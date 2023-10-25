@@ -36,10 +36,11 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterFeatureSink,
-                       QgsProcessingParameterDatabaseSchema
-                       QgsProcessingParameterDatabaseTable
-                       QgsProcessingParameterProviderConnection
+                       QgsProcessingParameterDatabaseSchema,
+                       QgsProcessingParameterDatabaseTable,
+                       QgsProcessingParameterProviderConnection,
                        QgsProcessingParameterEnum,
+                       QgsProcessingParameterDefinition,
                        QgsVectorLayer)
 
 
@@ -73,42 +74,35 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         fd_uri = '/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/fdlayers.csv|layername=fdlayers'
         fd_type = 'ogr'
         layer = QgsVectorLayer(fd_uri, 'fdlayers' , fd_type)
-        self.addParameter(QgsProcessingParameterDatabaseSchema('schema_name_for_paramter_list', 'schema name for paramter list', connectionParameterName='database_connection', defaultValue='administration'))
-        self.addParameter(QgsProcessingParameterDatabaseTable('table_name_for_parameter_list', 'Table name for parameter list', connectionParameterName='database_connection', schemaParameterName='schema_name_for_paramter_list', defaultValue='parameters'))
-        self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue='flood damage'))
-        self.addParameter(QgsProcessingParameterEnum('Lag', 'Vælg lag, som skal indlæses', options=[f.attributes()[0] for f in layer.getFeatures()], allowMultiple=True, defaultValue=[0]))
 
-    def processAlgorithm(self, parameters, context, feedback):
+        self.option_list =[f.attributes()[0] for f in layer.getFeatures()]
+        self.addParameter(QgsProcessingParameterEnum('import_layers', 'Choose types af data to import', self.option_list, allowMultiple=True, defaultValue=[0]))
 
+        self.addParameter(QgsProcessingParameterFeatureSource('layer_for_area_selection', 'Layer for area selection', types=[QgsProcessing.TypeVectorPolygon], defaultValue=None))
 
+        param = QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue='flood damage')
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
+ 
+        param = QgsProcessingParameterDatabaseSchema('schema_name_for_parameter_list', 'schema name for parameter list', connectionParameterName='database_connection', defaultValue='fdc_admin')
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
+        param = QgsProcessingParameterDatabaseTable('table_name_for_parameter_list', 'Table name for parameter list', connectionParameterName='database_connection', schemaParameterName='schema_name_for_paramter_list', defaultValue='parametre')
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
-
-
-        # We add the input vector features source. It can have any kind of
-        # geometry.
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.INPUT,
-                self.tr('Input layer'),
-                [QgsProcessing.TypeVectorAnyGeometry]
-            )
-        )
-
-        # We add a feature sink in which to store our processed features (this
-        # usually takes the form of a newly created vector layer when the
-        # algorithm is run in QGIS).
-        self.addParameter(
-            QgsProcessingParameterFeatureSink(
-                self.OUTPUT,
-                self.tr('Output layer')
-            )
-        )
 
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
+        user_options = self.parameterAsEnums(parameters, 'import_layers', context)
+        selected_items = [self.option_list[i] for i in user_options]
+        
+        return {'import_layers': selected_items}
+
+
 
         # Retrieve the feature source and sink. The 'dest_id' variable is used
         # to uniquely identify the feature sink, and must be included in the
