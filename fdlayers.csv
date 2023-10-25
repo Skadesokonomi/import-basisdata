@@ -1,0 +1,4 @@
+"lagnavn","forklaring","adresse","dbkode","dato"
+"Bygninger","Bygningslag fra Geodanmark beriget med BBR oplysninger","/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/bygning.fgb|layername=bygning","t_bygninger","2023-10-25"
+"Rekreative områder","Rekreative områder","/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/rekreative_omr.fgb|layername=rekreative_omr_dk_siteswtp","t_recreative","2022-10-25"
+"Bioscore","Bioscore data","/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/bioscore_2021.fgb|layername=bioscore_2021_artscore_proxysum_buf","t_bioscore","2021-10-25"

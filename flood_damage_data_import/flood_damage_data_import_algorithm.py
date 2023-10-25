@@ -35,7 +35,12 @@ from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterFeatureSink)
+                       QgsProcessingParameterFeatureSink,
+                       QgsProcessingParameterDatabaseSchema
+                       QgsProcessingParameterDatabaseTable
+                       QgsProcessingParameterProviderConnection
+                       QgsProcessingParameterEnum,
+                       QgsVectorLayer)
 
 
 class FDDataImportAlgorithm(QgsProcessingAlgorithm):
@@ -64,6 +69,21 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
+        
+        fd_uri = '/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/fdlayers.csv|layername=fdlayers'
+        fd_type = 'ogr'
+        layer = QgsVectorLayer(fd_uri, 'fdlayers' , fd_type)
+        self.addParameter(QgsProcessingParameterDatabaseSchema('schema_name_for_paramter_list', 'schema name for paramter list', connectionParameterName='database_connection', defaultValue='administration'))
+        self.addParameter(QgsProcessingParameterDatabaseTable('table_name_for_parameter_list', 'Table name for parameter list', connectionParameterName='database_connection', schemaParameterName='schema_name_for_paramter_list', defaultValue='parameters'))
+        self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue='flood damage'))
+        self.addParameter(QgsProcessingParameterEnum('Lag', 'Vælg lag, som skal indlæses', options=[f.attributes()[0] for f in layer.getFeatures()], allowMultiple=True, defaultValue=[0]))
+
+    def processAlgorithm(self, parameters, context, feedback):
+
+
+
+
+
 
         # We add the input vector features source. It can have any kind of
         # geometry.
