@@ -45,21 +45,15 @@ from qgis.core import (QgsProcessing,
                        QgsVectorLayer,
                        QgsProviderRegistry,
                        QgsDataSourceUri,
-                       QgsAuthMethodConfig)
+                       QgsAuthMethodConfig,
+                       QgsApplication)
+                       
+from qgis import processing
                       
 
 class FDDataImportAlgorithm(QgsProcessingAlgorithm):
     """
-    This is an example algorithm that takes a vector layer and
-    creates a new identical one.
-
-    It is meant to be used as an example of how to create your own
-    algorithms and explain methods and variables used to do it. An
-    algorithm like this will be available in all elements, and there
-    is not need for additional work.
-
-    All Processing algorithms should extend the QgsProcessingAlgorithm
-    class.
+    Blah blah blah
     """
 
     # Constants used to refer to parameters and outputs. They will be
@@ -112,13 +106,13 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
 
         # Get connection
         connection_name = self.parameterAsString(parameters, 'database_connection', context)
-        metadata = QgsProviderRegistry.instance().providerMetadata('QPSQL')
+        metadata = QgsProviderRegistry.instance().providerMetadata('postgres')
         connection = metadata.findConnection(connection_name)
 
         # Find username/password (even if it's hidden in a configuration setup)
         uri = QgsDataSourceUri(connection.uri())
-        myname, mypass = self.get_postgres_conn_info(connectionName)
-        uri.setUserName(myname)
+        myname, mypass = self.get_postgres_conn_info(connection_name)
+        uri.setUsername(myname)
         uri.setPassword(mypass)
 
 
@@ -146,22 +140,23 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
                 break
 
             # Find schema and table name in parameter table
-            parm_table = connection.executeSql(format('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\'',schema_name, table_name, self.options[item]['dbkode']))
+            parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
             full_name = parm_table[0][0] 
-
+          
             # Split full name into schema and table name
+            schtab = full_name.split('.',1)
 
             # Find geometry column name in parameter table
-            parm_table = connection.executeSql(format('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\'',schema_name, table_name, self.options[item]['dbkode']))
-            full_name = parm_table[0][0] 
+            parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_geom_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
+            geom_name = parm_table[0][0] 
 
             # Set uri parameters
-            uri.setSchema = ''
-            uri.setTable = ''
-            uri.setGeometryColumn = ''
-            # Activate processing algorithm with generated parameters
+            uri.setSchema = schtab[0].replace('"','')
+            uri.setTable = schtab[1].replace('"','')
+            uri.setGeometryColumn = geom_name
 
-            processing.run("native:extractbylocation", {'INPUT':self.options[item]['dbkode'],'PREDICATE':[0],'INTERSECT':source,'OUTPUT':'postgres://dbname=\'skadeokonomi\' host=localhost port=5432 user=\'postgres\' password=\'ukulemy\' sslmode=disable table="fdc_data"."bioscore_xxx" (geom)'})
+            # Activate processing algorithm with generated parameters
+            processing.run("native:extractbylocation", {'INPUT':self.options[item]['adresse'],'PREDICATE':[0],'INTERSECT':parameters['layer_for_area_selection'],'OUTPUT':uri.uri()})
 
             # Update the progress bar
             feedback.setProgress(int(current* total))
