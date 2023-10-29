@@ -22,15 +22,16 @@
  ***************************************************************************/
 """
 
-__author__ = 'Bo Victor Thomsen AestasGIS Denmark'
+__author__ = 'Bo Victor Thomsen, AestasGIS Denmark'
 __date__ = '2023-10-24'
-__copyright__ = '(C) 2023 by Bo Victor Thomsen AestasGIS Denmark'
+__copyright__ = '(C) 2023 by Bo Victor Thomsen, AestasGIS Denmark'
 
 # This will get replaced with a git SHA1 when you do a git archive
 
 __revision__ = '$Format:%H$'
 
-from qgis.PyQt.QtCore import QCoreApplication
+from qgis.PyQt.QtCore import QCoreApplication, QSettings
+
 from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
                        QgsProcessingAlgorithm,
@@ -41,8 +42,11 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterProviderConnection,
                        QgsProcessingParameterEnum,
                        QgsProcessingParameterDefinition,
-                       QgsVectorLayer)
-
+                       QgsVectorLayer,
+                       QgsProviderRegistry,
+                       QgsDataSourceUri,
+                       QgsAuthMethodConfig)
+                      
 
 class FDDataImportAlgorithm(QgsProcessingAlgorithm):
     """
@@ -75,8 +79,12 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         fd_type = 'ogr'
         layer = QgsVectorLayer(fd_uri, 'fdlayers' , fd_type)
 
-        self.option_list =[f.attributes()[0] for f in layer.getFeatures()]
-        self.addParameter(QgsProcessingParameterEnum('import_layers', 'Choose types af data to import', self.option_list, allowMultiple=True, defaultValue=[0]))
+        self.options = {}
+        for f in layer.getFeatures():
+            self.options[f.attributes()[0]] = {'forklaring':f.attributes()[1],'adresse':f.attributes()[2],'dbkode':f.attributes()[3],'dato':f.attributes()[4]}
+        self.option_list =[key for key in self.options]
+
+        self.addParameter(QgsProcessingParameterEnum('import_layers', 'Choose types af data to import', [key for key in self.options], allowMultiple=True, defaultValue=[0]))
 
         self.addParameter(QgsProcessingParameterFeatureSource('layer_for_area_selection', 'Layer for area selection', types=[QgsProcessing.TypeVectorPolygon], defaultValue=None))
 
@@ -88,7 +96,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(param)
 
-        param = QgsProcessingParameterDatabaseTable('table_name_for_parameter_list', 'Table name for parameter list', connectionParameterName='database_connection', schemaParameterName='schema_name_for_paramter_list', defaultValue='parametre')
+        param = QgsProcessingParameterDatabaseTable('table_name_for_parameter_list', 'Table name for parameter list', connectionParameterName='database_connection', schemaParameterName='schema_name_for_parameter_list', defaultValue='parametre')
         param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(param)
 
@@ -99,41 +107,67 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         """
         user_options = self.parameterAsEnums(parameters, 'import_layers', context)
         selected_items = [self.option_list[i] for i in user_options]
+
+        feature_source = self.parameterAsSource(parameters,'layer_for_area_selection', context)
+
+        # Get connection
+        connection_name = self.parameterAsString(parameters, 'database_connection', context)
+        metadata = QgsProviderRegistry.instance().providerMetadata('QPSQL')
+        connection = metadata.findConnection(connection_name)
+
+        # Find username/password (even if it's hidden in a configuration setup)
+        uri = QgsDataSourceUri(connection.uri())
+        myname, mypass = self.get_postgres_conn_info(connectionName)
+        uri.setUserName(myname)
+        uri.setPassword(mypass)
+
+
+        # Find full name for table with parameters
+        schema_name = self.parameterAsString(parameters, 'schema_name_for_parameter_list', context)
+        table_name = self.parameterAsString(parameters, 'table_name_for_parameter_list', context)
         
-        return {'import_layers': selected_items}
+        # Source for cutter polygon(s)
+        source = self.parameterAsSource(parameters,'layer_for_area_selection', context)
 
 
+        # Setup for progress indicator
+        total = 100.0 / len(selected_items) if len(selected_items) else 0
+        current = 1
+        
+        extr_result = {}
 
-        # Retrieve the feature source and sink. The 'dest_id' variable is used
-        # to uniquely identify the feature sink, and must be included in the
-        # dictionary returned by the processAlgorithm function.
-        source = self.parameterAsSource(parameters, self.INPUT, context)
-        (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT,
-                context, source.fields(), source.wkbType(), source.sourceCrs())
+        # Get connection
 
-        # Compute the number of steps to display within the progress bar and
-        # get features from source
-        total = 100.0 / source.featureCount() if source.featureCount() else 0
-        features = source.getFeatures()
+        # Loop through selected layers        
+        for item in selected_items:
 
-        for current, feature in enumerate(features):
             # Stop the algorithm if cancel button has been clicked
             if feedback.isCanceled():
                 break
 
-            # Add a feature in the sink
-            sink.addFeature(feature, QgsFeatureSink.FastInsert)
+            # Find schema and table name in parameter table
+            parm_table = connection.executeSql(format('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\'',schema_name, table_name, self.options[item]['dbkode']))
+            full_name = parm_table[0][0] 
+
+            # Split full name into schema and table name
+
+            # Find geometry column name in parameter table
+            parm_table = connection.executeSql(format('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\'',schema_name, table_name, self.options[item]['dbkode']))
+            full_name = parm_table[0][0] 
+
+            # Set uri parameters
+            uri.setSchema = ''
+            uri.setTable = ''
+            uri.setGeometryColumn = ''
+            # Activate processing algorithm with generated parameters
+
+            processing.run("native:extractbylocation", {'INPUT':self.options[item]['dbkode'],'PREDICATE':[0],'INTERSECT':source,'OUTPUT':'postgres://dbname=\'skadeokonomi\' host=localhost port=5432 user=\'postgres\' password=\'ukulemy\' sslmode=disable table="fdc_data"."bioscore_xxx" (geom)'})
 
             # Update the progress bar
-            feedback.setProgress(int(current * total))
+            feedback.setProgress(int(current* total))
+            current += 1 
 
-        # Return the results of the algorithm. In this case our only result is
-        # the feature sink which contains the processed features, but some
-        # algorithms may return multiple feature sinks, calculated numeric
-        # statistics, etc. These should all be included in the returned
-        # dictionary, with keys matching the feature corresponding parameter
-        # or output names.
-        return {self.OUTPUT: dest_id}
+        return {'user_options': selected_items, 'connction_name': connection_name, 'schema_name': schema_name, 'table_name': schema_name}
 
     def name(self):
         """
@@ -143,7 +177,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Import data to Flood Damage Database'
+        return 'Import data to Flood Damage database'
 
     def displayName(self):
         """
@@ -174,3 +208,29 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
 
     def createInstance(self):
         return FDDataImportAlgorithm()
+
+
+    def get_postgres_conn_info(self, selected):
+        """ Read PostgreSQL connection details from QSettings stored by QGIS
+        """
+        settings = QSettings()
+        settings.beginGroup(u"/PostgreSQL/connections/" + selected)
+    
+        # password and username
+        username = ''
+        password = ''
+        authconf = settings.value('authcfg', '')
+        if authconf :
+            # password encrypted in AuthManager
+            auth_manager = QgsApplication.authManager()
+            conf = QgsAuthMethodConfig()
+            auth_manager.loadAuthenticationConfig(authconf, conf, True)
+            if conf.id():
+                username = conf.config('username', '')
+                password = conf.config('password', '')
+        else:
+            # basic (plain-text) settings
+            username = settings.value('username', '', type=str)
+            password = settings.value('password', '', type=str)
+        return username, password
+
