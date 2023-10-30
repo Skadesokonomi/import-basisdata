@@ -42,11 +42,13 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterProviderConnection,
                        QgsProcessingParameterEnum,
                        QgsProcessingParameterDefinition,
+                       QgsProcessingParameterBoolean,
                        QgsVectorLayer,
                        QgsProviderRegistry,
                        QgsDataSourceUri,
                        QgsAuthMethodConfig,
-                       QgsApplication)
+                       QgsApplication,
+                       QgsProcessingContext)
                        
 from qgis import processing
                       
@@ -82,6 +84,8 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
 
         self.addParameter(QgsProcessingParameterFeatureSource('layer_for_area_selection', 'Layer for area selection', types=[QgsProcessing.TypeVectorPolygon], defaultValue=None))
 
+        self.addParameter(QgsProcessingParameterBoolean('open_layers_after_running_algorithm', 'Open layer(s) after running algorithm', defaultValue=False))
+
         param = QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue='flood damage')
         param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(param)
@@ -101,8 +105,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         """
         user_options = self.parameterAsEnums(parameters, 'import_layers', context)
         selected_items = [self.option_list[i] for i in user_options]
-
-        feature_source = self.parameterAsSource(parameters,'layer_for_area_selection', context)
+        open_layer = self.parameterAsBoolean(parameters, 'open_layers_after_running_algorithm', context)
 
         # Get connection
         connection_name = self.parameterAsString(parameters, 'database_connection', context)
@@ -111,18 +114,18 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
 
         # Find username/password (even if it's hidden in a configuration setup)
         uri = QgsDataSourceUri(connection.uri())
+        #feedback.pushInfo('URI: {}'.format(uri.uri()))
+
         myname, mypass = self.get_postgres_conn_info(connection_name)
         uri.setUsername(myname)
         uri.setPassword(mypass)
-
+        #feedback.pushInfo('Username = "{}", Password = "{}"'.format(myname,mypass))
+        #feedback.pushInfo('URI(2): {}'.format(uri.uri()))
 
         # Find full name for table with parameters
         schema_name = self.parameterAsString(parameters, 'schema_name_for_parameter_list', context)
         table_name = self.parameterAsString(parameters, 'table_name_for_parameter_list', context)
-        
-        # Source for cutter polygon(s)
-        source = self.parameterAsSource(parameters,'layer_for_area_selection', context)
-
+        #feedback.pushInfo('Parameter: Schemaname = "{}", Tablename = "{}"'.format(schema_name,table_name))
 
         # Setup for progress indicator
         total = 100.0 / len(selected_items) if len(selected_items) else 0
@@ -138,25 +141,68 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
             # Stop the algorithm if cancel button has been clicked
             if feedback.isCanceled():
                 break
+            
+            feedback.pushInfo('\n\nProcessing layer {}....\n'.format(item))
 
             # Find schema and table name in parameter table
+            #feedback.pushInfo('Export: SQL --> SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
             parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
             full_name = parm_table[0][0] 
-          
+
             # Split full name into schema and table name
             schtab = full_name.split('.',1)
+            exp_schema = schtab[0].replace('"','')
+            exp_table = schtab[1].replace('"','')
+
+            #feedback.pushInfo('Export: Full name = {}, Schemaname = {}, Tablename = {}'.format(full_name, exp_schema, exp_table))
+
+            # Find primary key column name in parameter table
+            #feedback.pushInfo('Geometry: SQL --> SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_pkey_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
+            parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_pkey_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
+            exp_pkey = parm_table[0][0] 
+            
+            #feedback.pushInfo('Primary: Column name: {}'.format(exp_pkey))
 
             # Find geometry column name in parameter table
+            #feedback.pushInfo('Geometry: SQL --> SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_geom_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
             parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_geom_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-            geom_name = parm_table[0][0] 
+            exp_geom = parm_table[0][0] 
+            
+            #feedback.pushInfo('Geometry: Column name: {}'.format(exp_geom))
 
-            # Set uri parameters
-            uri.setSchema = schtab[0].replace('"','')
-            uri.setTable = schtab[1].replace('"','')
-            uri.setGeometryColumn = geom_name
+
+            # Drop table if it exist beforehand
+            connection.executeSql('DROP TABLE IF EXISTS "{}"."{}"'.format(exp_schema, exp_table))
+
+            # Update uri with datasource
+            uri.setDataSource(exp_schema, exp_table, exp_geom, '', exp_pkey)
+            uri_upd = 'postgres://'+uri.uri()
+
+            #feedback.pushInfo('Updated URI: {}'.format(uri_upd))
+
 
             # Activate processing algorithm with generated parameters
-            processing.run("native:extractbylocation", {'INPUT':self.options[item]['adresse'],'PREDICATE':[0],'INTERSECT':parameters['layer_for_area_selection'],'OUTPUT':uri.uri()})
+            processing.run(
+                "native:extractbylocation", 
+                {
+                    'INPUT':     self.options[item]['adresse'],
+                    'PREDICATE': [0],
+                    'INTERSECT': parameters['layer_for_area_selection'],
+                    'OUTPUT':    uri_upd
+                },
+                is_child_algorithm=True, 
+                context=context, 
+                feedback=feedback
+            )
+            if open_layer:
+                context.addLayerToLoadOnCompletion(
+                    uri_upd,
+                    QgsProcessingContext.LayerDetails(
+                        item,
+                        context.project(),
+                        'LAYER'
+                    )
+                )
 
             # Update the progress bar
             feedback.setProgress(int(current* total))
