@@ -158,15 +158,15 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
 
             # Find primary key column name in parameter table
             sql_pkey = 'SELECT "value" FROM "{}"."{}" WHERE "name" = \'f_pkey_{}\''.format(schema_name, table_name, self.options[item]['dbkode'])
-            feedback.pushInfo('Primary key: SQL --> {}'.format(sql_pkey))
+            #feedback.pushInfo('Primary key: SQL --> {}'.format(sql_pkey))
             parm_table = connection.executeSql(sql_pkey)
-            exp_geom = parm_table[0][0] if parm_table[0] else None 
+            exp_pkey = parm_table[0][0] if parm_table[0] else None 
             
             #feedback.pushInfo('Primary: Column name: {}'.format(exp_pkey))
 
             # Find geometry column name in parameter table
             sql_geom = 'SELECT "value" FROM "{}"."{}" WHERE "name" = \'f_geom_{}\''.format(schema_name, table_name, self.options[item]['dbkode'])
-            feedback.pushInfo('Geometry: SQL --> {}'.format(sql_geom))
+            #feedback.pushInfo('Geometry: SQL --> {}'.format(sql_geom))
             parm_table = connection.executeSql(sql_geom)
             exp_geom = parm_table[0][0] if parm_table[0] else None
             
@@ -180,14 +180,16 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
             uri.setDataSource(exp_schema, exp_table, exp_geom, '', exp_pkey)
             uri_upd = 'postgres://'+uri.uri()
 
-            #feedback.pushInfo('Updated URI: {}'.format(uri_upd))
+            feedback.pushInfo('Updated URI: {}'.format(uri_upd))
 
+
+            feedback.pushInfo('Input ogr: {}'.format(self.options[item]['adresse']))
 
             # Activate processing algorithm with generated parameters
             processing.run(
                 "native:extractbylocation", 
                 {
-                    'INPUT':     self.options[item]['adresse'],
+                    'INPUT':     QgsVectorLayer(self.options[item]['adresse'],self.options[item]['dbkode'],'ogr'),
                     'PREDICATE': [0],
                     'INTERSECT': parameters['layer_for_area_selection'],
                     'OUTPUT':    uri_upd
