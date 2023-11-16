@@ -71,7 +71,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
         
-        fd_uri = '/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/fdlayers.csv|layername=fdlayers'
+        fd_uri = '/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/fdlayers.csv'
         fd_type = 'ogr'
         layer = QgsVectorLayer(fd_uri, 'fdlayers' , fd_type)
 
