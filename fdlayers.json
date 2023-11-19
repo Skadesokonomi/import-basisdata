@@ -1,0 +1,104 @@
+{
+   "Bygninger":{
+      "forklaring":"Bygningslag fra Geodanmark beriget med BBR oplysninger",
+      "provider":"ogr",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/bygninger_dk_2023.fgb",
+      "dbkode":"t_building",
+      "dbkeys":{
+         "f_pkey_t_building":"fid",
+         "f_geom_t_building":"geom",
+         "f_usage_code_t_building":"bbr_anv_kode",
+         "f_usage_text_t_building":"bbr_anv_tekst",
+		 "f_cellar_area_t_building":"kaelder_areal" 
+      },
+      "dato":"2023-11-19"
+   },
+   "Økosystemer":{
+      "forklaring":"Bioscore o.a. data",
+      "provider":"ogr",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/okosystemer_dk_2023.fgb",
+      "dbkode":"t_bioscore",
+      "dbkeys":{
+         "f_pkey_t_bioscore":"fid",
+         "f_geom_t_bioscore":"geom"
+      },
+      "dato":"2023-11-19"
+   },
+   "Kritisk infrastruktur":{
+      "forklaring":"Kritisk infrastruktur",
+      "provider":"ogr",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/kritisk_infrastruktur_dk_2023.fgb",
+      "dbkode":"t_infrastructure",
+      "dbkeys":{
+         "f_pkey_t_infrastructure":"fid",
+         "f_geom_t_infrastructure":"geom"
+      },
+      "dato":"2023-11-19"
+   },
+   "Landbrug":{
+      "forklaring":"Markdata",
+      "provider":"ogr",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/landbrug_dk_2023.fgb",
+      "dbkode":"t_agriculture",
+      "dbkeys":{
+         "f_pkey_t_agriculture":"fid",
+         "f_geom_t_agriculture":"geom"
+      },
+      "dato":"2023-11-19"
+   },
+   "Mennesker":{
+      "forklaring":"Personer",
+      "provider":"ogr",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/mennesker_dk_2023.fgb",
+      "dbkode":"t_human_health",
+      "dbkeys":{
+         "f_pkey_t_human_health":"fid",
+         "f_geom_t_human_health":"geom"
+      },
+      "dato":"2023-11-19"
+   },
+   "Offentlig service":{
+      "forklaring":"Offentlig service",
+      "provider":"ogr",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/bygninger_dk_2023.fgb",
+      "dbkode":"t_publicservice",
+      "dbkeys":{
+         "f_pkey_t_publicservice":"fid",
+         "f_geom_t_publicservice":"geom"
+      },
+      "dato":"2023-11-19"
+   },
+   "Vej og trafik":{
+      "forklaring":"Vej og trafik",
+      "provider":"ogr",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/vej_og_trafik_dk_2023.fgb",
+      "dbkode":"t_road_traffic",
+      "dbkeys":{
+         "f_pkey_t_road_traffic":"fid",
+         "f_geom_t_road_traffic":"geom"
+      },
+      "dato":"2023-11-19"
+   },
+   "Oversvømmelse 50mm. l0m. grid":{
+      "forklaring":"Oversvømmelsespolygoner 50 mm / 10 m. grid",
+      "provider":"ogr",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/oversvommelse_50mm_10m_grid.fgb",
+      "dbkode":"t_flood_50",
+      "dbkeys":{
+         "f_pkey_t_flood_50":"fid",
+         "f_geom_t_flood_50":"geom"
+      },
+      "dato":"2023-11-19"
+   },
+   "Rekreative områder":{
+      "forklaring":"Rekreative områder",
+      "provider":"ogr",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/rekreative_omr_dk_2023.fgb",
+      "dbkode":"t_recreative",
+      "dbkeys":{
+         "f_pkey_t_recreative":"fid",
+         "f_geom_t_recreative":"geom"
+      },
+      "dato":"2023-11-19"
+   }
+}

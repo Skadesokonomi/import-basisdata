@@ -51,6 +51,8 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingContext)
                        
 from qgis import processing
+from json import loads, dumps
+from urllib.request import urlopen
                       
 
 class FDDataImportAlgorithm(QgsProcessingAlgorithm):
@@ -70,17 +72,14 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
-        
-        fd_uri = '/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/fdlayers.csv'
-        fd_type = 'ogr'
-        layer = QgsVectorLayer(fd_uri, 'fdlayers' , fd_type)
 
-        self.options = {}
-        for f in layer.getFeatures():
-            self.options[f.attributes()[0]] = {'forklaring':f.attributes()[1],'adresse':f.attributes()[2],'dbkode':f.attributes()[3],'dato':f.attributes()[4]}
+        URL = 'https://storage.googleapis.com/skadesokonomi-dk-data/fdlayers.json'
+  
+        data = urlopen(URL).read().decode('utf-8')
+        self.options = loads(data)
         self.option_list =[key for key in self.options]
 
-        self.addParameter(QgsProcessingParameterEnum('import_layers', 'Choose types af data to import', [key for key in self.options], allowMultiple=True, defaultValue=[0]))
+        self.addParameter(QgsProcessingParameterEnum('import_layers', 'Choose types af data to import', ['{} ... {}'.format(key,self.options[key]['dato']) for key in self.options], allowMultiple=True, defaultValue=[0]))
 
         self.addParameter(QgsProcessingParameterFeatureSource('layer_for_area_selection', 'Layer for area selection', types=[QgsProcessing.TypeVectorPolygon], defaultValue=None))
 
@@ -103,6 +102,13 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+        
+        TEMPLATE = """
+        INSERT INTO "{schema}"."{table}" (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable)
+            VALUES ('{name}','{parent}','{value}','T', '', '', '', '', '** Autoupdated**', 10, ' ')
+            ON CONFLICT (name) DO UPDATE SET value = '{value}', parent = '{parent}'
+        """          
+
         user_options = self.parameterAsEnums(parameters, 'import_layers', context)
         selected_items = [self.option_list[i] for i in user_options]
         open_layer = self.parameterAsBoolean(parameters, 'open_layers_after_running_algorithm', context)
@@ -136,7 +142,9 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         # Get connection
 
         # Loop through selected layers        
-        for item in selected_items:
+        for iteml in selected_items:
+            
+            item = iteml.split(' ... ',1)[0]
 
             # Stop the algorithm if cancel button has been clicked
             if feedback.isCanceled():
@@ -154,15 +162,21 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
             exp_schema = schtab[0].replace('"','')
             exp_table = schtab[1].replace('"','')
 
-            #feedback.pushInfo('Export: Full name = {}, Schemaname = {}, Tablename = {}'.format(full_name, exp_schema, exp_table))
+            feedback.pushInfo('Export: Full name = {}, Schemaname = {}, Tablename = {}'.format(full_name, exp_schema, exp_table))
+
+            # Update fields information in parameter list
+            for k,v in self.options[item]['dbkeys'].items():
+                sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=k, value=v, parent=self.options[item]['dbkode'])
+                feedback.pushInfo('setting field sql: {}'.format(sqlstr))
+                parm_table = connection.executeSql(sqlstr)
 
             # Find primary key column name in parameter table
             sql_pkey = 'SELECT "value" FROM "{}"."{}" WHERE "name" = \'f_pkey_{}\''.format(schema_name, table_name, self.options[item]['dbkode'])
-            #feedback.pushInfo('Primary key: SQL --> {}'.format(sql_pkey))
+            feedback.pushInfo('Primary key: SQL --> {}'.format(sql_pkey))
             parm_table = connection.executeSql(sql_pkey)
             exp_pkey = parm_table[0][0].replace('"','') if parm_table[0] else None 
             
-            #feedback.pushInfo('Primary: Column name: {}'.format(exp_pkey))
+            feedback.pushInfo('Primary: Column name: {}'.format(exp_pkey))
 
             # Find geometry column name in parameter table
             sql_geom = 'SELECT "value" FROM "{}"."{}" WHERE "name" = \'f_geom_{}\''.format(schema_name, table_name, self.options[item]['dbkode'])
@@ -170,7 +184,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
             parm_table = connection.executeSql(sql_geom)
             exp_geom = parm_table[0][0].replace('"','') if parm_table[0] else None
             
-            #feedback.pushInfo('Geometry: Column name: {}'.format(exp_geom))
+            feedback.pushInfo('Geometry: Column name: {}'.format(exp_geom))
 
 
             # Drop table if it exist beforehand
@@ -189,7 +203,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
             processing.run(
                 "native:extractbylocation", 
                 {
-                    'INPUT':     QgsVectorLayer(self.options[item]['adresse'],self.options[item]['dbkode'],'ogr'),
+                    'INPUT':     QgsVectorLayer(self.options[item]['adresse'],self.options[item]['dbkode'],self.options[item]['provider']),
                     'PREDICATE': [0],
                     'INTERSECT': parameters['layer_for_area_selection'],
                     'OUTPUT':    uri_upd
