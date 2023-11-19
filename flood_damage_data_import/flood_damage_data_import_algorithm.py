@@ -160,7 +160,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
             sql_pkey = 'SELECT "value" FROM "{}"."{}" WHERE "name" = \'f_pkey_{}\''.format(schema_name, table_name, self.options[item]['dbkode'])
             #feedback.pushInfo('Primary key: SQL --> {}'.format(sql_pkey))
             parm_table = connection.executeSql(sql_pkey)
-            exp_pkey = parm_table[0][0] if parm_table[0] else None 
+            exp_pkey = parm_table[0][0].replace('"','') if parm_table[0] else None 
             
             #feedback.pushInfo('Primary: Column name: {}'.format(exp_pkey))
 
@@ -168,7 +168,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
             sql_geom = 'SELECT "value" FROM "{}"."{}" WHERE "name" = \'f_geom_{}\''.format(schema_name, table_name, self.options[item]['dbkode'])
             #feedback.pushInfo('Geometry: SQL --> {}'.format(sql_geom))
             parm_table = connection.executeSql(sql_geom)
-            exp_geom = parm_table[0][0] if parm_table[0] else None
+            exp_geom = parm_table[0][0].replace('"','') if parm_table[0] else None
             
             #feedback.pushInfo('Geometry: Column name: {}'.format(exp_geom))
 
@@ -198,6 +198,9 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
                 context=context, 
                 feedback=feedback
             )
+            # Create spatial index
+            connection.executeSql('CREATE INDEX ON "{}"."{}" USING GIST ("{}")'.format(exp_schema, exp_table, exp_geom))
+
             if open_layer:
                 context.addLayerToLoadOnCompletion(
                     uri_upd,

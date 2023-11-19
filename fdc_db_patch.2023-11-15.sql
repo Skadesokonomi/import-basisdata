@@ -84,3 +84,5 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) 
     VALUES ('f_pkey_t_flood_50', 't_flood_50', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ')
     ON CONFLICT (name) DO UPDATE SET value = 'fid';    
+
+UPDATE parametre set value = 'bbr_anv_kode' WHERE name = 'f_usage_code_t_building';
