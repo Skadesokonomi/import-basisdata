@@ -153,7 +153,6 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
             feedback.pushInfo('\n\nProcessing layer {}....\n'.format(item))
 
             # Find schema and table name in parameter table
-            #feedback.pushInfo('Export: SQL --> SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
             parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
             full_name = parm_table[0][0] 
 
@@ -166,7 +165,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
 
             # Update fields information in parameter list
             for k,v in self.options[item]['dbkeys'].items():
-                sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=k, value=v, parent=self.options[item]['dbkode'])
+                sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=k, value=v[0], parent=v[1])
                 feedback.pushInfo('setting field sql: {}'.format(sqlstr))
                 parm_table = connection.executeSql(sqlstr)
 
@@ -253,7 +252,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         Returns the name of the group this algorithm belongs to. This string
         should be localised.
         """
-        return self.tr('Flood Damage')
+        return self.tr('')
 
     def groupId(self):
         """
@@ -263,7 +262,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'flood_damage'
+        return ''
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)

@@ -232,7 +232,7 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         Returns the name of the group this algorithm belongs to. This string
         should be localised.
         """
-        return self.tr('Flood Damage')
+        return self.tr('')
 
     def groupId(self):
         """
@@ -242,7 +242,8 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'flood_damage'
+        return ''
+
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
