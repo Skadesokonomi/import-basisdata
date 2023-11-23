@@ -48,6 +48,7 @@ from qgis.core import (QgsProcessing,
                        QgsDataSourceUri,
                        QgsAuthMethodConfig,
                        QgsApplication,
+                       QgsSettings,
                        QgsProcessingContext)
                        
 from qgis import processing
@@ -78,6 +79,10 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         data = urlopen(URL).read().decode('utf-8')
         self.options = loads(data)
         self.option_list =[key for key in self.options]
+
+        s = QgsSettings()
+        self.folded = s.value("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", None)
+        s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", True) 
 
         self.addParameter(QgsProcessingParameterEnum('import_layers', 'Choose types af data to import', ['{} ... {}'.format(key,self.options[key]['dato']) for key in self.options], allowMultiple=True, defaultValue=[0]))
 
@@ -227,6 +232,9 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
             # Update the progress bar
             feedback.setProgress(int(current* total))
             current += 1 
+
+        s = QgsSettings()
+        s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", self.folded) 
 
         return {'user_options': selected_items, 'connction_name': connection_name, 'schema_name': schema_name, 'table_name': schema_name}
 
