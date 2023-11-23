@@ -268,8 +268,8 @@
       },
       "dato":"2023-11-19"
    },
-   "Virksomheder":{
-      "forklaring":"Virksomheder",
+   "Erhverv":{
+      "forklaring":"Erhvervsdata",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/erhverv_hele_DK_v2.fgb",
       "dbkode":"t_company",
