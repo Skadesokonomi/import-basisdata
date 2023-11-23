@@ -1,27 +1,3 @@
---
--- PostgreSQL database dump
---
-
--- Dumped from database version 15.4
--- Dumped by pg_dump version 15.4
-
--- Started on 2023-11-23 11:32:12
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
---
--- TOC entry 225 (class 1259 OID 100600)
--- Name: parametre; Type: TABLE; Schema: fdc_admin; Owner: -
---
 
 CREATE TABLE fdc_admin.parametre (
     name character varying NOT NULL,
@@ -37,12 +13,6 @@ CREATE TABLE fdc_admin.parametre (
     checkable "char" NOT NULL
 );
 
-
---
--- TOC entry 4280 (class 0 OID 100600)
--- Dependencies: 225
--- Data for Name: parametre; Type: TABLE DATA; Schema: fdc_admin; Owner: -
---
 
 INSERT INTO fdc_admin.parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('General', '', '', 'G', '', '', '', '', 'Hovedgrupper til administration af grundlæggende parametre for systemet', 1, ' ');
 INSERT INTO fdc_admin.parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Cell administration', 'General', '', 'G', '', '', '', '', 'Grupper til administration af celle generering', 1, ' ');
@@ -993,26 +963,6 @@ SELECT
 ', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ');
 
 
---
--- TOC entry 4132 (class 2606 OID 100606)
--- Name: parametre parametre_pkey; Type: CONSTRAINT; Schema: fdc_admin; Owner: -
---
-
-ALTER TABLE ONLY fdc_admin.parametre
-    ADD CONSTRAINT parametre_pkey PRIMARY KEY (name);
-
-
---
--- TOC entry 4130 (class 1259 OID 100619)
--- Name: parametre_parent_idx; Type: INDEX; Schema: fdc_admin; Owner: -
---
-
-CREATE INDEX parametre_parent_idx ON fdc_admin.parametre USING btree (parent);
-
-
--- Completed on 2023-11-23 11:32:12
-
---
--- PostgreSQL database dump complete
---
+ALTER TABLE ONLY parametre ADD CONSTRAINT parametre_pkey PRIMARY KEY (name);
+CREATE INDEX parametre_parent_idx ON parametre USING btree (parent);
 
