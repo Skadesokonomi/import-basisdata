@@ -267,5 +267,42 @@
          ]
       },
       "dato":"2023-11-19"
+   },
+   "Virksomheder":{
+      "forklaring":"Virksomheder",
+      "provider":"ogr",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/erhverv_hele_DK_v2.fgb",
+      "dbkode":"t_company",
+      "dbkeys":{
+         "f_pkey_q_comp_build":[
+            "fid",
+            "q_comp_build"
+         ],
+         "f_geom_q_comp_build":[
+            "geom",
+            "q_comp_build"
+         ],
+         "f_prod_id_t_company":[
+            "p_nr_fiktiv",
+            "t_company"
+         ],
+         "f_empcount_t_company":[
+            "aarsbes_antalansatte",
+            "t_company"
+         ],
+         "f_comp_id_t_company":[
+            "cvr",
+            "t_company"
+         ],
+         "f_pkey_t_company":[
+            "fid",
+            "t_company"
+         ],
+         "f_geom_t_company":[
+            "geom",
+            "t_company"
+         ]
+      },
+      "dato":"2023-11-19"
    }
 }
