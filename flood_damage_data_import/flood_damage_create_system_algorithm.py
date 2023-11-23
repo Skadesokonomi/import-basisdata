@@ -68,7 +68,7 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
 
     OUTPUT = 'OUTPUT'
     INPUT = 'INPUT'
-    URL = 'https://storage.googleapis.com/skadesokonomi-dk-data/fdlayers.json'
+    URL = 'https://storage.googleapis.com/skadesokonomi-dk-data/createscripts.json'
 
     def initAlgorithm(self, config):
         """
@@ -76,9 +76,6 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
   
-        data = urlopen(self.URL).read().decode('utf-8')
-        self.options = loads(data)
-
         self.addParameter(QgsProcessingParameterString('server_name', 'IP name/adress for Database server', defaultValue='localhost'))
         self.addParameter(QgsProcessingParameterNumber('server_port','Port number for database server',type=QgsProcessingParameterNumber.Integer,minValue=1024, maxValue=49151, defaultValue=5432))
         self.addParameter(QgsProcessingParameterString('database_name', 'Name of new flood_damage database', defaultValue='flood_damage'))
@@ -155,7 +152,20 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
    
         fdc_connection = fdc_connection.format(database_name=database_name,server_name=server_name,administrative_user=adm_user)
         conn_fdc.store(fdc_connection)
+        
+#       Hent script (extension, schemas, roles, application of roles)
+        data = urlopen(self.URL).read().decode('utf-8')
+        self.options = loads(data)
 
+        
+        
+
+#        Replace tokens i script
+#        Kør script
+#        Hent data oversigt json
+#        For hver section i json 
+#        Hent  parametre sql script
+#        Kør script
         
 
 #        # Setup for progress indicator
