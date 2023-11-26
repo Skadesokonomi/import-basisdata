@@ -80,9 +80,10 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         self.options = loads(data)
         self.option_list =[key for key in self.options]
 
-        s = QgsSettings()
-        self.folded = s.value("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", None)
-        s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", True) 
+        s = QgsSettings()  
+        self.folded = s.value("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", None) # save original state
+        s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", True) # Force collapsed to True 
+
 
         self.addParameter(QgsProcessingParameterEnum('import_layers', 'Choose types af data to import', ['{} ... {}'.format(key,self.options[key]['dato']) for key in self.options], allowMultiple=True, defaultValue=[0]))
 
@@ -114,6 +115,9 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
             ON CONFLICT (name) DO UPDATE SET value = '{value}', parent = '{parent}'
         """          
 
+        s = QgsSettings() 
+        s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", self.folded) # Restore original state
+        
         user_options = self.parameterAsEnums(parameters, 'import_layers', context)
         selected_items = [self.option_list[i] for i in user_options]
         open_layer = self.parameterAsBoolean(parameters, 'open_layers_after_running_algorithm', context)
@@ -232,9 +236,6 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
             # Update the progress bar
             feedback.setProgress(int(current* total))
             current += 1 
-
-        s = QgsSettings()
-        s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", self.folded) 
 
         return {'user_options': selected_items, 'connction_name': connection_name, 'schema_name': schema_name, 'table_name': schema_name}
 

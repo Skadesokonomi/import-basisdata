@@ -51,6 +51,7 @@ from qgis.core import (QgsProcessing,
                        QgsDataSourceUri,
                        QgsAuthMethodConfig,
                        QgsApplication,
+                       QgsSettings,
                        QgsProcessingContext)
                        
 from qgis import processing
@@ -68,43 +69,41 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
 
     OUTPUT = 'OUTPUT'
     INPUT = 'INPUT'
-    URL = 'https://storage.googleapis.com/skadesokonomi-dk-data/createscripts.json'
+    DEF_URL = 'https://storage.googleapis.com/skadesokonomi-dk-data/createscripts.json'
 
     def initAlgorithm(self, config):
         """
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
+
+        s = QgsSettings()  
+
+        # Force advanced section to be folded         
+        self.folded = s.value("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", None) # save original state
+        s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", True) # Force collapsed to True 
+
+        # Find saved url
+        url = s.value("flood_damage/url", None)
+
+        # If url setting doesn't exist, create it using default value
+        if not url:        
+            url = self.DEF_URL
+            s.setValue("flood_damage/url", url)
+  
+        data = urlopen(URL).read().decode('utf-8')
+        self.options = loads(data)
+
   
         self.addParameter(QgsProcessingParameterString('server_name', 'IP name/adress for Database server', defaultValue='localhost'))
         self.addParameter(QgsProcessingParameterNumber('server_port','Port number for database server',type=QgsProcessingParameterNumber.Integer,minValue=1024, maxValue=49151, defaultValue=5432))
-        self.addParameter(QgsProcessingParameterString('database_name', 'Name of new flood_damage database', defaultValue='flood_damage'))
         self.addParameter(QgsProcessingParameterString('adm_user', 'Administrative username', defaultValue='postgres' ))
         self.addParameter(QgsProcessingParameterString('adm_password', 'Administrative password', defaultValue='ukulemy'))
+        self.addParameter(QgsProcessingParameterString('database_name', 'Name of new flood_damage database', defaultValue='flood_damage'))
 
         adm_database = QgsProcessingParameterString('adm_database_name', 'Name of postgres system database', defaultValue='postgres')
         adm_database.setFlags(adm_database.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(adm_database)
-
-        fdc_admin = QgsProcessingParameterString('fdc_admin_schema', 'Name of flood_damage administration schema', defaultValue='fdc_admin')
-        fdc_admin.setFlags(adm_database.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(fdc_admin)
-
-        fdc_lookup = QgsProcessingParameterString('fdc_lookup_schema', 'Name of flood_damage lookup schema', defaultValue='fdc_lookup')
-        fdc_lookup.setFlags(adm_database.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(fdc_lookup)
-
-        fdc_sector = QgsProcessingParameterString('fdc_sector_schema', 'Name of flood_damage sectordata schema', defaultValue='fdc_sector')
-        fdc_sector.setFlags(adm_database.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(fdc_sector)
-
-        fdc_flood = QgsProcessingParameterString('fdc_flood_schema', 'Name of flood_damage flood-data schema', defaultValue='fdc_flood')
-        fdc_flood.setFlags(adm_database.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(fdc_flood)
-
-        fdc_result = QgsProcessingParameterString('fdc_result_schema', 'Name of flood_damage results schema', defaultValue='fdc_result')
-        fdc_result.setFlags(adm_database.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(fdc_result)
 
         fdc_connection = QgsProcessingParameterString('fdc_connection', 'Name of flood_damage database connection', defaultValue='{database_name} at {server_name} as {administrative_user}')
         fdc_connection.setFlags(adm_database.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
@@ -115,18 +114,15 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
 
+        s = QgsSettings() 
+        s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", self.folded) # Restore original state
+
         server_name = self.parameterAsString(parameters, 'server_name', context).replace ('"','')
         server_port = self.parameterAsString(parameters, 'server_port', context)
         database_name = self.parameterAsString(parameters, 'database_name', context).replace ('"','')
         adm_user = self.parameterAsString(parameters, 'adm_user', context)
         adm_password = self.parameterAsString(parameters, 'adm_password', context)
-        
-        adm_database = self.parameterAsString(parameters, 'adm_database', context).replace ('"','')      
-        fdc_admin = self.parameterAsString(parameters, 'fdc_admin', context).replace ('"','')       
-        fdc_lookup = self.parameterAsString(parameters, 'fdc_lookup', context).replace ('"','')       
-        fdc_sector = self.parameterAsString(parameters, 'fdc_sector', context).replace ('"','')
-        fdc_flood = self.parameterAsString(parameters, 'fdc_flood', context).replace ('"','')
-        fdc_result = self.parameterAsString(parameters, 'fdc_result', context).replace ('"','')
+        adm_database = self.parameterAsString(parameters, 'adm_database', context)
         fdc_connection = self.parameterAsString(parameters, 'fdc_connection', context)
 
         # Create connection administrative postgres database (postgres)
@@ -152,11 +148,8 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
    
         fdc_connection = fdc_connection.format(database_name=database_name,server_name=server_name,administrative_user=adm_user)
         conn_fdc.store(fdc_connection)
-        
-#       Hent script (extension, schemas, roles, application of roles)
-        data = urlopen(self.URL).read().decode('utf-8')
-        self.options = loads(data)
 
+#       self.options blah ...
         
         
 
