@@ -93,12 +93,14 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
  
         data = urlopen(url + 'createscripts.json').read().decode('utf-8')
         self.options = loads(data)
+        self.option_list =[key for key in self.options]
  
         self.addParameter(QgsProcessingParameterString('server_name', 'IP name/adress for Database server', defaultValue='localhost'))
         self.addParameter(QgsProcessingParameterNumber('server_port','Port number for database server',type=QgsProcessingParameterNumber.Integer,minValue=1024, maxValue=49151, defaultValue=5432))
         self.addParameter(QgsProcessingParameterString('adm_user', 'Administrative username', defaultValue='postgres' ))
         self.addParameter(QgsProcessingParameterString('adm_password', 'Administrative password', defaultValue='ukulemy'))
         self.addParameter(QgsProcessingParameterString('database_name', 'Name of new flood_damage database', defaultValue='flood_damage'))
+        self.addParameter(QgsProcessingParameterEnum('run_scripts', 'Choose which SQL scripts to run', ['{} ... {}'.format(key,self.options[key]['dato']) for key in self.options], allowMultiple=True, defaultValue=[0,1,2,3]))
 
         param = QgsProcessingParameterString('repository_url', 'Repository URL (Reference only)', defaultValue=url + 'createscripts.json')
         param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
@@ -119,6 +121,10 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
 
         s = QgsSettings() 
         s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", self.folded) # Restore original state
+
+        user_options = self.parameterAsEnums(parameters, 'run_scripts', context)
+        selected_items = [self.option_list[i] for i in user_options]
+
 
         server_name = self.parameterAsString(parameters, 'server_name', context).replace ('"','')
         server_port = self.parameterAsString(parameters, 'server_port', context)
@@ -152,98 +158,28 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         fdc_connection = fdc_connection.format(database_name=database_name,server_name=server_name,administrative_user=adm_user)
         conn_fdc.store(fdc_connection)
 
-#       self.options blah ...
-        
-        
 
-#        Replace tokens i script
-#        Kør script
-#        Hent data oversigt json
-#        For hver section i json 
-#        Hent  parametre sql script
-#        Kør script
+        # Setup for progress indicator
+        total = 100.0 / len(selected_items) if len(selected_items) else 0
+        current = 1
         
+        extr_result = {}
 
-#        # Setup for progress indicator
-#        total = 100.0 / len(selected_items) if len(selected_items) else 0
-#        current = 1
-#        
-#        extr_result = {}
-#
-#        # Get connection
-#
-#        # Loop through selected layers        
-#        for item in selected_items:
-#
-#            # Stop the algorithm if cancel button has been clicked
-#            if feedback.isCanceled():
-#                break
-#            
-#            feedback.pushInfo('\n\nProcessing layer {}....\n'.format(item))
-#
-#            # Find schema and table name in parameter table
-#            #feedback.pushInfo('Export: SQL --> SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-#            parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-#            full_name = parm_table[0][0] 
-#
-#            # Split full name into schema and table name
-#            schtab = full_name.split('.',1)
-#            exp_schema = schtab[0].replace('"','')
-#            exp_table = schtab[1].replace('"','')
-#
-#            #feedback.pushInfo('Export: Full name = {}, Schemaname = {}, Tablename = {}'.format(full_name, exp_schema, exp_table))
-#
-#            # Find primary key column name in parameter table
-#            #feedback.pushInfo('Geometry: SQL --> SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_pkey_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-#            parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_pkey_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-#            exp_pkey = parm_table[0][0] 
-#            
-#            #feedback.pushInfo('Primary: Column name: {}'.format(exp_pkey))
-#
-#            # Find geometry column name in parameter table
-#            #feedback.pushInfo('Geometry: SQL --> SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_geom_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-#            parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_geom_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-#            exp_geom = parm_table[0][0] 
-#            
-#            #feedback.pushInfo('Geometry: Column name: {}'.format(exp_geom))
-#
-#
-#            # Drop table if it exist beforehand
-#            connection.executeSql('DROP TABLE IF EXISTS "{}"."{}"'.format(exp_schema, exp_table))
-#
-#            # Update uri with datasource
-#            uri.setDataSource(exp_schema, exp_table, exp_geom, '', exp_pkey)
-#            uri_upd = 'postgres://'+uri.uri()
-#
-#            #feedback.pushInfo('Updated URI: {}'.format(uri_upd))
-#
-#
-#            # Activate processing algorithm with generated parameters
-#            processing.run(
-#                "native:extractbylocation", 
-#                {
-#                    'INPUT':     self.options[item]['adresse'],
-#                    'PREDICATE': [0],
-#                    'INTERSECT': parameters['layer_for_area_selection'],
-#                    'OUTPUT':    uri_upd
-#                },
-#                is_child_algorithm=True, 
-#                context=context, 
-#                feedback=feedback
-#            )
-#            if open_layer:
-#                context.addLayerToLoadOnCompletion(
-#                    uri_upd,
-#                    QgsProcessingContext.LayerDetails(
-#                        item,
-#                        context.project(),
-#                        'LAYER'
-#                    )
-#                )
-#
-#            # Update the progress bar
-#            feedback.setProgress(int(current* total))
-#            current += 1 
+        # Loop through selected scripts        
+        for item in selected_items:
+
+            # Stop the algorithm if cancel button has been clicked
+            if feedback.isCanceled():
+                break
+            
+            feedback.pushInfo('\n\nProcessing script: {}....\n'.format(item))
+
+            data = urlopen(self.options[item]['adresse']).read().decode('utf-8')
+            conn_fdc.executeSql(data)
+
+            # Update the progress bar
+            feedback.setProgress(int(current* total))
+            current += 1 
 
         return {'connection name': fdc_connection}
 
