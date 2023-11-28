@@ -43,6 +43,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterEnum,
                        QgsProcessingParameterDefinition,
                        QgsProcessingParameterBoolean,
+                       QgsProcessingParameterString,
                        QgsVectorLayer,
                        QgsProviderRegistry,
                        QgsDataSourceUri,
@@ -67,6 +68,8 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
 
     OUTPUT = 'OUTPUT'
     INPUT = 'INPUT'
+    DEF_URL = 'https://storage.googleapis.com/skadesokonomi-dk-data/'
+
 
     def initAlgorithm(self, config):
         """
@@ -74,22 +77,31 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
 
-        URL = 'https://storage.googleapis.com/skadesokonomi-dk-data/fdlayers.json'
-  
-        data = urlopen(URL).read().decode('utf-8')
-        self.options = loads(data)
-        self.option_list =[key for key in self.options]
-
         s = QgsSettings()  
+
+        # Force advanced section to be folded         
         self.folded = s.value("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", None) # save original state
         s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", True) # Force collapsed to True 
 
+        # Find saved url
+        url = s.value("flood_damage/url", None)
+
+        # If url setting doesn't exist, create it using default value
+        if not url: url = self.DEF_URL 
+        url += '' if url[-1]=='/' else '/'
+        s.setValue("flood_damage/url", url)
+ 
+        data = urlopen(url + 'fdlayers.json').read().decode('utf-8')
+        self.options = loads(data)
+        self.option_list =[key for key in self.options]
 
         self.addParameter(QgsProcessingParameterEnum('import_layers', 'Choose types af data to import', ['{} ... {}'.format(key,self.options[key]['dato']) for key in self.options], allowMultiple=True, defaultValue=[0]))
-
         self.addParameter(QgsProcessingParameterFeatureSource('layer_for_area_selection', 'Layer for area selection', types=[QgsProcessing.TypeVectorPolygon], defaultValue=None))
-
         self.addParameter(QgsProcessingParameterBoolean('open_layers_after_running_algorithm', 'Open layer(s) after running algorithm', defaultValue=False))
+
+        param = QgsProcessingParameterString('repository_url', 'Repository URL (Reference only)', defaultValue=url + 'fdlayers.json')
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
         param = QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue='flood damage')
         param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
@@ -117,7 +129,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
 
         s = QgsSettings() 
         s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", self.folded) # Restore original state
-        
+    
         user_options = self.parameterAsEnums(parameters, 'import_layers', context)
         selected_items = [self.option_list[i] for i in user_options]
         open_layer = self.parameterAsBoolean(parameters, 'open_layers_after_running_algorithm', context)

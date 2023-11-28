@@ -69,7 +69,7 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
 
     OUTPUT = 'OUTPUT'
     INPUT = 'INPUT'
-    DEF_URL = 'https://storage.googleapis.com/skadesokonomi-dk-data/createscripts.json'
+    DEF_URL = 'https://storage.googleapis.com/skadesokonomi-dk-data/'
 
     def initAlgorithm(self, config):
         """
@@ -87,19 +87,22 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         url = s.value("flood_damage/url", None)
 
         # If url setting doesn't exist, create it using default value
-        if not url:        
-            url = self.DEF_URL
-            s.setValue("flood_damage/url", url)
-  
-        data = urlopen(URL).read().decode('utf-8')
+        if not url: url = self.DEF_URL 
+        url += '' if url[-1]=='/' else '/'
+        s.setValue("flood_damage/url", url)
+ 
+        data = urlopen(url + 'createscripts.json').read().decode('utf-8')
         self.options = loads(data)
-
-  
+ 
         self.addParameter(QgsProcessingParameterString('server_name', 'IP name/adress for Database server', defaultValue='localhost'))
         self.addParameter(QgsProcessingParameterNumber('server_port','Port number for database server',type=QgsProcessingParameterNumber.Integer,minValue=1024, maxValue=49151, defaultValue=5432))
         self.addParameter(QgsProcessingParameterString('adm_user', 'Administrative username', defaultValue='postgres' ))
         self.addParameter(QgsProcessingParameterString('adm_password', 'Administrative password', defaultValue='ukulemy'))
         self.addParameter(QgsProcessingParameterString('database_name', 'Name of new flood_damage database', defaultValue='flood_damage'))
+
+        param = QgsProcessingParameterString('repository_url', 'Repository URL (Reference only)', defaultValue=url + 'createscripts.json')
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
         adm_database = QgsProcessingParameterString('adm_database_name', 'Name of postgres system database', defaultValue='postgres')
         adm_database.setFlags(adm_database.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
