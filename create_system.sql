@@ -9,12 +9,48 @@ CREATE SCHEMA fdc_lookup; -- lookup data
 CREATE SCHEMA fdc_sector; -- sektor data
 CREATE SCHEMA fdc_flood; -- oversvømmelses data
 CREATE SCHEMA fdc_values; -- parametre + historik/ oversigt over modelkørsler
-CREATE SCHEMA fdc_results; -- resultater
+CREATE SCHEMA fdc_results; -- resultater}
+
+
+CREATE ROLE {fdc_read_role}  NOINHERIT; -- kan læse data fra alle schemaer i databasenR
+CREATE ROLE {fdc_model_role} NOINHERIT; -- har alle rettigheder model schemaer
+CREATE ROLE {fdc_admin_role} NOINHERIT; -- har alle rettigheder inkl. oprettelse af nye schemaer
+
+-- Fjern alle standard rettigheder fra schemaer, inkl. schema "public" fra rolle "PUBLIC"
+REVOKE ALL ON SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results FROM PUBLIC;
+REVOKE ALL ON DATABASE {database_name} FROM PUBLIC;  
+
+-- Tildel rettigheder til de forskellige ressourcegrupper
+
+-- Adgang til database
+GRANT CONNECT, TEMP ON DATABASE {database_name} TO {fdc_read_role};
+GRANT ALL ON DATABASE {database_name} TO {fdc_admin_role};
+
+-- Adgang til schemaer for read og model gruppe
+GRANT USAGE ON SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results TO {fdc_read_role}, {fdc_model_role};
+-- Administrator får alle rettigheder
+GRANT ALL ON SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results TO {fdc_admin_role};
+
+-- Læse rettigheder til nye objekter for read gruppe
+ALTER DEFAULT PRIVILEGES IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results GRANT SELECT  ON TABLES    TO {fdc_read_role};
+ALTER DEFAULT PRIVILEGES IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results GRANT SELECT  ON SEQUENCES TO {fdc_read_role};
+ALTER DEFAULT PRIVILEGES IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results GRANT EXECUTE ON FUNCTIONS TO {fdc_read_role};
+
+-- Alle rettigheder til nye objekter til gruppe adm
+ALTER DEFAULT PRIVILEGES IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON TABLES    TO {fdc_admin_role};
+ALTER DEFAULT PRIVILEGES IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON SEQUENCES TO {fdc_admin_role}; 
+ALTER DEFAULT PRIVILEGES IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON FUNCTIONS TO {fdc_admin_role};
+
+-- Rettigheder til nye objekter til gruppe model
+ALTER DEFAULT PRIVILEGES IN SCHEMA public, fdc_admin, fdc_lookup GRANT SELECT  ON TABLES    TO {fdc_model_role};
+ALTER DEFAULT PRIVILEGES IN SCHEMA public, fdc_admin, fdc_lookup GRANT SELECT  ON SEQUENCES TO {fdc_model_role};
+ALTER DEFAULT PRIVILEGES IN SCHEMA public, fdc_admin, fdc_lookup GRANT EXECUTE ON FUNCTIONS TO {fdc_model_role};
+ALTER DEFAULT PRIVILEGES IN SCHEMA fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON TABLES    TO {fdc_model_role};
+ALTER DEFAULT PRIVILEGES IN SCHEMA fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON SEQUENCES TO {fdc_model_role}; 
+ALTER DEFAULT PRIVILEGES IN SCHEMA fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON FUNCTIONS TO {fdc_model_role};
 
 -- creation of parameters table 
-
 SET search_path = fdc_admin, public;
-
 
 CREATE TABLE IF NOT EXISTS parametre (
     name character varying NOT NULL,
@@ -33,7 +69,6 @@ CREATE TABLE IF NOT EXISTS parametre (
 TRUNCATE TABLE parametre;
 
 -- populate table
-
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('General', '', '', 'G', '', '', '', '', 'Hovedgrupper til administration af grundlæggende parametre for systemet', 1, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Cell administration', 'General', '', 'G', '', '', '', '', 'Grupper til administration af celle generering', 1, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Name templates', 'General', '', 'G', '', '', '', '', 'Grupper til administration af celle generering', 1, ' ');

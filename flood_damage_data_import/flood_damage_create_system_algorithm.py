@@ -113,6 +113,31 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         fdc_connection = QgsProcessingParameterString('fdc_connection', 'Name of flood_damage database connection', defaultValue='{database_name} at {server_name} as {administrative_user}')
         fdc_connection.setFlags(adm_database.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(fdc_connection)
+        
+        fdc_admin_role = QgsProcessingParameterString('fdc_admin_role', 'Name of administrator role for new database', defaultValue='{database_name}_admin_role')
+        fdc_admin_role.setFlags(fdc_admin_role.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(fdc_admin_role)
+
+        fdc_admin_pwd = QgsProcessingParameterString('fdc_admin_pwd', 'Password for administrator role ('' -> Non interactive group', defaultValue='')
+        fdc_admin_pwd.setFlags(fdc_admin_pwd.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(fdc_admin_pwd)
+
+        fdc_model_role = QgsProcessingParameterString('fdc_model_role', 'Name of modeler role for new database', defaultValue='{database_name}_model_role')
+        fdc_model_role.setFlags(fdc_model_role.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(fdc_model_role)
+
+        fdc_model_pwd = QgsProcessingParameterString('fdc_model_pwd', 'Password for modeler role ('' -> Non interactive group', defaultValue='')
+        fdc_model_pwd.setFlags(fdc_model_pwd.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(fdc_model_pwd)
+
+        fdc_read_role = QgsProcessingParameterString('fdc_read_role', 'Name of reader role for new database', defaultValue='{database_name}_read_role')
+        fdc_read_role.setFlags(fdc_read_role.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(fdc_read_role)
+
+        fdc_read_pwd = QgsProcessingParameterString('fdc_read_pwd', 'Password for reader role ('' -> Non interactive group', defaultValue='')
+        fdc_read_pwd.setFlags(fdc_read_pwd.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(fdc_read_pwd)
+
 
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -133,6 +158,13 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         adm_password = self.parameterAsString(parameters, 'adm_password', context)
         adm_database = self.parameterAsString(parameters, 'adm_database', context)
         fdc_connection = self.parameterAsString(parameters, 'fdc_connection', context)
+        fdc_connection = self.parameterAsString(parameters, 'fdc_connection', context)
+        fdc_admin_role = self.parameterAsString(parameters, 'fdc_admin_role', context)
+        fdc_admin_pwd = self.parameterAsString(parameters, 'fdc_admin_pwd', context)
+        fdc_model_role = self.parameterAsString(parameters, 'fdc_model_role', context)
+        fdc_model_pwd = self.parameterAsString(parameters, 'fdc_model_pwd', context)
+        fdc_read_role = self.parameterAsString(parameters, 'fdc_read_role', context)
+        fdc_read_pwd = self.parameterAsString(parameters, 'fdc_read_pwd', context)
 
         # Create connection administrative postgres database (postgres)
         uri = QgsDataSourceUri()
@@ -175,7 +207,7 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
             feedback.pushInfo('\n\nProcessing script: {}....\n'.format(item))
 
             data = urlopen(self.options[item]['adresse']).read().decode('utf-8')
-            conn_fdc.executeSql(data)
+            conn_fdc.executeSql(data.format(fdc_admin_role=fdc_admin_role,fdc_model_role=fdc_model_role,fdc_read_role=fdc_read_role))
 
             # Update the progress bar
             feedback.setProgress(int(current* total))
