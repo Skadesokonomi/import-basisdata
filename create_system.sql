@@ -9,7 +9,7 @@ CREATE SCHEMA fdc_lookup; -- lookup data
 CREATE SCHEMA fdc_sector; -- sektor data
 CREATE SCHEMA fdc_flood; -- oversvømmelses data
 CREATE SCHEMA fdc_values; -- parametre + historik/ oversigt over modelkørsler
-CREATE SCHEMA fdc_results; -- resultater}
+CREATE SCHEMA fdc_results; -- resultater
 
 
 CREATE ROLE {fdc_read_role}  NOINHERIT; -- kan læse data fra alle schemaer i databasenR
