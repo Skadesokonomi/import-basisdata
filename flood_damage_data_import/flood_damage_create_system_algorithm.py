@@ -270,6 +270,13 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+        
+        TEMPLATE = """
+        INSERT INTO "{schema}"."{table}" (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable)
+            VALUES ('{name}','{parent}','{value}','T', '', '', '', '', '** Autoupdated**', 10, ' ')
+            ON CONFLICT (name) DO UPDATE SET value = '{value}', parent = '{parent}'
+        """          
+
 
         s = QgsSettings() 
         s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", self.folded) # Restore original state
@@ -353,6 +360,13 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
             data = urlopen(self.options[item]['adresse']).read().decode('utf-8')
             data = data.replace('{database_name}',database_name).replace('{fdc_admin_role}',fdc_admin_role).replace('{fdc_model_role}',fdc_model_role).replace('{fdc_read_role}',fdc_read_role)
             conn_fdc.executeSql(data)
+
+            # Update fields information in parameter list
+            for k,v in self.options[item]['dbkeys'].items():
+                sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=k, value=v[0], parent=v[1])
+                feedback.pushInfo('setting field sql: {}'.format(sqlstr))
+                parm_table = connection.executeSql(sqlstr)
+
 
             # Update the progress bar
             feedback.setProgress(int(current* total))
