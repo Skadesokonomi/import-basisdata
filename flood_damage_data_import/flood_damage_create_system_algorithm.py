@@ -245,7 +245,7 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         fdc_admin_role.setFlags(fdc_admin_role.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(fdc_admin_role)
 
-        fdc_admin_pwd = QgsProcessingParameterString('fdc_admin_pwd', 'Password for administrator role (empty -> Group role)', defaultValue='', optional=True)
+        fdc_admin_pwd = QgsProcessingParameterString('fdc_admin_pwd', 'Password for administrator role (empty -> Non-interactive group role)', defaultValue='', optional=True)
         fdc_admin_pwd.setFlags(fdc_admin_pwd.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(fdc_admin_pwd)
 
@@ -253,7 +253,7 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         fdc_model_role.setFlags(fdc_model_role.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(fdc_model_role)
 
-        fdc_model_pwd = QgsProcessingParameterString('fdc_model_pwd', 'Password for modeler role (empty -> Group role)', defaultValue='', optional=True)
+        fdc_model_pwd = QgsProcessingParameterString('fdc_model_pwd', 'Password for modeler role (empty -> Non-interactive group role)', defaultValue='', optional=True)
         fdc_model_pwd.setFlags(fdc_model_pwd.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(fdc_model_pwd)
 
@@ -261,7 +261,7 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         fdc_read_role.setFlags(fdc_read_role.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(fdc_read_role)
 
-        fdc_read_pwd = QgsProcessingParameterString('fdc_read_pwd', 'Password for reader role (empty -> Group role)', defaultValue='', optional=True)
+        fdc_read_pwd = QgsProcessingParameterString('fdc_read_pwd', 'Password for reader role (empty -> Non-interactive group role)', defaultValue='', optional=True)
         fdc_read_pwd.setFlags(fdc_read_pwd.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(fdc_read_pwd)
 
@@ -315,6 +315,19 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         # Create fdc database
         sql = 'CREATE DATABASE "{}"'.format(database_name)
         conn_adm.executeSql(sql)
+        
+        if fdc_admin_pwd and fdc_admin_pwd.replace (' ','') != '': 
+            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_admin_role, fdc_admin_pwd)
+            conn_adm.executeSql(sql)
+
+        if fdc_model_pwd and fdc_model_pwd.replace (' ','') != '': 
+            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_model_role, fdc_model_pwd)
+            conn_adm.executeSql(sql)
+
+        if fdc_read_pwd and fdc_read_pwd.replace (' ','') != '': 
+        if fdc_read_pwd: 
+            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_read_role, fdc_read_pwd)
+            conn_adm.executeSql(sql)
 
         uri.setConnection(server_name, server_port, database_name, adm_user, adm_password)
         conn_fdc = metadata.createConnection(uri.uri(), config)
@@ -345,7 +358,10 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
             feedback.setProgress(int(current* total))
             current += 1 
 
+
+
         return {'connection name': fdc_connection}
+
 
     def name(self):
         """
