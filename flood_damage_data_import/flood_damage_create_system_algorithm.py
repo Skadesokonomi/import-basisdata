@@ -285,13 +285,18 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         adm_password = self.parameterAsString(parameters, 'adm_password', context)
         adm_database = self.parameterAsString(parameters, 'adm_database', context)
         fdc_connection = self.parameterAsString(parameters, 'fdc_connection', context)
-        fdc_connection = self.parameterAsString(parameters, 'fdc_connection', context)
         fdc_admin_role = self.parameterAsString(parameters, 'fdc_admin_role', context)
         fdc_admin_pwd = self.parameterAsString(parameters, 'fdc_admin_pwd', context)
         fdc_model_role = self.parameterAsString(parameters, 'fdc_model_role', context)
         fdc_model_pwd = self.parameterAsString(parameters, 'fdc_model_pwd', context)
         fdc_read_role = self.parameterAsString(parameters, 'fdc_read_role', context)
         fdc_read_pwd = self.parameterAsString(parameters, 'fdc_read_pwd', context)
+
+        # Replace token with actual values
+        fdc_connection = fdc_connection.format(database_name=database_name,server_name=server_name,administrative_user=adm_user)
+        fdc_admin_role = fdc_admin_role.format(database_name=database_name,server_name=server_name,administrative_user=adm_user)
+        fdc_model_role = fdc_model_role.format(database_name=database_name,server_name=server_name,administrative_user=adm_user)
+        fdc_read_role = fdc_read_role.format(database_name=database_name,server_name=server_name,administrative_user=adm_user)
 
         # Create connection administrative postgres database (postgres)
         uri = QgsDataSourceUri()
@@ -314,7 +319,6 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         uri.setConnection(server_name, server_port, database_name, adm_user, adm_password)
         conn_fdc = metadata.createConnection(uri.uri(), config)
    
-        fdc_connection = fdc_connection.format(database_name=database_name,server_name=server_name,administrative_user=adm_user)
         conn_fdc.store(fdc_connection)
 
 
@@ -377,191 +381,9 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         """
         return ''
 
-
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
         return FDCreateSystemAlgorithm()
-
-
-    def get_postgres_conn_info(self, selected):
-        """ Read PostgreSQL connection details from QSettings stored by QGIS
-        """
-        settings = QSettings()
-        settings.beginGroup(u"/PostgreSQL/connections/" + selected)
-    
-        # password and username
-        username = ''
-        password = ''
-        authconf = settings.value('authcfg', '')
-        if authconf :
-            # password encrypted in AuthManager
-            auth_manager = QgsApplication.authManager()
-            conf = QgsAuthMethodConfig()
-            auth_manager.loadAuthenticationConfig(authconf, conf, True)
-            if conf.id():
-                username = conf.config('username', '')
-                password = conf.config('password', '')
-        else:
-            # basic (plain-text) settings
-            username = settings.value('username', '', type=str)
-            password = settings.value('password', '', type=str)
-        return username, password
-
-
-        fdc_model_pwd = QgsProcessingParameterString('fdc_model_pwd', 'Password for modeler role (empty -> Group role)', defaultValue='', optional=True)
-        fdc_model_pwd.setFlags(fdc_model_pwd.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(fdc_model_pwd)
-
-        fdc_read_role = QgsProcessingParameterString('fdc_read_role', 'Name of reader role for new database', defaultValue='{database_name}_read_role')
-        fdc_read_role.setFlags(fdc_read_role.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(fdc_read_role)
-
-        fdc_read_pwd = QgsProcessingParameterString('fdc_read_pwd', 'Password for reader role (empty -> Group role)', defaultValue='', optional=True)
-        fdc_read_pwd.setFlags(fdc_read_pwd.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(fdc_read_pwd)
-
-
-    def processAlgorithm(self, parameters, context, feedback):
-        """
-        Here is where the processing itself takes place.
-        """
-
-        s = QgsSettings() 
-        s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", self.folded) # Restore original state
-
-        user_options = self.parameterAsEnums(parameters, 'run_scripts', context)
-        selected_items = [self.option_list[i] for i in user_options]
-
-
-        server_name = self.parameterAsString(parameters, 'server_name', context).replace ('"','')
-        server_port = self.parameterAsString(parameters, 'server_port', context)
-        database_name = self.parameterAsString(parameters, 'database_name', context).replace ('"','')
-        adm_user = self.parameterAsString(parameters, 'adm_user', context)
-        adm_password = self.parameterAsString(parameters, 'adm_password', context)
-        adm_database = self.parameterAsString(parameters, 'adm_database', context)
-        fdc_connection = self.parameterAsString(parameters, 'fdc_connection', context)
-        fdc_connection = self.parameterAsString(parameters, 'fdc_connection', context)
-        fdc_admin_role = self.parameterAsString(parameters, 'fdc_admin_role', context)
-        fdc_admin_pwd = self.parameterAsString(parameters, 'fdc_admin_pwd', context)
-        fdc_model_role = self.parameterAsString(parameters, 'fdc_model_role', context)
-        fdc_model_pwd = self.parameterAsString(parameters, 'fdc_model_pwd', context)
-        fdc_read_role = self.parameterAsString(parameters, 'fdc_read_role', context)
-        fdc_read_pwd = self.parameterAsString(parameters, 'fdc_read_pwd', context)
-
-        # Create connection administrative postgres database (postgres)
-        uri = QgsDataSourceUri()
-        uri.setConnection(server_name, server_port, adm_database, adm_user, adm_password)
-
-        config = {
-          "saveUsername": True,
-          "savePassword": True,
-          "estimatedMetadata": True,
-          "metadataInDatabase": True,
-        }
-
-        metadata = QgsProviderRegistry.instance().providerMetadata('postgres')
-        conn_adm = metadata.createConnection(uri.uri(), config)
-            
-        # Create fdc database
-        sql = 'CREATE DATABASE "{}"'.format(database_name)
-        conn_adm.executeSql(sql)
-
-        uri.setConnection(server_name, server_port, database_name, adm_user, adm_password)
-        conn_fdc = metadata.createConnection(uri.uri(), config)
-   
-        fdc_connection = fdc_connection.format(database_name=database_name,server_name=server_name,administrative_user=adm_user)
-        conn_fdc.store(fdc_connection)
-
-
-        # Setup for progress indicator
-        total = 100.0 / len(selected_items) if len(selected_items) else 0
-        current = 1
-        
-        extr_result = {}
-
-        # Loop through selected scripts        
-        for item in selected_items:
-
-            # Stop the algorithm if cancel button has been clicked
-            if feedback.isCanceled():
-                break
-            
-            feedback.pushInfo('\n\nProcessing script: {}....\n'.format(item))
-
-            data = urlopen(self.options[item]['adresse']).read().decode('utf-8')
-            conn_fdc.executeSql(data.format(fdc_admin_role=fdc_admin_role,fdc_model_role=fdc_model_role,fdc_read_role=fdc_read_role))
-
-            # Update the progress bar
-            feedback.setProgress(int(current* total))
-            current += 1 
-
-        return {'connection name': fdc_connection}
-
-    def name(self):
-        """
-        Returns the algorithm name, used for identifying the algorithm. This
-        string should be fixed for the algorithm, and must not be localised.
-        The name should be unique within each provider. Names should contain
-        lowercase alphanumeric characters only and no spaces or other
-        formatting characters.
-        """
-        return 'flood_damage_create_system'
-
-    def displayName(self):
-        """
-        Returns the translated algorithm name, which should be used for any
-        user-visible display of the algorithm name.
-        """
-        return self.tr('Flood Damage create system')
-
-    def group(self):
-        """
-        Returns the name of the group this algorithm belongs to. This string
-        should be localised.
-        """
-        return self.tr('')
-
-    def groupId(self):
-        """
-        Returns the unique ID of the group this algorithm belongs to. This
-        string should be fixed for the algorithm, and must not be localised.
-        The group id should be unique within each provider. Group id should
-        contain lowercase alphanumeric characters only and no spaces or other
-        formatting characters.
-        """
-        return ''
-
-
-    def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
-
-    def createInstance(self):
-        return FDCreateSystemAlgorithm()
-
-
-    def get_postgres_conn_info(self, selected):
-        """ Read PostgreSQL connection details from QSettings stored by QGIS
-        """
-        settings = QSettings()
-        settings.beginGroup(u"/PostgreSQL/connections/" + selected)
-    
-        # password and username
-        username = ''
-        password = ''
-        authconf = settings.value('authcfg', '')
-        if authconf :
-            # password encrypted in AuthManager
-            auth_manager = QgsApplication.authManager()
-            conf = QgsAuthMethodConfig()
-            auth_manager.loadAuthenticationConfig(authconf, conf, True)
-            if conf.id():
-                username = conf.config('username', '')
-                password = conf.config('password', '')
-        else:
-            # basic (plain-text) settings
-            username = settings.value('username', '', type=str)
-            password = settings.value('password', '', type=str)
-        return username, password
 
