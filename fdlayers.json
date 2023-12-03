@@ -229,7 +229,7 @@
       "dbkode":"t_flood_50",
       "dbkeys":{
          "f_depth_t_flood_50":[
-            "VALUE",
+            "value",
             "t_flood_50"
          ],
          "f_pkey_t_flood_50":[
