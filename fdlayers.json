@@ -125,7 +125,7 @@
             "q_agriculture"
          ],
          "f_afgcode_t_agriculture":[
-            "Afgkode",
+            "\"Afgkode\"",
             "t_agriculture"
          ],
          "f_pkey_t_agriculture":[
