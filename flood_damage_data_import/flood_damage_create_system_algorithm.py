@@ -236,9 +236,9 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
             # Update fields information in parameter list
             if 'dbkeys' in self.options[item]:
                 for k,v in self.options[item]['dbkeys'].items():
-                    sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=k, value=v[0], parent=v[1])
+                    sqlstr = TEMPLATE.format(schema='fdc_admin', table='parametre', name=k, value=v[0], parent=v[1])
                     feedback.pushInfo('setting field sql: {}'.format(sqlstr))
-                    parm_table = connection.executeSql(sqlstr)
+                    parm_table = conn_fdc.executeSql(sqlstr)
 
 
             # Update the progress bar
