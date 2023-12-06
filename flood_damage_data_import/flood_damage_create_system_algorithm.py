@@ -195,18 +195,6 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         # Create fdc database
         sql = 'CREATE DATABASE "{}"'.format(database_name)
         conn_adm.executeSql(sql)
-        
-        if fdc_admin_pwd and fdc_admin_pwd.replace (' ','') != '': 
-            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_admin_role, fdc_admin_pwd)
-            conn_adm.executeSql(sql)
-
-        if fdc_model_pwd and fdc_model_pwd.replace (' ','') != '': 
-            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_model_role, fdc_model_pwd)
-            conn_adm.executeSql(sql)
-
-        if fdc_read_pwd and fdc_read_pwd.replace (' ','') != '': 
-            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_read_role, fdc_read_pwd)
-            conn_adm.executeSql(sql)
 
         uri.setConnection(server_name, server_port, database_name, adm_user, adm_password)
         conn_fdc = metadata.createConnection(uri.uri(), config)
@@ -245,7 +233,17 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
             feedback.setProgress(int(current* total))
             current += 1 
 
+        if fdc_admin_pwd and fdc_admin_pwd.replace (' ','') != '': 
+            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_admin_role, fdc_admin_pwd)
+            conn_adm.executeSql(sql)
 
+        if fdc_model_pwd and fdc_model_pwd.replace (' ','') != '': 
+            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_model_role, fdc_model_pwd)
+            conn_adm.executeSql(sql)
+
+        if fdc_read_pwd and fdc_read_pwd.replace (' ','') != '': 
+            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_read_role, fdc_read_pwd)
+            conn_adm.executeSql(sql)
 
         return {'connection name': fdc_connection}
 
