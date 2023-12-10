@@ -99,13 +99,14 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterFeatureSource('layer_for_area_selection', 'Layer for area selection', types=[QgsProcessing.TypeVectorPolygon], defaultValue=None))
         self.addParameter(QgsProcessingParameterBoolean('open_layers_after_running_algorithm', 'Open layer(s) after running algorithm', defaultValue=False))
 
+        param = QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue='flood damage')
+        #param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
+
         param = QgsProcessingParameterString('repository_url', 'Repository URL (Reference only)', defaultValue=url + 'fdlayers.json')
         param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(param)
 
-        param = QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue='flood damage')
-        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(param)
  
         param = QgsProcessingParameterDatabaseSchema('schema_name_for_parameter_list', 'schema name for parameter list', connectionParameterName='database_connection', defaultValue='fdc_admin')
         param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
@@ -266,7 +267,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         """
-        return self.tr('Flood Damage Import Data')
+        return self.tr('Flood Damage import data')
 
     def group(self):
         """

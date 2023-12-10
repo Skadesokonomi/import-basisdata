@@ -35,18 +35,13 @@ from qgis.PyQt.QtCore import QCoreApplication, QSettings
 from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
                        QgsProcessingAlgorithm,
-                       QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterFeatureSink,
-                       QgsProcessingParameterDatabaseSchema,
-                       QgsProcessingParameterDatabaseTable,
                        QgsProcessingParameterProviderConnection,
+                       QgsProcessingParameterString,
                        QgsProcessingParameterEnum,
-                       QgsProcessingParameterDefinition,
                        QgsProcessingParameterBoolean,
-                       QgsVectorLayer,
                        QgsProviderRegistry,
-                       QgsDataSourceUri,
                        QgsAuthMethodConfig,
+                       QgsDataSourceUri,
                        QgsApplication,
                        QgsProcessingContext)
                        
@@ -71,144 +66,82 @@ class FDUserAdminAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
         
-        fd_uri = '/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/fdlayers.csv|layername=fdlayers'
-        fd_type = 'ogr'
-        layer = QgsVectorLayer(fd_uri, 'fdlayers' , fd_type)
-
-        self.options = {}
-        for f in layer.getFeatures():
-            self.options[f.attributes()[0]] = {'forklaring':f.attributes()[1],'adresse':f.attributes()[2],'dbkode':f.attributes()[3],'dato':f.attributes()[4]}
-        self.option_list =[key for key in self.options]
-
-        self.addParameter(QgsProcessingParameterEnum('import_layers', 'Choose types af data to import', [key for key in self.options], allowMultiple=True, defaultValue=[0]))
-
-        self.addParameter(QgsProcessingParameterFeatureSource('layer_for_area_selection', 'Layer for area selection', types=[QgsProcessing.TypeVectorPolygon], defaultValue=None))
-
-        self.addParameter(QgsProcessingParameterBoolean('open_layers_after_running_algorithm', 'Open layer(s) after running algorithm', defaultValue=False))
-
-        param = QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue='flood damage')
-        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(param)
- 
-        param = QgsProcessingParameterDatabaseSchema('schema_name_for_parameter_list', 'schema name for parameter list', connectionParameterName='database_connection', defaultValue='fdc_admin')
-        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(param)
-
-        param = QgsProcessingParameterDatabaseTable('table_name_for_parameter_list', 'Table name for parameter list', connectionParameterName='database_connection', schemaParameterName='schema_name_for_parameter_list', defaultValue='parametre')
-        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(param)
+        self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection, FDC database (superuser access)', 'postgres', defaultValue='flood damage'))
+        self.addParameter(QgsProcessingParameterBoolean('create_user', 'Create new user (otherwise it\'s assumed that user exists)', defaultValue=True))
+        self.addParameter(QgsProcessingParameterString('new_user', 'Name for (perhaps new) user' ))
+        self.addParameter(QgsProcessingParameterString('new_password', 'Password for new user', optional=True))
+        self.addParameter(QgsProcessingParameterEnum('role_name', 'Choose role', ['Admin role','Modeller role','Reader role'], allowMultiple=False, defaultValue=2))
+        self.addParameter(QgsProcessingParameterString('new_connection', 'Name for new connection using new user (empty -> Connection will not be created)', defaultValue='{database_name} at {server_name} as {new_user}',optional=True))
 
 
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
-        user_options = self.parameterAsEnums(parameters, 'import_layers', context)
-        selected_items = [self.option_list[i] for i in user_options]
-        open_layer = self.parameterAsBoolean(parameters, 'open_layers_after_running_algorithm', context)
+
+        TEMPLATE1 = """
+        CREATE USER "{user}" WITH PASSWORD '{pwd}' INHERIT;
+        """          
+
+        TEMPLATE2 = """
+        GRANT "{role}" TO "{user}";
+        """          
 
         # Get connection
         connection_name = self.parameterAsString(parameters, 'database_connection', context)
         metadata = QgsProviderRegistry.instance().providerMetadata('postgres')
         connection = metadata.findConnection(connection_name)
 
-        # Find username/password (even if it's hidden in a configuration setup)
-        uri = QgsDataSourceUri(connection.uri())
-        #feedback.pushInfo('URI: {}'.format(uri.uri()))
+        # Find username, password and role
+        new_user = self.parameterAsString(parameters,'new_user', context)
+        new_password = self.parameterAsString(parameters, 'new_password', context)
+        role_name = self.parameterAsString(parameters, 'role_name', context)
+        create_user = self.parameterAsBoolean(parameters, 'create_user', context)
+        new_connection = self.parameterAsString(parameters, 'new_connection', context)
 
-        myname, mypass = self.get_postgres_conn_info(connection_name)
-        uri.setUsername(myname)
-        uri.setPassword(mypass)
-        #feedback.pushInfo('Username = "{}", Password = "{}"'.format(myname,mypass))
-        #feedback.pushInfo('URI(2): {}'.format(uri.uri()))
-
-        # Find full name for table with parameters
-        schema_name = self.parameterAsString(parameters, 'schema_name_for_parameter_list', context)
-        table_name = self.parameterAsString(parameters, 'table_name_for_parameter_list', context)
-        #feedback.pushInfo('Parameter: Schemaname = "{}", Tablename = "{}"'.format(schema_name,table_name))
-
-        # Setup for progress indicator
-        total = 100.0 / len(selected_items) if len(selected_items) else 0
-        current = 1
+        if role_name == '0': role = 'Name, admin role'
+        elif role_name == '1': role = 'Name, model role'
+        else: role = 'Name, reader role'
         
-        extr_result = {}
+        feedback.pushInfo('\n\nRole name: {}....\n'.format(role))
 
-        # Get connection
+        # Find schema and table name in parameter table
+        role_value = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format('fdc_admin', 'parametre', role))
+        feedback.pushInfo('\n\nRole value: {}....\n'.format(role_value))
 
-        # Loop through selected layers        
-        for item in selected_items:
+        role_value = role_value[0][0]
+        feedback.pushInfo('\n\nRole value2: {}....\n'.format(role_value))
 
-            # Stop the algorithm if cancel button has been clicked
-            if feedback.isCanceled():
-                break
+        # Create SQL
+        if create_user:
+            sqlstr = TEMPLATE1.format(role=role_value, user=new_user, pwd=new_password)
+            # Execute SQL
+            parm = connection.executeSql(sqlstr)
+
+        sqlstr = TEMPLATE2.format(role=role_value, user=new_user, pwd=new_password)
+        # Execute SQL
+        parm = connection.executeSql(sqlstr)
+        
+        if new_connection and new_connection.replace (' ','') != '': 
+
+            # Create connection administrative postgres database (postgres)
+            uri = QgsDataSourceUri(connection.uri())
+
+            new_connection = new_connection.format(database_name=uri.database(),server_name=uri.host(),new_user=new_user)
+            uri.setUsername(new_user)
+            uri.setPassword(new_password)
             
-            feedback.pushInfo('\n\nProcessing layer {}....\n'.format(item))
+            config = {
+              "saveUsername": True,
+              "savePassword": True,
+              "estimatedMetadata": True,
+              "metadataInDatabase": True,
+            }
 
-            # Find schema and table name in parameter table
-            #feedback.pushInfo('Export: SQL --> SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-            parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-            full_name = parm_table[0][0] 
+            conn_new = metadata.createConnection(uri.uri(), config)
+            conn_new.store(new_connection)
 
-            # Split full name into schema and table name
-            schtab = full_name.split('.',1)
-            exp_schema = schtab[0].replace('"','')
-            exp_table = schtab[1].replace('"','')
-
-            #feedback.pushInfo('Export: Full name = {}, Schemaname = {}, Tablename = {}'.format(full_name, exp_schema, exp_table))
-
-            # Find primary key column name in parameter table
-            #feedback.pushInfo('Geometry: SQL --> SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_pkey_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-            parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_pkey_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-            exp_pkey = parm_table[0][0] 
-            
-            #feedback.pushInfo('Primary: Column name: {}'.format(exp_pkey))
-
-            # Find geometry column name in parameter table
-            #feedback.pushInfo('Geometry: SQL --> SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_geom_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-            parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" like \'f_geom_%\' AND parent = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-            exp_geom = parm_table[0][0] 
-            
-            #feedback.pushInfo('Geometry: Column name: {}'.format(exp_geom))
-
-
-            # Drop table if it exist beforehand
-            connection.executeSql('DROP TABLE IF EXISTS "{}"."{}"'.format(exp_schema, exp_table))
-
-            # Update uri with datasource
-            uri.setDataSource(exp_schema, exp_table, exp_geom, '', exp_pkey)
-            uri_upd = 'postgres://'+uri.uri()
-
-            #feedback.pushInfo('Updated URI: {}'.format(uri_upd))
-
-
-            # Activate processing algorithm with generated parameters
-            processing.run(
-                "native:extractbylocation", 
-                {
-                    'INPUT':     self.options[item]['adresse'],
-                    'PREDICATE': [0],
-                    'INTERSECT': parameters['layer_for_area_selection'],
-                    'OUTPUT':    uri_upd
-                },
-                is_child_algorithm=True, 
-                context=context, 
-                feedback=feedback
-            )
-            if open_layer:
-                context.addLayerToLoadOnCompletion(
-                    uri_upd,
-                    QgsProcessingContext.LayerDetails(
-                        item,
-                        context.project(),
-                        'LAYER'
-                    )
-                )
-
-            # Update the progress bar
-            feedback.setProgress(int(current* total))
-            current += 1 
-
-        return {'user_options': selected_items, 'connction_name': connection_name, 'schema_name': schema_name, 'table_name': schema_name}
+        return {'new_connction': new_connection, 'new_user': new_user, 'new_password': new_password, 'role': role}
 
     def name(self):
         """
@@ -251,29 +184,4 @@ class FDUserAdminAlgorithm(QgsProcessingAlgorithm):
 
     def createInstance(self):
         return FDUserAdminAlgorithm()
-
-
-    def get_postgres_conn_info(self, selected):
-        """ Read PostgreSQL connection details from QSettings stored by QGIS
-        """
-        settings = QSettings()
-        settings.beginGroup(u"/PostgreSQL/connections/" + selected)
-    
-        # password and username
-        username = ''
-        password = ''
-        authconf = settings.value('authcfg', '')
-        if authconf :
-            # password encrypted in AuthManager
-            auth_manager = QgsApplication.authManager()
-            conf = QgsAuthMethodConfig()
-            auth_manager.loadAuthenticationConfig(authconf, conf, True)
-            if conf.id():
-                username = conf.config('username', '')
-                password = conf.config('password', '')
-        else:
-            # basic (plain-text) settings
-            username = settings.value('username', '', type=str)
-            password = settings.value('password', '', type=str)
-        return username, password
 
