@@ -87,6 +87,26 @@ class FDUserAdminAlgorithm(QgsProcessingAlgorithm):
         GRANT "{role}" TO "{user}";
         """          
 
+        TEMPLATE3 = """
+        -- Læse rettigheder til nye objekter for read gruppe
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results GRANT SELECT  ON TABLES    TO {fdc_read_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results GRANT SELECT  ON SEQUENCES TO {fdc_read_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results GRANT EXECUTE ON FUNCTIONS TO {fdc_read_role};
+
+        -- Alle rettigheder til nye objekter til gruppe adm
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON TABLES    TO {fdc_admin_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON SEQUENCES TO {fdc_admin_role}; 
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON FUNCTIONS TO {fdc_admin_role};
+
+        -- Rettigheder til nye objekter til gruppe model
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA public, fdc_admin, fdc_lookup GRANT SELECT  ON TABLES    TO {fdc_model_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA public, fdc_admin, fdc_lookup GRANT SELECT  ON SEQUENCES TO {fdc_model_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA public, fdc_admin, fdc_lookup GRANT EXECUTE ON FUNCTIONS TO {fdc_model_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON TABLES    TO {fdc_model_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON SEQUENCES TO {fdc_model_role}; 
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON FUNCTIONS TO {fdc_model_role};
+        """          
+
         # Get connection
         connection_name = self.parameterAsString(parameters, 'database_connection', context)
         metadata = QgsProviderRegistry.instance().providerMetadata('postgres')
@@ -99,18 +119,13 @@ class FDUserAdminAlgorithm(QgsProcessingAlgorithm):
         create_user = self.parameterAsBoolean(parameters, 'create_user', context)
         new_connection = self.parameterAsString(parameters, 'new_connection', context)
 
-        if role_name == '0': role = 'Name, admin role'
-        elif role_name == '1': role = 'Name, model role'
-        else: role = 'Name, reader role'
-        
-        feedback.pushInfo('\n\nRole name: {}....\n'.format(role))
+        fdc_read_role = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format('fdc_admin', 'parametre', 'Name, reader role'))[0][0]
+        fdc_model_role = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format('fdc_admin', 'parametre', 'Name, model role'))[0][0]
+        fdc_admin_role = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format('fdc_admin', 'parametre', 'Name, admin role'))[0][0]
 
-        # Find schema and table name in parameter table
-        role_value = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format('fdc_admin', 'parametre', role))
-        feedback.pushInfo('\n\nRole value: {}....\n'.format(role_value))
-
-        role_value = role_value[0][0]
-        feedback.pushInfo('\n\nRole value2: {}....\n'.format(role_value))
+        if role_name == '0': role_value = fdc_admin_role
+        elif role_name == '1': role_value = fdc_model_role
+        else: role_value = fdc_read_role
 
         # Create SQL
         if create_user:
@@ -121,6 +136,11 @@ class FDUserAdminAlgorithm(QgsProcessingAlgorithm):
         sqlstr = TEMPLATE2.format(role=role_value, user=new_user, pwd=new_password)
         # Execute SQL
         parm = connection.executeSql(sqlstr)
+
+        if role_name in {'0','1'}:
+            sqlstr = TEMPLATE3.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+            # Execute SQL
+            parm = connection.executeSql(sqlstr)
         
         if new_connection and new_connection.replace (' ','') != '': 
 
@@ -141,7 +161,7 @@ class FDUserAdminAlgorithm(QgsProcessingAlgorithm):
             conn_new = metadata.createConnection(uri.uri(), config)
             conn_new.store(new_connection)
 
-        return {'new_connction': new_connection, 'new_user': new_user, 'new_password': new_password, 'role': role}
+        return {'new_connction': new_connection, 'new_user': new_user, 'new_password': new_password, 'role': role_value}
 
     def name(self):
         """
