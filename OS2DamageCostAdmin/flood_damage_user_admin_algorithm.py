@@ -48,7 +48,7 @@ from qgis.core import (QgsProcessing,
 from qgis import processing
                       
 
-class FDUserAdminAlgorithm(QgsProcessingAlgorithm):
+class FDCUserAdminAlgorithm(QgsProcessingAlgorithm):
     """
     Blah blah blah
     """
@@ -179,7 +179,7 @@ class FDUserAdminAlgorithm(QgsProcessingAlgorithm):
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         """
-        return self.tr('Flood Damage user administration')
+        return self.tr('OS2 Flood Damage Cost user administration')
 
     def group(self):
         """
@@ -203,5 +203,5 @@ class FDUserAdminAlgorithm(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return FDUserAdminAlgorithm()
+        return FDCUserAdminAlgorithm()
 

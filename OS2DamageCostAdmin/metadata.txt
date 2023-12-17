@@ -3,14 +3,14 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=Flood Damage Data Import
+name=OS2 Damage Cost Administration
 qgisMinimumVersion=3.0
-description=QGIS processing plugin to import data from web based flatgeobuf data sources til flood damage database
+description=QGIS processing plugin to do administrative work for the OS2 Flood Damage Cost plugin - Creation af database, import data, setup of users 
 version=0.1
 author=Bo Victor Thomsen AestasGIS Denmark
 email=bvt@aestas.dk
 
-about=QGIS processing plugin to import flatgeobuf data from web datasources til flood damage database
+about=QGIS processing plugin to do administrative work for the OS2 Flood Damage Cost plugin - Creation af database, import data, setup of users 
 
 tracker=https://github.com/Skadesokonomi/import-basisdata/issues
 repository=https://github.com/Skadesokonomi/import-basisdata
@@ -27,7 +27,7 @@ tags=python
 
 homepage=https://github.com/Skadesokonomi/import-basisdata
 category=Analysis
-icon=icon.png
+icon=skadesokonomi.png
 # experimental flag
 experimental=True
 

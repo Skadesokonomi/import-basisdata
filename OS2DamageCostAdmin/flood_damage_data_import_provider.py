@@ -31,12 +31,12 @@ __copyright__ = '(C) 2023 by Bo Victor Thomsen AestasGIS Denmark'
 __revision__ = '$Format:%H$'
 
 from qgis.core import QgsProcessingProvider
-from .flood_damage_data_import_algorithm   import FDDataImportAlgorithm
-from .flood_damage_create_system_algorithm import FDCreateSystemAlgorithm
-from .flood_damage_user_admin_algorithm    import FDUserAdminAlgorithm
+from .flood_damage_data_import_algorithm   import FDCDataImportAlgorithm
+from .flood_damage_create_system_algorithm import FDCCreateSystemAlgorithm
+from .flood_damage_user_admin_algorithm    import FDCUserAdminAlgorithm
 
 
-class FDDataImportProvider(QgsProcessingProvider):
+class FloodDamageCostAdmin(QgsProcessingProvider):
 
     def __init__(self):
         """
@@ -55,9 +55,9 @@ class FDDataImportProvider(QgsProcessingProvider):
         """
         Loads all algorithms belonging to this provider.
         """
-        self.addAlgorithm(FDDataImportAlgorithm())
-        self.addAlgorithm(FDCreateSystemAlgorithm())
-        self.addAlgorithm(FDUserAdminAlgorithm())
+        self.addAlgorithm(FDCDataImportAlgorithm())
+        self.addAlgorithm(FDCCreateSystemAlgorithm())
+        self.addAlgorithm(FDCUserAdminAlgorithm())
         # add additional algorithms here
         # self.addAlgorithm(MyOtherAlgorithm())
 
@@ -67,7 +67,7 @@ class FDDataImportProvider(QgsProcessingProvider):
         string should be a unique, short, character only string, eg "qgis" or
         "gdal". This string should not be localised.
         """
-        return 'fdcost'
+        return 'fdccost'
 
     def name(self):
         """
@@ -76,7 +76,7 @@ class FDDataImportProvider(QgsProcessingProvider):
 
         This string should be short (e.g. "Lastools") and localised.
         """
-        return self.tr('FD cost analysis')
+        return self.tr('FDC cost administration')
 
     def icon(self):
         """
@@ -92,4 +92,4 @@ class FDDataImportProvider(QgsProcessingProvider):
         (version 2.2.1)". This string should be localised. The default
         implementation returns the same string as name().
         """
-        return self.tr('Flood damage cost analysis')
+        return self.tr('OS2 Flood Damage Cost administration')

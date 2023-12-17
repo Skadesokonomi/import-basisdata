@@ -57,7 +57,7 @@ from json import loads, dumps
 from urllib.request import urlopen
                       
 
-class FDDataImportAlgorithm(QgsProcessingAlgorithm):
+class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
     """
     Blah blah blah
     """
@@ -267,7 +267,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         """
-        return self.tr('Flood Damage import data')
+        return self.tr('OS2 Flood Damage Cost import data')
 
     def group(self):
         """
@@ -290,7 +290,7 @@ class FDDataImportAlgorithm(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return FDDataImportAlgorithm()
+        return FDCDataImportAlgorithm()
 
 
     def get_postgres_conn_info(self, selected):

@@ -58,7 +58,7 @@ from qgis import processing
 from json import loads, dumps
 from urllib.request import urlopen
 
-class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
+class FDCCreateSystemAlgorithm(QgsProcessingAlgorithm):
     """
     Blah blah blah
     """
@@ -197,11 +197,7 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         # Create fdc database
         sql = 'CREATE DATABASE "{}"'.format(database_name)
         conn_adm.executeSql(sql)
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> 3f8966ac909005b75a8b35401e8afa4ef0451dde
         uri.setConnection(server_name, server_port, database_name, adm_user, adm_password)
         conn_fdc = metadata.createConnection(uri.uri(), config)
    
@@ -238,19 +234,6 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
             feedback.setProgress(int(current* total))
             current += 1 
 
-<<<<<<< HEAD
-        if fdc_admin_pwd and fdc_admin_pwd.replace (' ','') != '': 
-            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_admin_role, fdc_admin_pwd)
-            conn_adm.executeSql(sql)
-
-        if fdc_model_pwd and fdc_model_pwd.replace (' ','') != '': 
-            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_model_role, fdc_model_pwd)
-            conn_adm.executeSql(sql)
-
-        if fdc_read_pwd and fdc_read_pwd.replace (' ','') != '': 
-            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_read_role, fdc_read_pwd)
-            conn_adm.executeSql(sql)
-=======
 #        if fdc_admin_pwd and fdc_admin_pwd.replace (' ','') != '': 
 #            sql = 'ALTER ROLE "{}" LOGIN PASSWORD \'{}\''.format(fdc_admin_role, fdc_admin_pwd)
 #            conn_adm.executeSql(sql)
@@ -271,7 +254,6 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
 
         sqlstr = TEMPLATE.format(schema='fdc_admin', table='parametre', name='Name, reader role', value=fdc_read_role, parent='SQL templates')
         parm_table = conn_fdc.executeSql(sqlstr)
->>>>>>> 3f8966ac909005b75a8b35401e8afa4ef0451dde
 
         return {'connection name': fdc_connection}
 
@@ -291,7 +273,7 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         """
-        return self.tr('Flood Damage create system')
+        return self.tr('OS2 Flood Damage Cost create system')
 
     def group(self):
         """
@@ -314,5 +296,5 @@ class FDCreateSystemAlgorithm(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return FDCreateSystemAlgorithm()
+        return FDCCreateSystemAlgorithm()
 

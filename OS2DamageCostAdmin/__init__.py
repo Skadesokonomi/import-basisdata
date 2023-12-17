@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
  FDDataImport
@@ -20,41 +19,21 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+ This script initializes the plugin, making it known to QGIS.
 """
 
 __author__ = 'Bo Victor Thomsen AestasGIS Denmark'
 __date__ = '2023-10-24'
 __copyright__ = '(C) 2023 by Bo Victor Thomsen AestasGIS Denmark'
 
-# This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+# noinspection PyPep8Naming
+def classFactory(iface):  # pylint: disable=invalid-name
+    """Load FDDataImport class from file FDDataImport.
 
-import os
-import sys
-import inspect
-
-from qgis.core import QgsProcessingAlgorithm, QgsApplication
-from .flood_damage_data_import_provider import FDDataImportProvider
-
-cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
-
-if cmd_folder not in sys.path:
-    sys.path.insert(0, cmd_folder)
-
-
-class FDDataImportPlugin(object):
-
-    def __init__(self):
-        self.provider = None
-
-    def initProcessing(self):
-        """Init Processing provider for QGIS >= 3.8."""
-        self.provider = FDDataImportProvider()
-        QgsApplication.processingRegistry().addProvider(self.provider)
-
-    def initGui(self):
-        self.initProcessing()
-
-    def unload(self):
-        QgsApplication.processingRegistry().removeProvider(self.provider)
+    :param iface: A QGIS interface instance.
+    :type iface: QgsInterface
+    """
+    #
+    from .flood_damage_data_import import FloodDamageCostAdminPlugin
+    return FloodDamageCostAdminPlugin()
