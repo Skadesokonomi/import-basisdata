@@ -3,55 +3,69 @@
       "forklaring":"Bygningslag fra Geodanmark beriget med BBR oplysninger",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/bygninger_dk_2023.fgb",
-      "dbkode":"t_building",
+      "dbkode":["t_building","Sector data","S"],
+      "def_schema":"fdc_sector",
+      "def_table":"bygninger",
       "dbkeys":{
          "f_pkey_q_building":[
             "fid",
-            "q_building"
+            "q_building",
+            "F"
          ],
          "f_geom_q_building":[
             "geom",
-            "q_building"
+            "q_building",
+            "F"
          ],
          "f_pkey_q_build_peri":[
             "fid",
-            "q_build_peri"
+            "q_build_peri",
+            "F"
          ],
          "f_geom_q_build_peri":[
             "geom",
-            "q_build_peri"
+            "q_build_peri",
+            "F"
          ],
          "f_pkey_q_surrounding_loss":[
             "fid",
-            "q_surrounding_loss"
+            "q_surrounding_loss",
+            "F"
          ],
          "f_geom_q_surrounding_loss":[
             "geom",
-            "q_surrounding_loss"
+            "q_surrounding_loss",
+            "F"
          ],
          "f_pkey_t_building":[
             "fid",
-            "t_building"
+            "t_building",
+            "F"
          ],
          "f_geom_t_building":[
             "geom",
-            "t_building"
+            "t_building",
+            "F"
          ],
          "f_muncode_t_building":[
             "komkode",
-            "t_building"
+            "t_building",
+            "F"
          ],
          "f_usage_code_t_building":[
             "bbr_anv_kode",
-            "t_building"
+            "t_building",
+            "F"
          ],
          "f_usage_text_t_building":[
             "bbr_anv_tekst",
-            "t_building"
+            "t_building",
+            "F"
          ],
          "f_cellar_area_t_building":[
             "kaelder_areal",
-            "t_building"
+            "t_building",
+            "F"
          ]
       },
       "dato":"2023-11-19"
@@ -60,27 +74,34 @@
       "forklaring":"Bioscore o.a. data",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/okosystemer_dk_2023.fgb",
-      "dbkode":"t_bioscore",
+      "dbkode":["t_bioscore","Sector data","S"],
+      "def_schema":"fdc_sector",
+      "def_table":"biodiversitet",
       "dbkeys":{
          "f_pkey_q_bioscore_spatial":[
             "fid",
-            "q_bioscore_spatial"
+            "q_bioscore_spatial",
+            "F"
          ],
          "f_geom_q_bioscore_spatial":[
             "geom",
-            "q_bioscore_spatial"
+            "q_bioscore_spatial",
+            "F"
          ],
          "f_pkey_t_bioscore":[
             "fid",
-            "t_bioscore"
+            "t_bioscore",
+            "F"
          ],
          "f_geom_t_bioscore":[
             "geom",
-            "t_bioscore"
+            "t_bioscore",
+            "F"
          ],
          "f_bioscore_t_bioscore":[
             "bioscore",
-            "t_bioscore"
+            "t_bioscore",
+            "F"
          ]
       },
       "dato":"2023-11-19"
@@ -89,23 +110,29 @@
       "forklaring":"Kritisk infrastruktur",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/kritisk_infrastruktur_dk_2023.fgb",
-      "dbkode":"t_infrastructure",
+      "dbkode":["t_infrastructure","Sector data","S"],
+      "def_schema":"fdc_sector",
+      "def_table":"kritisk_infrastruktur",
       "dbkeys":{
          "f_pkey_q_infrastructure":[
             "fid",
-            "q_infrastructure"
+            "q_infrastructure",
+            "F"
          ],
          "f_geom_q_infrastructure":[
             "geom",
-            "q_infrastructure"
+            "q_infrastructure",
+            "F"
          ],
          "f_pkey_t_infrastructure":[
             "fid",
-            "t_infrastructure"
+            "t_infrastructure",
+            "F"
          ],
          "f_geom_t_infrastructure":[
             "geom",
-            "t_infrastructure"
+            "t_infrastructure",
+            "F"
          ]
       },
       "dato":"2023-11-19"
@@ -114,27 +141,34 @@
       "forklaring":"Markdata",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/landbrug_dk_2023.fgb",
-      "dbkode":"t_agriculture",
+      "dbkode":["t_agriculture","Sector data","S"],
+      "def_schema":"fdc_sector",
+      "def_table":"marker2021",
       "dbkeys":{
          "f_pkey_q_agriculture":[
             "fid",
-            "q_agriculture"
+            "q_agriculture",
+            "F"
          ],
          "f_geom_q_agriculture":[
             "geom",
-            "q_agriculture"
+            "q_agriculture",
+            "F"
          ],
          "f_afgcode_t_agriculture":[
             "\"Afgkode\"",
-            "t_agriculture"
+            "t_agriculture",
+            "F"
          ],
          "f_pkey_t_agriculture":[
             "fid",
-            "t_agriculture"
+            "t_agriculture",
+            "F"
          ],
          "f_geom_t_agriculture":[
             "geom",
-            "t_agriculture"
+            "t_agriculture",
+            "F"
          ]
       },
       "dato":"2023-11-19"
@@ -143,27 +177,34 @@
       "forklaring":"Personer",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/mennesker_dk_2023.fgb",
-      "dbkode":"t_human_health",
+      "dbkode":["t_human_health","Sector data","S"],
+      "def_schema":"fdc_sector",
+      "def_table":"mennesker",
       "dbkeys":{
          "f_pkey_q_human_health":[
             "fid",
-            "q_human_health"
+            "q_human_health",
+            "F"
          ],
          "f_geom_q_human_health":[
             "geom",
-            "q_human_health"
+            "q_human_health",
+            "F"
          ],
          "f_age_t_human_health":[
             "alder_rand",
-            "t_human_health"
+            "t_human_health",
+            "F"
          ],
          "f_pkey_t_human_health":[
             "fid",
-            "t_human_health"
+            "t_human_health",
+            "F"
          ],
          "f_geom_t_human_health":[
             "geom",
-            "t_human_health"
+            "t_human_health",
+            "F"
          ]
       },
       "dato":"2023-11-19"
@@ -172,23 +213,29 @@
       "forklaring":"Offentlig service",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/bygninger_dk_2023.fgb",
-      "dbkode":"t_publicservice",
+      "dbkode":["t_publicservice","Sector data","S"],
+      "def_schema":"fdc_sector",
+      "def_table":"offentlig_service",
       "dbkeys":{
          "f_pkey_q_publicservice":[
             "fid",
-            "q_publicservice"
+            "q_publicservice",
+            "F"
          ],
          "f_geom_q_publicservice":[
             "geom",
-            "q_publicservice"
+            "q_publicservice",
+            "F"
          ],
          "f_pkey_t_publicservice":[
             "fid",
-            "t_publicservice"
+            "t_publicservice",
+            "F"
          ],
          "f_geom_t_publicservice":[
             "geom",
-            "t_publicservice"
+            "t_publicservice",
+            "F"
          ]
       },
       "dato":"2023-11-19"
@@ -197,27 +244,34 @@
       "forklaring":"Vej og trafik",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/vej_og_trafik_dk_2023.fgb",
-      "dbkode":"t_road_traffic",
+      "dbkode":["t_road_traffic","Sector data","S"],
+      "def_schema":"fdc_sector",
+      "def_table":"vejnet",
       "dbkeys":{
          "f_number_cars_t_road_traffic":[
             "trafik_tal",
-            "t_road_traffic"
+            "t_road_traffic",
+            "F"
          ],
          "f_pkey_q_road_traffic":[
             "fid",
-            "q_road_traffic"
+            "q_road_traffic",
+            "F"
          ],
          "f_geom_q_road_traffic":[
             "geom",
-            "q_road_traffic"
+            "q_road_traffic",
+            "F"
          ],
          "f_pkey_t_road_traffic":[
             "fid",
-            "t_road_traffic"
+            "t_road_traffic",
+            "F"
          ],
          "f_geom_t_road_traffic":[
             "geom",
-            "t_road_traffic"
+            "t_road_traffic",
+            "F"
          ]
       },
       "dato":"2023-11-19"
@@ -226,19 +280,24 @@
       "forklaring":"Oversvømmelsespolygoner 50 mm / 10 m. grid",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/oversvommelse_50mm_10m_grid.fgb",
-      "dbkode":"t_flood_50",
+      "dbkode":["t_flood_50","Flood data","S"],
+      "def_schema":"fdc_flood",
+      "def_table":"nedbor_50mm",
       "dbkeys":{
          "f_depth_t_flood_50":[
             "value",
-            "t_flood_50"
+            "t_flood_50",
+            "F"
          ],
          "f_pkey_t_flood_50":[
             "fid",
-            "t_flood_50"
+            "t_flood_50",
+            "F"
          ],
          "f_geom_t_flood_50":[
             "geom",
-            "t_flood_50"
+            "t_flood_50",
+            "F"
          ]
       },
       "dato":"2023-11-19"
@@ -247,19 +306,24 @@
       "forklaring":"Oversvømmelsespolygoner, flood_rp100_2071_2100_rcp85mean",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/flood_rp100_2071_2100_rcp85mean.fgb",
-      "dbkode":"t_flood_49",
+      "dbkode":["t_flood_49","Flood data","S"],
+      "def_schema":"fdc_flood",
+      "def_table":"stormflod_t100_rcp85_2071_2100",
       "dbkeys":{
          "f_depth_t_flood_49":[
             "value",
-            "t_flood_49"
+            "t_flood_49",
+            "F"
          ],
          "f_pkey_t_flood_49":[
             "fid",
-            "t_flood_49"
+            "t_flood_49",
+            "F"
          ],
          "f_geom_t_flood_49":[
             "geom",
-            "t_flood_49"
+            "t_flood_49",
+            "F"
          ]
       },
       "dato":"2023-12-18"
@@ -268,19 +332,24 @@
       "forklaring":"Oversvømmelsespolygoner, flood_rp100_presentday",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/flood_rp100_presentday.fgb",
-      "dbkode":"t_flood_48",
+      "dbkode":["t_flood_48","Flood data","S"],
+      "def_schema":"fdc_flood",
+      "def_table":"stormflod_t100_1981_2010",
       "dbkeys":{
          "f_depth_t_flood_48":[
             "value",
-            "t_flood_48"
+            "t_flood_48",
+            "F"
          ],
          "f_pkey_t_flood_48":[
             "fid",
-            "t_flood_48"
+            "t_flood_48",
+            "F"
          ],
          "f_geom_t_flood_48":[
             "geom",
-            "t_flood_48"
+            "t_flood_48",
+            "F"
          ]
       },
       "dato":"2023-12-18"
@@ -289,23 +358,29 @@
       "forklaring":"Rekreative områder",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/rekreative_omr_dk_2023.fgb",
-      "dbkode":"t_recreative",
+      "dbkode":["t_recreative","Sector data","S"],
+      "def_schema":"fdc_sector",
+      "def_table":"rekreative_omr",
       "dbkeys":{
          "f_pkey_q_recreative":[
             "fid",
-            "q_recreative"
+            "q_recreative",
+            "F"
          ],
          "f_geom_q_recreative":[
             "geom",
-            "q_recreative"
+            "q_recreative",
+            "F"
          ],
          "f_pkey_t_recreative":[
             "fid",
-            "t_recreative"
+            "t_recreative",
+            "F"
          ],
          "f_geom_t_recreative":[
             "geom",
-            "t_recreative"
+            "t_recreative",
+            "F"
          ]
       },
       "dato":"2023-11-19"
@@ -314,35 +389,44 @@
       "forklaring":"Erhvervsdata",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/erhverv_hele_DK_v2.fgb",
-      "dbkode":"t_company",
+      "dbkode":["t_company","Sector data","S"],
+      "def_schema":"fdc_sector",
+      "def_table":"industri",
       "dbkeys":{
          "f_pkey_q_comp_build":[
             "fid",
-            "q_comp_build"
+            "q_comp_build",
+            "F"
          ],
          "f_geom_q_comp_build":[
             "geom",
-            "q_comp_build"
+            "q_comp_build",
+            "F"
          ],
          "f_prod_id_t_company":[
             "p_nr_fiktiv",
-            "t_company"
+            "t_company",
+            "F"
          ],
          "f_empcount_t_company":[
             "aarsbes_antalansatte",
-            "t_company"
+            "t_company",
+            "F"
          ],
          "f_comp_id_t_company":[
             "cvr",
-            "t_company"
+            "t_company",
+            "F"
          ],
          "f_pkey_t_company":[
             "fid",
-            "t_company"
+            "t_company",
+            "F"
          ],
          "f_geom_t_company":[
             "geom",
-            "t_company"
+            "t_company",
+            "F"
          ]
       },
       "dato":"2023-11-19"

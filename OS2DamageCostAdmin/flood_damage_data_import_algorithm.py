@@ -124,8 +124,8 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
         
         TEMPLATE = """
         INSERT INTO "{schema}"."{table}" (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable)
-            VALUES ('{name}','{parent}','{value}','T', '', '', '', '', '** Autoupdated**', 10, ' ')
-            ON CONFLICT (name) DO UPDATE SET value = '{value}', parent = '{parent}'
+            VALUES ('{name}','{parent}','{value}','{type}', '', '', '', '', '** Autoupdated**', 10, ' ')
+            ON CONFLICT (name) DO UPDATE SET value = '{value}', parent = '{parent}', type = '{type}' 
         """          
 
         s = QgsSettings() 
@@ -175,24 +175,34 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
             feedback.pushInfo('\n\nProcessing layer {}....\n'.format(item))
 
             # Find schema and table name in parameter table
-            parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode']))
-            full_name = parm_table[0][0] 
+            parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode'][0]))
 
-            # Split full name into schema and table name
-            schtab = full_name.split('.',1)
-            exp_schema = schtab[0].replace('"','')
-            exp_table = schtab[1].replace('"','')
+            if parm_table:                   
+                full_name = parm_table[0][0] 
+            else:
+                full_name = ''
+            
+            if len(full_name.replace(' ','')==0: 
+                exp_schema = self.options[item]['def_schema']
+                exp_table = self.options[item]['def_table']
+                sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=self.options[item]['dbkode'][0]',  value=, parent=self.options[item]['dbkode'][1], type=self.options[item]['dbkode'][2])
+                parm_table = connection.executeSql(sqlstr)
+            else:
+                # Split full name into schema and table name
+                schtab = full_name.split('.',1)
+                exp_schema = schtab[0].replace('"','')
+                exp_table = schtab[1].replace('"','')
 
             feedback.pushInfo('Export: Full name = {}, Schemaname = {}, Tablename = {}'.format(full_name, exp_schema, exp_table))
 
             # Update fields information in parameter list
             for k,v in self.options[item]['dbkeys'].items():
-                sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=k, value=v[0], parent=v[1])
+                sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=k, value=v[0], parent=v[1], type=v[2])
                 feedback.pushInfo('setting field sql: {}'.format(sqlstr))
                 parm_table = connection.executeSql(sqlstr)
 
             # Find primary key column name in parameter table
-            sql_pkey = 'SELECT "value" FROM "{}"."{}" WHERE "name" = \'f_pkey_{}\''.format(schema_name, table_name, self.options[item]['dbkode'])
+            sql_pkey = 'SELECT "value" FROM "{}"."{}" WHERE "name" = \'f_pkey_{}\''.format(schema_name, table_name, self.options[item]['dbkode'][0])
             feedback.pushInfo('Primary key: SQL --> {}'.format(sql_pkey))
             parm_table = connection.executeSql(sql_pkey)
             exp_pkey = parm_table[0][0].replace('"','') if parm_table[0] else None 
@@ -200,7 +210,7 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
             feedback.pushInfo('Primary: Column name: {}'.format(exp_pkey))
 
             # Find geometry column name in parameter table
-            sql_geom = 'SELECT "value" FROM "{}"."{}" WHERE "name" = \'f_geom_{}\''.format(schema_name, table_name, self.options[item]['dbkode'])
+            sql_geom = 'SELECT "value" FROM "{}"."{}" WHERE "name" = \'f_geom_{}\''.format(schema_name, table_name, self.options[item]['dbkode'][0])
             #feedback.pushInfo('Geometry: SQL --> {}'.format(sql_geom))
             parm_table = connection.executeSql(sql_geom)
             exp_geom = parm_table[0][0].replace('"','') if parm_table[0] else None
@@ -224,7 +234,7 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
             processing.run(
                 "native:extractbylocation", 
                 {
-                    'INPUT':     QgsVectorLayer(self.options[item]['adresse'],self.options[item]['dbkode'],self.options[item]['provider']),
+                    'INPUT':     QgsVectorLayer(self.options[item]['adresse'],self.options[item]['dbkode'][0],self.options[item]['provider']),
                     'PREDICATE': [0],
                     'INTERSECT': parameters['layer_for_area_selection'],
                     'OUTPUT':    uri_upd
