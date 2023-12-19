@@ -243,6 +243,48 @@
       },
       "dato":"2023-11-19"
    },
+   "Oversvømmelse, flood_rp100_2071_2100_rcp85mean":{
+      "forklaring":"Oversvømmelsespolygoner, flood_rp100_2071_2100_rcp85mean",
+      "provider":"ogr",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/flood_rp100_2071_2100_rcp85mean.fgb",
+      "dbkode":"t_flood_49",
+      "dbkeys":{
+         "f_depth_t_flood_49":[
+            "value",
+            "t_flood_49"
+         ],
+         "f_pkey_t_flood_49":[
+            "fid",
+            "t_flood_49"
+         ],
+         "f_geom_t_flood_49":[
+            "geom",
+            "t_flood_49"
+         ]
+      },
+      "dato":"2023-12-18"
+   },
+   "Oversvømmelse, flood_rp100_presentday":{
+      "forklaring":"Oversvømmelsespolygoner, flood_rp100_presentday",
+      "provider":"ogr",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/flood_rp100_presentday.fgb",
+      "dbkode":"t_flood_48",
+      "dbkeys":{
+         "f_depth_t_flood_48":[
+            "value",
+            "t_flood_48"
+         ],
+         "f_pkey_t_flood_48":[
+            "fid",
+            "t_flood_48"
+         ],
+         "f_geom_t_flood_48":[
+            "geom",
+            "t_flood_48"
+         ]
+      },
+      "dato":"2023-12-18"
+   },
    "Rekreative områder":{
       "forklaring":"Rekreative områder",
       "provider":"ogr",
