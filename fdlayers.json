@@ -212,7 +212,8 @@
    "Offentlig service":{
       "forklaring":"Offentlig service",
       "provider":"ogr",
-      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/bygninger_dk_2023.fgb",
+      "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/offentlig_service_dk_2023.fgb",
+	  
       "dbkode":["t_publicservice","Sector data","S"],
       "def_schema":"fdc_sector",
       "def_table":"offentlig_service",
@@ -276,7 +277,7 @@
       },
       "dato":"2023-11-19"
    },
-   "Oversvømmelse 50mm. l0m. grid":{
+   "Nedbor, 50 mm":{
       "forklaring":"Oversvømmelsespolygoner 50 mm / 10 m. grid",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/oversvommelse_50mm_10m_grid.fgb",
@@ -302,7 +303,7 @@
       },
       "dato":"2023-11-19"
    },
-   "Oversvømmelse, flood_rp100_2071_2100_rcp85mean":{
+   "Stormflod, t100 rcp85 2071-2100":{
       "forklaring":"Oversvømmelsespolygoner, flood_rp100_2071_2100_rcp85mean",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/flood_rp100_2071_2100_rcp85mean.fgb",
@@ -328,7 +329,7 @@
       },
       "dato":"2023-12-18"
    },
-   "Oversvømmelse, flood_rp100_presentday":{
+   "Stormflod, t100 1981-2010":{
       "forklaring":"Oversvømmelsespolygoner, flood_rp100_presentday",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/flood_rp100_presentday.fgb",
