@@ -182,10 +182,11 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
             else:
                 full_name = ''
             
-            if len(full_name.replace(' ','')==0: 
+            if len(full_name.replace(' ',''))==0: 
                 exp_schema = self.options[item]['def_schema']
                 exp_table = self.options[item]['def_table']
-                sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=self.options[item]['dbkode'][0]',  value=, parent=self.options[item]['dbkode'][1], type=self.options[item]['dbkode'][2])
+                exp_full_name = '"{}"."{}"'.format (exp_schema.replace('"',''),exp_table.replace('"',''))
+                sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=self.options[item]['dbkode'][0],  value=exp_full_name, parent=self.options[item]['dbkode'][1], type=self.options[item]['dbkode'][2])
                 parm_table = connection.executeSql(sqlstr)
             else:
                 # Split full name into schema and table name
@@ -197,6 +198,7 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
 
             # Update fields information in parameter list
             for k,v in self.options[item]['dbkeys'].items():
+                feedback.pushInfo('values: {}'.format(str(v)))
                 sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=k, value=v[0], parent=v[1], type=v[2])
                 feedback.pushInfo('setting field sql: {}'.format(sqlstr))
                 parm_table = connection.executeSql(sqlstr)
