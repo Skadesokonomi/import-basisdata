@@ -12,9 +12,27 @@ CREATE SCHEMA fdc_values; -- parametre + historik/ oversigt over modelkørsler
 CREATE SCHEMA fdc_results; -- resultater
 
 
-CREATE ROLE "{fdc_read_role}"  NOINHERIT; -- kan læse data fra alle schemaer i databasenR
-CREATE ROLE "{fdc_model_role}" NOINHERIT; -- har alle rettigheder model schemaer
-CREATE ROLE "{fdc_admin_role}" NOINHERIT; -- har alle rettigheder inkl. oprettelse af nye schemaer
+DO $$
+BEGIN
+  CREATE ROLE "{fdc_read_role}"  NOINHERIT; -- kan læse data fra alle schemaer i databasenR
+  EXCEPTION WHEN duplicate_object THEN RAISE NOTICE '%, skipping', SQLERRM USING ERRCODE = SQLSTATE;
+END
+$$;
+DO $$
+BEGIN
+  CREATE ROLE "{fdc_model_role}" NOINHERIT; -- har alle rettigheder model schemaer
+  EXCEPTION WHEN duplicate_object THEN RAISE NOTICE '%, skipping', SQLERRM USING ERRCODE = SQLSTATE;
+END
+$$;
+DO $$
+BEGIN
+  CREATE ROLE "{fdc_admin_role}" NOINHERIT; -- har alle rettigheder inkl. oprettelse af nye schemaer
+  EXCEPTION WHEN duplicate_object THEN RAISE NOTICE '%, skipping', SQLERRM USING ERRCODE = SQLSTATE;
+END
+$$;
+--CREATE ROLE "{fdc_read_role}"  NOINHERIT; -- kan læse data fra alle schemaer i databasenR
+--CREATE ROLE "{fdc_model_role}" NOINHERIT; -- har alle rettigheder model schemaer
+--CREATE ROLE "{fdc_admin_role}" NOINHERIT; -- har alle rettigheder inkl. oprettelse af nye schemaer
 
 -- Fjern alle standard rettigheder fra schemaer, inkl. schema "public" fra rolle "PUBLIC"
 REVOKE ALL ON SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results FROM PUBLIC;
