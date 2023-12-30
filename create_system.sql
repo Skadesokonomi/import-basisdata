@@ -1091,3 +1091,41 @@ SELECT
 -- Setup primary key and indexes
 ALTER TABLE ONLY parametre ADD CONSTRAINT parametre_pkey PRIMARY KEY (name);
 CREATE INDEX parametre_parent_idx ON parametre USING btree (parent);
+
+-- Setup result tables and sequence
+
+SET search_path = fdc_results, public;
+
+DROP TABLE IF EXISTS used_parameters;
+DROP TABLE IF EXISTS used_models;
+DROP TABLE IF EXISTS batches;
+DROP SEQUENCE IF EXISTS id_numbers;
+
+CREATE SEQUENCE IF NOT EXISTS id_numbers;
+
+CREATE TABLE IF NOT EXISTS batches
+(
+    bid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
+    name character varying NOT NULL,
+    run_at timestamp,
+    CONSTRAINT batches_pkey PRIMARY KEY (bid)
+);
+
+CREATE TABLE IF NOT EXISTS used_models
+(
+    mid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
+    bid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
+    name character varying COLLATE pg_catalog."default" NOT NULL,
+    no_rows INT,
+	no_secs DOUBLE PRECISION,
+    CONSTRAINT used_models_pkey PRIMARY KEY (mid)
+);
+
+CREATE TABLE IF NOT EXISTS used_parameters
+(
+    uid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
+    bid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
+    name character varying COLLATE pg_catalog."default" NOT NULL,
+    value character varying COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT used_parameters_pkey PRIMARY KEY (uid)
+);
