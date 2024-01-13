@@ -1115,7 +1115,7 @@ CREATE TABLE IF NOT EXISTS batches
 CREATE TABLE IF NOT EXISTS used_models
 (
     mid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
-    bid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
+    bid bigint NOT NULL,
     name character varying COLLATE pg_catalog."default" NOT NULL,
     no_rows INT,
 	no_secs DOUBLE PRECISION,
@@ -1125,7 +1125,7 @@ CREATE TABLE IF NOT EXISTS used_models
 CREATE TABLE IF NOT EXISTS used_parameters
 (
     uid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
-    bid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
+    mid bigint NOT NULL,
     name character varying COLLATE pg_catalog."default" NOT NULL,
     value character varying COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT used_parameters_pkey PRIMARY KEY (uid)

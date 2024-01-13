@@ -434,7 +434,7 @@
       "clip_table":"no",
       "dbkeys":{
          "f_pkey_q_comp_build":[
-            "fid",
+            "rowid",
             "q_comp_build",
             "F"
          ],
