@@ -1109,6 +1109,7 @@ CREATE TABLE IF NOT EXISTS batches
     bid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
     name character varying NOT NULL,
     run_at timestamp,
+    no_models INT default 0,
     CONSTRAINT batches_pkey PRIMARY KEY (bid)
 );
 
@@ -1119,6 +1120,7 @@ CREATE TABLE IF NOT EXISTS used_models
     name character varying COLLATE pg_catalog."default" NOT NULL,
     no_rows INT,
 	no_secs DOUBLE PRECISION,
+    sql_txt character varying COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT used_models_pkey PRIMARY KEY (mid)
 );
 
