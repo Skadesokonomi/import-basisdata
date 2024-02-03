@@ -107,6 +107,13 @@
          ]
       }, 
       "dato":"2023-11-28"
+   },
+   "Tilføj historik tabeller":{
+      "forklaring":"SQL kommandoer til generering af historik tabeller",
+      "adresse":"https://storage.googleapis.com/skadesokonomi-dk-data/add_history.sql",
+      "sortering":22,
+      "dbkeys":{}, 
+      "dato":"2024-01-15"
    }
 }
 
