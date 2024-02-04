@@ -201,8 +201,8 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegning for kælder', 'Hidden parameters', 'Medtages', 'O', '', '', 'Medtages ikke¤Medtages', ' ', 'Bestemmer skadeberegning for kælder medtages i udregningen', 2, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadetype', 'Generelle modelværdier', 'Stormflod', 'O', '', '', 'Stormflod¤Skybrud¤Vandløb', ' ', 'Valg af økonomisk skademodel', 1, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_type_t_damage', 't_damage', 'skade_type', 'F', '', '', '', '', 'Field name for keyfield in damage function table ', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Oversvømmelsesmodel, nutid', 'Generelle modelværdier', '"fdc_flood"."stormflod_t100_1981_2010"', 'Q', '', '', 't_flood', 't_flood', 'Vælg oversvømmelsestabel for nutidshændelse', 12, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Oversvømmelsesmodel, fremtid', 'Generelle modelværdier', '"fdc_flood"."stormflod_t100_rcp85_2071_2100"', 'Q', '', '', 't_flood', 't_flood', 'Vælg oversvømmelsestabel for fremtidshændelse', 13, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Oversvømmelsesmodel, nutid', 'Generelle modelværdier', '"fdc_flood"."stormflod_t100_1981_2010"', 'Q', '', '', 't_flood_48', 't_flood', 'Vælg oversvømmelsestabel for nutidshændelse', 12, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Oversvømmelsesmodel, fremtid', 'Generelle modelværdier', '"fdc_flood"."stormflod_t100_rcp85_2071_2100"', 'Q', '', '', 't_flood_49', 't_flood', 'Vælg oversvømmelsestabel for fremtidshændelse', 13, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Returperiode, antal år', 'Generelle modelværdier', '100', 'I', '0', '1000', '10', '', 'Indtast returperioden i hele år, dvs. gennemsnitligt antal år mellem hændelser (Nutidshændelse og fremtidshændelse skal have samme returperiode)', 14, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegninger, Bygninger gl. model', 'Hidden parameters', '', 'T', '', '', '', 'q_building', 'Skadeberegning for bygninger, forskellige skademodeller, med eller uden kælderberegning, ny metode', 11, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_building', 'q_building', 'objectid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
@@ -327,7 +327,7 @@ SELECT
     WHERE f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0
 ', 'P', '', '', '', '', 'SQL template for recreative new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Industri, personale i bygninger', 'Industri', ' ', 'T', '', '', '', 'q_comp_build', 'Sæt hak såfremt modellen skal identificere de virksomheder som bliver berørt af den pågældende oversvømmelse, og angive antallet af medarbejdere per virksomhed.', 10, 'T');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_comp_build', 'q_comp_build', 'id', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_comp_build', 'q_comp_build', 'rowid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_comp_build', 'q_comp_build', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Biodiversitet, kort', 'Biodiversitet', '', 'T', '', '', '', 'q_bioscore_spatial', 'Sæt hak såfremt modellen skal identificere særlige levesteder for rødlistede arter som bliver berørt i forbindelse med den pågældende oversvømmelseshændelse. Her vises levestederne geografisk på et kort.', 10, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_bioscore_spatial', 'q_bioscore_spatial', 'id', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
@@ -697,6 +697,7 @@ WHERE n.cnt_oversvoem_nutid > 0 OR f.cnt_oversvoem_fremtid > 0
 ', 'P', '', '', '', '', 'SQL template for bioscore spatial - new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_comp_build', 'Queries', '
 SELECT
+    row_number() OVER () as {f_pkey_q_comp_build},
     c.*,
     b.{f_pkey_t_building} AS byg_id,
     b.{f_muncode_t_building} AS kom_kode,
@@ -936,7 +937,7 @@ SELECT
     ) r
     WHERE f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Humane omkostninger', 'Mennesker og helbred', '', 'T', '', '', '', 'q_human_health', 'Sæt hak såfremt der skal beregnes humane omkostninger', 10, 'T');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_human_health', 'q_human_health', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_human_health', 'q_human_health', 'rowid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_human_health', 'q_human_health', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_human_health', 'q_human_health', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_future_q_human_health', 'q_human_health', 'skadebeloeb_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
@@ -1096,6 +1097,7 @@ CREATE INDEX parametre_parent_idx ON parametre USING btree (parent);
 
 SET search_path = fdc_results, public;
 
+DROP VIEW  IF EXISTS used_parameters_view;
 DROP TABLE IF EXISTS used_parameters;
 DROP TABLE IF EXISTS used_models;
 DROP TABLE IF EXISTS batches;
@@ -1108,24 +1110,48 @@ CREATE TABLE IF NOT EXISTS batches
     bid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
     name character varying NOT NULL,
     run_at timestamp,
+    no_models INT default 0,
     CONSTRAINT batches_pkey PRIMARY KEY (bid)
 );
 
-CREATE TABLE IF NOT EXISTS used_models
+CREATE TABLE fdc_results.used_models
 (
-    mid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
-    bid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
+    mid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'::regclass),
+    bid bigint NOT NULL,
+    table_name character varying COLLATE pg_catalog."default" NOT NULL,
     name character varying COLLATE pg_catalog."default" NOT NULL,
-    no_rows INT,
-	no_secs DOUBLE PRECISION,
+    no_rows integer,
+    no_secs double precision,
     CONSTRAINT used_models_pkey PRIMARY KEY (mid)
 );
+
 
 CREATE TABLE IF NOT EXISTS used_parameters
 (
     uid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
-    bid bigint NOT NULL DEFAULT nextval('fdc_results.id_numbers'),
+    mid bigint NOT NULL,
     name character varying COLLATE pg_catalog."default" NOT NULL,
     value character varying COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT used_parameters_pkey PRIMARY KEY (uid)
 );
+
+
+CREATE OR REPLACE VIEW fdc_results.used_parameters_view
+ AS
+ SELECT b.bid,
+    b.name AS batch_name,
+    b.run_at,
+    b.no_models,
+    m.mid,
+    m.table_name,
+    m.name AS model_name,
+    m.no_rows,
+    m.no_secs,
+    p.uid,
+    p.name AS parameter_name,
+    p.value
+   FROM fdc_results.batches b
+     LEFT JOIN fdc_results.used_models m ON b.bid = m.bid
+     LEFT JOIN fdc_results.used_parameters p ON m.mid = p.mid
+  ORDER BY b.bid, m.mid, p.uid;
+  

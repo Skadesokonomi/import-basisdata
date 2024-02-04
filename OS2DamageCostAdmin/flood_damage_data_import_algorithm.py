@@ -229,8 +229,23 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
 
             feedback.pushInfo('Updated URI: {}'.format(uri_upd))
 
-
             feedback.pushInfo('Input ogr: {}'.format(self.options[item]['adresse']))
+
+#            p_opt = '-nlt PROMOTE_TO_MULTI'
+#            p_opt = ''
+
+#            processing.run(
+#                "gdal:clipvectorbypolygon", 
+#                {
+#                    'INPUT':    QgsVectorLayer(self.options[item]['adresse'],self.options[item]['dbkode'][0],self.options[item]['provider']),
+#                    'MASK':     parameters['layer_for_area_selection'],
+#                    'OPTIONS':  p_opt,
+#                    'OUTPUT':   uri_upd
+#                },
+#                is_child_algorithm=True, 
+#                context=context, 
+#                feedback=feedback
+#            )
 
             # Activate processing algorithm with generated parameters
             processing.run(
