@@ -95,7 +95,7 @@ class FDCUpdateSystemAlgorithm(QgsProcessingAlgorithm):
         self.options = loads(data)
         self.option_list =[key for key in self.options]
  
-        self.addParameter(QgsProcessingParameterEnum('run_scripts', 'Choose which SQL scripts to run', ['{} ... {}'.format(key,self.options[key]['dato']) for key in self.options], allowMultiple=True, defaultValue=[0,1,2,3]))
+        self.addParameter(QgsProcessingParameterEnum('run_scripts', 'Choose which SQL scripts to run', ['{} ... {}'.format(key,self.options[key]['dato']) for key in self.options], allowMultiple=True, defaultValue=[]))
         param = QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue='flood damage')
         #param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(param)
@@ -106,11 +106,11 @@ class FDCUpdateSystemAlgorithm(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
         
-#        TEMPLATE = """
-#        INSERT INTO "{schema}"."{table}" (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable)
-#            VALUES ('{name}','{parent}','{value}','T', '', '', '', '', '** Autoupdated**', 10, ' ')
-#            ON CONFLICT (name) DO UPDATE SET value = '{value}', parent = '{parent}'
-#        """          
+        TEMPLATE = """
+        INSERT INTO "{schema}"."{table}" (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable)
+            VALUES ('{name}','{parent}','{value}','T', '', '', '', '', '** Autoupdated**', 10, ' ')
+            ON CONFLICT (name) DO UPDATE SET value = '{value}', parent = '{parent}'
+        """          
 
 
         s = QgsSettings() 
@@ -131,6 +131,7 @@ class FDCUpdateSystemAlgorithm(QgsProcessingAlgorithm):
         total = 100.0 / len(selected_items) if len(selected_items) else 0
         current = 1
         
+            
         # Loop through selected scripts        
         for item in selected_items:
 
@@ -140,17 +141,29 @@ class FDCUpdateSystemAlgorithm(QgsProcessingAlgorithm):
             
             feedback.pushInfo('\n\nProcessing script: {}....\n'.format(item))
 
-            data = urlopen(self.options[item]['adresse']).read().decode('utf-8')
-            #data = data.replace('{database_name}',database_name).replace('{fdc_admin_role}',fdc_admin_role).replace('{fdc_model_role}',fdc_model_role).replace('{fdc_read_role}',fdc_read_role)
-            conn_fdc.executeSql(data)
+            # Check that all prerequisites are in place.
+            diff = 0
+            prerequisit = self.options[item]['forudsætning']
+            if prerequisit:
+                cnt_lst = len(prerequisit)
+                pr_list = connection.executeSql('SELECT COUNT(*) FROM fdc_admin.patches WHERE patch_name IN = (\'{}\')'.format('\',\''.join(prerequisit)))
+                diff = cnt_len-pr_list[0][0] 
 
-            # Update fields information in parameter list
-            if 'dbkeys' in self.options[item]:
-                for k,v in self.options[item]['dbkeys'].items():
-                    sqlstr = TEMPLATE.format(schema='fdc_admin', table='parametre', name=k, value=v[0], parent=v[1])
-                    feedback.pushInfo('setting field sql: {}'.format(sqlstr))
-                    parm_table = conn_fdc.executeSql(sqlstr)
-
+            if diff == 0: 
+               
+                data = urlopen(self.options[item]['adresse']).read().decode('utf-8')
+                #data = data.replace('{database_name}',database_name).replace('{fdc_admin_role}',fdc_admin_role).replace('{fdc_model_role}',fdc_model_role).replace('{fdc_read_role}',fdc_read_role)
+                conn_fdc.executeSql(data)
+     
+                # Update fields information in parameter list
+                if 'dbkeys' in self.options[item]:
+                    for k,v in self.options[item]['dbkeys'].items():
+                        sqlstr = TEMPLATE.format(schema='fdc_admin', table='parametre', name=k, value=v[0], parent=v[1])
+                        feedback.pushInfo('setting field sql: {}'.format(sqlstr))
+                        parm_table = conn_fdc.executeSql(sqlstr)
+            else: 
+                feedback.pushInfo('\nError !! Prerequisites missing')
+            
             # Update the progress bar
             feedback.setProgress(int(current* total))
             current += 1 
