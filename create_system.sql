@@ -1154,4 +1154,16 @@ CREATE OR REPLACE VIEW fdc_results.used_parameters_view
      LEFT JOIN fdc_results.used_models m ON b.bid = m.bid
      LEFT JOIN fdc_results.used_parameters p ON m.mid = p.mid
   ORDER BY b.bid, m.mid, p.uid;
-  
+
+SET search_path = fdc_administration, public;
+
+DROP TABLE IF EXISTS patches_done;
+
+CREATE TABLE IF NOT EXISTS patches_done
+(
+    patch_name character varying NOT NULL,
+    long_name character varying NOT NULL DEFAULT '',
+    created timestamp,
+    run_at timestamp,
+    CONSTRAINT patches_done_pkey PRIMARY KEY (patch_name)
+);

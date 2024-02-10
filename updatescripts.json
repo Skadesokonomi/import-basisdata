@@ -114,6 +114,15 @@
       "navn": "opd0004",	  
       "forudsætning" :[],
       "dato":"2024-01-15"
+   },
+   "Tilføj patching tabeller":{
+      "forklaring":"SQL kommandoer til generering af patching tabeller",
+      "adresse":"https://storage.googleapis.com/skadesokonomi-dk-data/add_patching.sql",
+      "sortering":23,
+      "dbkeys":{}, 
+      "navn": "opd0005",	  
+      "forudsætning" :[],
+      "dato":"2024-01-15"
    }
 }
 
