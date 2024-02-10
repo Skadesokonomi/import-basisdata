@@ -33,6 +33,7 @@ __revision__ = '$Format:%H$'
 from qgis.core import QgsProcessingProvider
 from .flood_damage_data_import_algorithm   import FDCDataImportAlgorithm
 from .flood_damage_create_system_algorithm import FDCCreateSystemAlgorithm
+from .flood_damage_update_system_algorithm import FDCUpdateSystemAlgorithm
 from .flood_damage_user_admin_algorithm    import FDCUserAdminAlgorithm
 
 
@@ -57,6 +58,7 @@ class FloodDamageCostAdmin(QgsProcessingProvider):
         """
         self.addAlgorithm(FDCDataImportAlgorithm())
         self.addAlgorithm(FDCCreateSystemAlgorithm())
+        self.addAlgorithm(FDCUpdateSystemAlgorithm())
         self.addAlgorithm(FDCUserAdminAlgorithm())
         # add additional algorithms here
         # self.addAlgorithm(MyOtherAlgorithm())

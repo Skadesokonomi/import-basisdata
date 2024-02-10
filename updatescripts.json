@@ -1,0 +1,120 @@
+{
+   "Opret/Opdater afgrøde opslagstabeller":{
+      "forklaring":"SQL kommandoer til generering af tabellerne afgroede_pris og afgroede_kategori",
+      "adresse":"https://storage.googleapis.com/skadesokonomi-dk-data/lookup_agriculture.sql",
+      "sortering":20,
+      "dbkeys":{
+         "t_agr_cat":[
+            "fdc_lookup.afgroede_kategori",
+            "Admin data"
+         ],
+         "t_agr_price":[
+            "fdc_lookup.afgroede_pris",
+            "Admin data"
+         ],
+         "f_pkey_t_agr_cat":[
+            "afgroedekode",
+            "t_agr_cat"
+         ],
+         "f_pcat_t_agr_cat":[
+            "priskategori",
+            "t_agr_cat"
+         ],
+         "f_price_t_agr_price":[
+            "pris",
+            "t_agr_price"
+         ],
+         "f_pkey_t_agr_price":[
+            "priskategori",
+            "t_agr_price"
+         ]
+      },
+      "navn": "opd0001",	  
+      "forudsætning" :[],
+      "dato":"2023-11-28"
+   },
+   "Opret/opdater bygning opslagstabeller":{
+      "forklaring":"SQL kommandoer til generering af tabellerne kvm_pris, skadefunktioenr og bbr_anvendelse",
+      "adresse":"https://storage.googleapis.com/skadesokonomi-dk-data/lookup_building.sql",
+      "sortering":21,
+      "dbkeys":{
+         "t_build_usage":[
+            "fdc_lookup.bbr_anvendelse",
+            "Admin data"
+         ],
+         "t_sqmprice":[
+            "fdc_lookup.kvm_pris",
+            "Admin data"
+         ],
+         "t_damage":[
+            "fdc_lookup.skadefunktioner",
+            "Admin data"
+         ],
+         "f_pkey_t_damage":[
+            "skade_type, skade_kategori",
+            "t_damage"
+         ],
+         "f_type_t_damage":[
+            "skade_type",
+            "t_damage"
+         ],
+         "f_category_t_damage":[
+            "skade_kategori",
+            "t_damage"
+         ],
+         "f_sqmprice_t_sqmprice":[
+            "kvm_pris",
+            "t_sqmprice"
+         ],
+         "f_muncode_t_sqmprice":[
+            "kom_kode",
+            "t_sqmprice"
+         ],
+         "f_category_t_build_usage":[
+            "skade_kategori",
+            "t_build_usage"
+         ],
+         "f_usage_text_t_build_usage":[
+            "bbr_anv_tekst",
+            "t_build_usage"
+         ],
+
+         "f_pkey_t_build_usage":[
+            "bbr_anv_kode",
+            "t_build_usage"
+         ]
+      }, 
+      "navn": "opd0002",	  
+      "forudsætning" :[],
+      "dato":"2023-11-28"
+   },
+   "Opret/opdater turist opslagstabeller":{
+      "forklaring":"SQL kommandoer til generering af tabel turisme",
+      "adresse":"https://storage.googleapis.com/skadesokonomi-dk-data/lookup_tourism.sql",
+      "sortering":22,
+      "dbkeys":{
+         "t_tourism":[
+            "fdc_lookup.turisme",
+            "Admin data"
+         ],
+         "f_pkey_t_tourism":[
+            "bbr_anv_kode",
+            "t_tourism"
+         ]
+      }, 
+      "navn": "opd0003",	  
+      "forudsætning" :[],
+      "dato":"2023-11-28"
+   },
+   "Tilføj historik tabeller":{
+      "forklaring":"SQL kommandoer til generering af historik tabeller",
+      "adresse":"https://storage.googleapis.com/skadesokonomi-dk-data/add_history.sql",
+      "sortering":22,
+      "dbkeys":{}, 
+      "navn": "opd0004",	  
+      "forudsætning" :[],
+      "dato":"2024-01-15"
+   }
+}
+
+
