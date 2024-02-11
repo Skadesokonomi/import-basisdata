@@ -1155,7 +1155,7 @@ CREATE OR REPLACE VIEW fdc_results.used_parameters_view
      LEFT JOIN fdc_results.used_parameters p ON m.mid = p.mid
   ORDER BY b.bid, m.mid, p.uid;
 
-SET search_path = fdc_administration, public;
+SET search_path = fdc_admin, public;
 
 DROP TABLE IF EXISTS patches_done;
 

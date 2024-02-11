@@ -1,6 +1,6 @@
 -- Setup result tables and sequence
 
-SET search_path = fdc_administration, public;
+SET search_path = fdc_admin, public;
 
 DROP TABLE IF EXISTS patches_done;
 

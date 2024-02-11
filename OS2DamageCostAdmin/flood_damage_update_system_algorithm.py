@@ -45,6 +45,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterBoolean,
                        QgsProcessingParameterString,
                        QgsProcessingParameterNumber,
+                       QgsProcessingMultiStepFeedback,
                        QgsProviderConnectionException,
                        QgsVectorLayer,
                        QgsProviderRegistry,
@@ -57,6 +58,7 @@ from qgis.core import (QgsProcessing,
 from qgis import processing
 from json import loads, dumps
 from urllib.request import urlopen
+import datetime
 
 class FDCUpdateSystemAlgorithm(QgsProcessingAlgorithm):
     """
@@ -99,6 +101,8 @@ class FDCUpdateSystemAlgorithm(QgsProcessingAlgorithm):
         param = QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue='flood damage')
         #param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(param)
+        self.addParameter(QgsProcessingParameterBoolean('overwrite_updates', 'Overwrite existing updates', defaultValue=False))
+
 
 
     def processAlgorithm(self, parameters, context, feedback):
@@ -112,7 +116,14 @@ class FDCUpdateSystemAlgorithm(QgsProcessingAlgorithm):
             ON CONFLICT (name) DO UPDATE SET value = '{value}', parent = '{parent}'
         """          
 
+        TEMPLATE2 = """
+        INSERT INTO fdc_admin.patches_done (patch_name, long_name, created, run_at) 
+            VALUES ('{patch_name}','{long_name}','{created}','{run_at}')
+            ON CONFLICT (patch_name) DO UPDATE SET run_at = '{run_at}'
+        """          
 
+
+        feedback = QgsProcessingMultiStepFeedback(1, feedback)
         s = QgsSettings() 
         s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", self.folded) # Restore original state
 
@@ -127,10 +138,13 @@ class FDCUpdateSystemAlgorithm(QgsProcessingAlgorithm):
         user_options = self.parameterAsEnums(parameters, 'run_scripts', context)
         selected_items = [self.option_list[i] for i in user_options]
 
+        overwrite_updates = self.parameterAsBoolean(parameters, 'overwrite_updates', context)
+
         # Setup for progress indicator
         total = 100.0 / len(selected_items) if len(selected_items) else 0
         current = 1
-        
+
+        current_time = datetime.datetime.now()
             
         # Loop through selected scripts        
         for item in selected_items:
@@ -146,23 +160,35 @@ class FDCUpdateSystemAlgorithm(QgsProcessingAlgorithm):
             prerequisit = self.options[item]['forudsætning']
             if prerequisit:
                 cnt_lst = len(prerequisit)
-                pr_list = connection.executeSql('SELECT COUNT(*) FROM fdc_admin.patches WHERE patch_name IN = (\'{}\')'.format('\',\''.join(prerequisit)))
+                pr_list = conn_fdc.executeSql('SELECT COUNT(*) FROM fdc_admin.patches_done WHERE patch_name IN = (\'{}\')'.format('\',\''.join(prerequisit)))
                 diff = cnt_len-pr_list[0][0] 
 
             if diff == 0: 
+
+                update_exists = conn_fdc.executeSql('SELECT COUNT(*) FROM fdc_admin.patches_done WHERE patch_name =\'{}\''.format(self.options[item]['navn']))
+                if update_exists[0][0]==0 or overwrite_updates: 
+
                
-                data = urlopen(self.options[item]['adresse']).read().decode('utf-8')
-                #data = data.replace('{database_name}',database_name).replace('{fdc_admin_role}',fdc_admin_role).replace('{fdc_model_role}',fdc_model_role).replace('{fdc_read_role}',fdc_read_role)
-                conn_fdc.executeSql(data)
-     
-                # Update fields information in parameter list
-                if 'dbkeys' in self.options[item]:
-                    for k,v in self.options[item]['dbkeys'].items():
-                        sqlstr = TEMPLATE.format(schema='fdc_admin', table='parametre', name=k, value=v[0], parent=v[1])
-                        feedback.pushInfo('setting field sql: {}'.format(sqlstr))
-                        parm_table = conn_fdc.executeSql(sqlstr)
+                    data = urlopen(self.options[item]['adresse']).read().decode('utf-8')
+                    #data = data.replace('{database_name}',database_name).replace('{fdc_admin_role}',fdc_admin_role).replace('{fdc_model_role}',fdc_model_role).replace('{fdc_read_role}',fdc_read_role)
+                    conn_fdc.executeSql(data)
+         
+                    # Update fields information in parameter list
+                    if 'dbkeys' in self.options[item]:
+                        for k,v in self.options[item]['dbkeys'].items():
+                            sqlstr = TEMPLATE.format(schema='fdc_admin', table='parametre', name=k, value=v[0], parent=v[1])
+                            feedback.pushInfo('setting field sql: {}'.format(sqlstr))
+                            parm_table = conn_fdc.executeSql(sqlstr)
+
+                    conn_fdc.executeSql(
+                        TEMPLATE2.format(
+                        patch_name=self.options[item]['navn'],long_name=self.options[item]['forklaring'],created=self.options[item]['dato'],run_at=current_time))
+
+                else:
+                    feedback.reportError('Update: {} - {} - previously done'.format(self.options[item]['navn'],self.options[item]['forklaring']))
+                
             else: 
-                feedback.pushInfo('\nError !! Prerequisites missing')
+                feedback.reportError('Prerequisites for update are missing')
             
             # Update the progress bar
             feedback.setProgress(int(current* total))

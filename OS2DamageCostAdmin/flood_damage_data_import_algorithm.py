@@ -44,6 +44,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterDefinition,
                        QgsProcessingParameterBoolean,
                        QgsProcessingParameterString,
+                       QgsProcessingMultiStepFeedback,
                        QgsVectorLayer,
                        QgsProviderRegistry,
                        QgsDataSourceUri,
@@ -128,6 +129,7 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
             ON CONFLICT (name) DO UPDATE SET value = '{value}', parent = '{parent}', type = '{type}' 
         """          
 
+        feedback = QgsProcessingMultiStepFeedback(1, feedback)
         s = QgsSettings() 
         s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", self.folded) # Restore original state
     
