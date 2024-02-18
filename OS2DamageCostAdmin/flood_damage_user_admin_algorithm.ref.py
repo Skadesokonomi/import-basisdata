@@ -65,13 +65,12 @@ class FDCUserAdminAlgorithm(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
-        enums = ['Create new user/password and grant profile','Grant/Change profile for existing user','Revoke profile(s) from existing user','Delete existing user ']system 
-
+        
         self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection, FDC database (superuser access)', 'postgres', defaultValue='flood damage'))
-        self.addParameter(QgsProcessingParameterEnum('operation', 'Choose which SQL scripts to run', ['{} ... {}'.format(key,self.options[key]['dato']) for key in self.options], allowMultiple=False, defaultValue=[0,1,2,3]))
-        self.addParameter(QgsProcessingParameterString('new_user', 'Name for user' ))
-        self.addParameter(QgsProcessingParameterString('new_password', 'Password for new user (only set when adding new user', optional=True))
-        self.addParameter(QgsProcessingParameterEnum('role_name', 'Grant/Change role', ['Admin role','Modeller role','Reader role'], allowMultiple=False, defaultValue=2))
+        self.addParameter(QgsProcessingParameterBoolean('create_user', 'Create new user (otherwise it\'s assumed that user exists)', defaultValue=True))
+        self.addParameter(QgsProcessingParameterString('new_user', 'Name for (perhaps new) user' ))
+        self.addParameter(QgsProcessingParameterString('new_password', 'Password for new user', optional=True))
+        self.addParameter(QgsProcessingParameterEnum('role_name', 'Choose role', ['Admin role','Modeller role','Reader role'], allowMultiple=False, defaultValue=2))
         self.addParameter(QgsProcessingParameterString('new_connection', 'Name for new connection using new user (empty -> Connection will not be created)', defaultValue='{database_name} at {server_name} as {new_user}',optional=True))
 
 
