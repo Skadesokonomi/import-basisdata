@@ -65,10 +65,10 @@ class FDCUserAdminAlgorithm(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
-        enums = ['Create new user/password and grant profile','Grant/Change profile for existing user','Revoke profile(s) from existing user','Delete existing user ']system 
+        enums = ['Create new user/password and grant role','Grant/Change role for existing user','Revoke role(s) from existing user','Delete existing user ']
 
         self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection, FDC database (superuser access)', 'postgres', defaultValue='flood damage'))
-        self.addParameter(QgsProcessingParameterEnum('operation', 'Choose which SQL scripts to run', ['{} ... {}'.format(key,self.options[key]['dato']) for key in self.options], allowMultiple=False, defaultValue=[0,1,2,3]))
+        self.addParameter(QgsProcessingParameterEnum('operation', 'Choose operation', enums, allowMultiple=False, defaultValue=0))
         self.addParameter(QgsProcessingParameterString('new_user', 'Name for user' ))
         self.addParameter(QgsProcessingParameterString('new_password', 'Password for new user (only set when adding new user', optional=True))
         self.addParameter(QgsProcessingParameterEnum('role_name', 'Grant/Change role', ['Admin role','Modeller role','Reader role'], allowMultiple=False, defaultValue=2))
@@ -81,11 +81,11 @@ class FDCUserAdminAlgorithm(QgsProcessingAlgorithm):
         """
 
         TEMPLATE1 = """
-        CREATE USER "{user}" WITH PASSWORD '{pwd}' INHERIT;
+        CREATE USER "{new_user}" WITH PASSWORD '{pwd}' INHERIT;
         """          
 
         TEMPLATE2 = """
-        GRANT "{role}" TO "{user}";
+        GRANT "{role}" TO "{new_user}";
         """          
 
         TEMPLATE3 = """
@@ -108,12 +108,30 @@ class FDCUserAdminAlgorithm(QgsProcessingAlgorithm):
         ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA fdc_sector, fdc_flood, fdc_values, fdc_results GRANT ALL ON FUNCTIONS TO {fdc_model_role};
         """          
 
+        TEMPLATE4 = """
+        -- Fjern default rettigheder til nye objekter for alle grupper
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results REVOKE ALL ON TABLES    FROM {fdc_read_role}, {fdc_model_role}, {fdc_admin_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results REVOKE ALL ON SEQUENCES FROM {fdc_read_role}, {fdc_model_role}, {fdc_admin_role};
+        ALTER DEFAULT PRIVILEGES FOR ROLE {new_user} IN SCHEMA public, fdc_admin, fdc_lookup, fdc_sector, fdc_flood, fdc_values, fdc_results REVOKE ALL ON FUNCTIONS FROM {fdc_read_role}, {fdc_model_role}, {fdc_admin_role};
+        """          
+
+        TEMPLATE5 = """
+        REVOKE {fdc_read_role}, {fdc_model_role}, {fdc_admin_role} FROM "{new_user}";
+        """          
+
+        TEMPLATE6 = """
+        DROP USER "{new_user}";;
+        """          
+
+
+
         # Get connection
         connection_name = self.parameterAsString(parameters, 'database_connection', context)
         metadata = QgsProviderRegistry.instance().providerMetadata('postgres')
         connection = metadata.findConnection(connection_name)
 
         # Find username, password and role
+        operation = self.parameterAsEnum(parameters,'operation', context)
         new_user = self.parameterAsString(parameters,'new_user', context)
         new_password = self.parameterAsString(parameters, 'new_password', context)
         role_name = self.parameterAsString(parameters, 'role_name', context)
@@ -128,21 +146,42 @@ class FDCUserAdminAlgorithm(QgsProcessingAlgorithm):
         elif role_name == '1': role_value = fdc_model_role
         else: role_value = fdc_read_role
 
-        # Create SQL
-        if create_user:
-            sqlstr = TEMPLATE1.format(role=role_value, user=new_user, pwd=new_password)
-            # Execute SQL
+        if operation == 0: # Create user, grant role
+            sqlstr = TEMPLATE1.format(role=role_value, new_user=new_user, pwd=new_password)
             parm = connection.executeSql(sqlstr)
-
-        sqlstr = TEMPLATE2.format(role=role_value, user=new_user, pwd=new_password)
-        # Execute SQL
-        parm = connection.executeSql(sqlstr)
-
-        if role_name in {'0','1'}:
+            sqlstr = TEMPLATE2.format(role=role_value, new_user=new_user, pwd=new_password)
+            parm = connection.executeSql(sqlstr)
             sqlstr = TEMPLATE3.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
-            # Execute SQL
             parm = connection.executeSql(sqlstr)
-        
+
+        elif operation == 1: # Existing user , change role
+            sqlstr = TEMPLATE4.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+            feedback.pushInfo('template4: {}'.format(sqlstr))
+            parm = connection.executeSql(sqlstr)
+            sqlstr = TEMPLATE5.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+            feedback.pushInfo('template5: {}'.format(sqlstr))
+            parm = connection.executeSql(sqlstr)
+            sqlstr = TEMPLATE2.format(role=role_value, new_user=new_user, pwd=new_password)
+            feedback.pushInfo('template2: {}'.format(sqlstr))
+            parm = connection.executeSql(sqlstr)
+            sqlstr = TEMPLATE3.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+            feedback.pushInfo('template3: {}'.format(sqlstr))
+            parm = connection.executeSql(sqlstr)
+
+        elif operation == 2: # Existing user , revoke role
+            sqlstr = TEMPLATE4.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+            parm = connection.executeSql(sqlstr)
+            sqlstr = TEMPLATE5.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+            parm = connection.executeSql(sqlstr)
+
+        elif operation == 3: # Existing user , revoke role, delete user
+            sqlstr = TEMPLATE4.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+            parm = connection.executeSql(sqlstr)
+            sqlstr = TEMPLATE5.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+            parm = connection.executeSql(sqlstr)
+            sqlstr = TEMPLATE6.format(new_user=new_user)
+            parm = connection.executeSql(sqlstr)
+
         if new_connection and new_connection.replace (' ','') != '': 
 
             # Create connection administrative postgres database (postgres)
