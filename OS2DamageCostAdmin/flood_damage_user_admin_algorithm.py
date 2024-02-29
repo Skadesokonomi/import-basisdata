@@ -65,14 +65,14 @@ class FDCUserAdminAlgorithm(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
-        enums = ['Create new user/password and grant role','Grant/Change role for existing user','Revoke role(s) from existing user','Delete existing user ']
+        enums = ['Create new user/password and grant role (Remember to set password)','Grant/Change role for existing user','Revoke role(s) from existing user','Delete existing user ','Create database connection for existing user (Remember to set password)']
 
         self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection, FDC database (superuser access)', 'postgres', defaultValue='flood damage'))
         self.addParameter(QgsProcessingParameterEnum('operation', 'Choose operation', enums, allowMultiple=False, defaultValue=0))
         self.addParameter(QgsProcessingParameterString('new_user', 'Name for user' ))
-        self.addParameter(QgsProcessingParameterString('new_password', 'Password for new user (only set when adding new user', optional=True))
-        self.addParameter(QgsProcessingParameterEnum('role_name', 'Grant/Change role', ['Admin role','Modeller role','Reader role'], allowMultiple=False, defaultValue=2))
-        self.addParameter(QgsProcessingParameterString('new_connection', 'Name for new connection using new user (empty -> Connection will not be created)', defaultValue='{database_name} at {server_name} as {new_user}',optional=True))
+        self.addParameter(QgsProcessingParameterString('new_password', 'Password for user (Only set value when creating new user or connection)', optional=True))
+        self.addParameter(QgsProcessingParameterEnum('role_name', 'User role (Only used when creating new user or changing role for existing user)', ['Admin role','Modeller role','Reader role'], allowMultiple=False, defaultValue=2))
+        self.addParameter(QgsProcessingParameterString('new_connection', 'Name for new connection using new user (Only used when creating a new connection)', defaultValue='{database_name} at {server_name} as {new_user}',optional=True))
 
 
     def processAlgorithm(self, parameters, context, feedback):
@@ -146,61 +146,74 @@ class FDCUserAdminAlgorithm(QgsProcessingAlgorithm):
         elif role_name == '1': role_value = fdc_model_role
         else: role_value = fdc_read_role
 
-        if operation == 0: # Create user, grant role
-            sqlstr = TEMPLATE1.format(role=role_value, new_user=new_user, pwd=new_password)
-            parm = connection.executeSql(sqlstr)
-            sqlstr = TEMPLATE2.format(role=role_value, new_user=new_user, pwd=new_password)
-            parm = connection.executeSql(sqlstr)
-            sqlstr = TEMPLATE3.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
-            parm = connection.executeSql(sqlstr)
+        if new_user.replace (' ','') != '':  # chech that username is set        
 
-        elif operation == 1: # Existing user , change role
-            sqlstr = TEMPLATE4.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
-            feedback.pushInfo('template4: {}'.format(sqlstr))
-            parm = connection.executeSql(sqlstr)
-            sqlstr = TEMPLATE5.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
-            feedback.pushInfo('template5: {}'.format(sqlstr))
-            parm = connection.executeSql(sqlstr)
-            sqlstr = TEMPLATE2.format(role=role_value, new_user=new_user, pwd=new_password)
-            feedback.pushInfo('template2: {}'.format(sqlstr))
-            parm = connection.executeSql(sqlstr)
-            sqlstr = TEMPLATE3.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
-            feedback.pushInfo('template3: {}'.format(sqlstr))
-            parm = connection.executeSql(sqlstr)
-
-        elif operation == 2: # Existing user , revoke role
-            sqlstr = TEMPLATE4.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
-            parm = connection.executeSql(sqlstr)
-            sqlstr = TEMPLATE5.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
-            parm = connection.executeSql(sqlstr)
-
-        elif operation == 3: # Existing user , revoke role, delete user
-            sqlstr = TEMPLATE4.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
-            parm = connection.executeSql(sqlstr)
-            sqlstr = TEMPLATE5.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
-            parm = connection.executeSql(sqlstr)
-            sqlstr = TEMPLATE6.format(new_user=new_user)
-            parm = connection.executeSql(sqlstr)
-
-        if new_connection and new_connection.replace (' ','') != '': 
-
-            # Create connection administrative postgres database (postgres)
-            uri = QgsDataSourceUri(connection.uri())
-
-            new_connection = new_connection.format(database_name=uri.database(),server_name=uri.host(),new_user=new_user)
-            uri.setUsername(new_user)
-            uri.setPassword(new_password)
-            
-            config = {
-              "saveUsername": True,
-              "savePassword": True,
-              "estimatedMetadata": True,
-              "metadataInDatabase": True,
-            }
-
-            conn_new = metadata.createConnection(uri.uri(), config)
-            conn_new.store(new_connection)
-
+            if operation == 0: # Create user, grant role
+                sqlstr = TEMPLATE1.format(role=role_value, new_user=new_user, pwd=new_password)
+                #feedback.pushInfo('\n\n{}'.format(sqlstr))
+                parm = connection.executeSql(sqlstr)
+                sqlstr = TEMPLATE2.format(role=role_value, new_user=new_user, pwd=new_password)
+                #feedback.pushInfo('\n\n{}'.format(sqlstr))
+                parm = connection.executeSql(sqlstr)
+                sqlstr = TEMPLATE3.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+                #feedback.pushInfo('\n\n{}'.format(sqlstr))
+                parm = connection.executeSql(sqlstr)
+    
+            elif operation == 1: # Existing user , change role
+                sqlstr = TEMPLATE4.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+                #feedback.pushInfo('\n\n{}'.format(sqlstr))
+                parm = connection.executeSql(sqlstr)
+                sqlstr = TEMPLATE5.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+                #feedback.pushInfo('\n\n{}'.format(sqlstr))
+                parm = connection.executeSql(sqlstr)
+                sqlstr = TEMPLATE2.format(role=role_value, new_user=new_user, pwd=new_password)
+                #feedback.pushInfo('\n\n{}'.format(sqlstr))
+                parm = connection.executeSql(sqlstr)
+                sqlstr = TEMPLATE3.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+                #feedback.pushInfo('\n\n{}'.format(sqlstr))
+                parm = connection.executeSql(sqlstr)
+    
+            elif operation == 2: # Existing user , revoke role
+                sqlstr = TEMPLATE4.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+                #feedback.pushInfo('\n\n{}'.format(sqlstr))
+                parm = connection.executeSql(sqlstr)
+                sqlstr = TEMPLATE5.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+                #feedback.pushInfo('\n\n{}'.format(sqlstr))
+                parm = connection.executeSql(sqlstr)
+    
+            elif operation == 3: # Existing user , revoke role, delete user
+                sqlstr = TEMPLATE4.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+                #feedback.pushInfo('\n\n{}'.format(sqlstr))
+                parm = connection.executeSql(sqlstr)
+                sqlstr = TEMPLATE5.format(new_user=new_user, fdc_read_role=fdc_read_role, fdc_model_role=fdc_model_role, fdc_admin_role=fdc_admin_role)
+                #feedback.pushInfo('\n\n{}'.format(sqlstr))
+                parm = connection.executeSql(sqlstr)
+                sqlstr = TEMPLATE6.format(new_user=new_user)
+                parm = connection.executeSql(sqlstr)
+            elif operation == 4: # Create new connection
+                if new_connection and new_connection.replace (' ','') != '' and new_password and new_password.replace (' ','') != '': 
+    
+                    # Create connection administrative postgres database (postgres)
+                    uri = QgsDataSourceUri(connection.uri())
+         
+                    new_connection = new_connection.format(database_name=uri.database(),server_name=uri.host(),new_user=new_user)
+                    uri.setUsername(new_user)
+                    uri.setPassword(new_password)
+                    
+                    config = {
+                      "saveUsername": True,
+                      "savePassword": True,
+                      "estimatedMetadata": True,
+                      "metadataInDatabase": True,
+                    }
+         
+                    conn_new = metadata.createConnection(uri.uri(), config)
+                    conn_new.store(new_connection)
+                else:
+                    feedback.reportError('Cannot create new connection; connection name or user password is missing !')
+        else:
+            feedback.reportError('Cannot continue; user name is missing!')
+        
         return {'new_connction': new_connection, 'new_user': new_user, 'new_password': new_password, 'role': role_value}
 
     def name(self):
