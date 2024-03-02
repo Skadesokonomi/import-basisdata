@@ -106,8 +106,8 @@
       "forudsætning" :[],
       "dato":"2023-11-28"
    },
-   "Tilføj historik tabeller":{
-      "forklaring":"SQL kommandoer til generering af historik tabeller",
+   "TOpdatering af historik view:{
+      "forklaring":"SQL kommandoer til gopdatring af af historik viewsenerering af historik tabeller",
       "adresse":"https://storage.googleapis.com/skadesokonomi-dk-data/add_history.sql",
       "sortering":22,
       "dbkeys":{}, 
@@ -123,6 +123,15 @@
       "navn": "opd0005",	  
       "forudsætning" :[],
       "dato":"2024-01-15"
+   },
+   "Opdatering af historik view":{
+      "forklaring":"SQL kommandoer til opdatring af af historik viewsgenerering af historik tabeller",
+      "adresse":"https://storage.googleapis.com/skadesokonomi-dk-data/add_history_views.sql",
+      "sortering":24,
+      "dbkeys":{}, 
+      "navn": "opd0006",	  
+      "forudsætning" :["opd0004"],
+      "dato":"2024-03-02"
    }
 }
 

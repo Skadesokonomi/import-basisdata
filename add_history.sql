@@ -41,20 +41,20 @@ CREATE TABLE IF NOT EXISTS used_parameters
 );
 
 
-CREATE OR REPLACE VIEW fdc_results.used_parameters_view
+CREATE OR REPLACE VIEW used_parameters_view
  AS
  SELECT b.bid,
-    b.name AS batch_name,
-    b.run_at,
-    b.no_models,
+    b.name AS "Batch name",
+    b.run_at AS "Creation time",
+    b.no_models "Number of models",
     m.mid,
-    m.table_name,
-    m.name AS model_name,
-    m.no_rows,
-    m.no_secs,
+    m.table_name AS "Table name",
+    m.name AS "Model name",
+    m.no_rows AS "Number of rows",
+    m.no_secs AS "Exeqution time",
     p.uid,
-    p.name AS parameter_name,
-    p.value
+    p.name AS "Parameter name",
+    p.value AS "Parameter value"
    FROM fdc_results.batches b
      LEFT JOIN fdc_results.used_models m ON b.bid = m.bid
      LEFT JOIN fdc_results.used_parameters p ON m.mid = p.mid
