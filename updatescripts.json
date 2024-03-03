@@ -106,8 +106,8 @@
       "forudsætning" :[],
       "dato":"2023-11-28"
    },
-   "TOpdatering af historik view:{
-      "forklaring":"SQL kommandoer til gopdatring af af historik viewsenerering af historik tabeller",
+   "Opdatering af historik view":{
+      "forklaring":"SQL kommandoer til opdatering af af historik view",
       "adresse":"https://storage.googleapis.com/skadesokonomi-dk-data/add_history.sql",
       "sortering":22,
       "dbkeys":{}, 
