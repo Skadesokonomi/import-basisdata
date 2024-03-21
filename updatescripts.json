@@ -123,6 +123,15 @@
       "navn": "opd0005",	  
       "forudsætning" :[],
       "dato":"2024-01-15"
+   },
+   "Ret query \"q_agriculture\" vedr. NULL fejl":{
+      "forklaring":"SQL kommandoer til opdatering af query \"q_agriculture\" vedr. NULL fejl",
+      "adresse":"https://storage.googleapis.com/skadesokonomi-dk-data/replace_agriculture.sql",
+      "sortering":24,
+      "dbkeys":{}, 
+      "navn": "opd0006",	  
+      "forudsætning" :[],
+      "dato":"2024-03-21"
    }
 }
 
