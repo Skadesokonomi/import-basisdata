@@ -72,32 +72,22 @@ class FDCRasterImportAlgorithm(QgsProcessingAlgorithm):
         s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", True) # Force collapsed to True 
 
 
-        self.addParameter(QgsProcessingParameterString('suffix', 'Suffix', optional=True, multiLine=False, defaultValue=''))
-        self.addParameter(QgsProcessingParameterNumber('year', 'Year', type=QgsProcessingParameterNumber.Integer, minValue=2000, maxValue=3000, defaultValue=2025))
-        self.addParameter(QgsProcessingParameterEnum('incident_type', 'Incident type', options=['T1','T5','T10','T20','T50','T100','T200','T500','T1000'], allowMultiple=False, usesStaticStrings=False, defaultValue=[]))
-        self.addParameter(QgsProcessingParameterDatabaseSchema('schema_flood_data', 'Schema, flood data', connectionParameterName='database_connection', defaultValue='fdc_flood'))
-        self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue=None))
-        self.addParameter(QgsProcessingParameterBoolean('depth_in_centimeters_', 'Depth in centimeters ? ', defaultValue=False))
-        self.addParameter(QgsProcessingParameterBand('flood_raster_layer', 'Flood raster layer', parentLayerParameterName='flood_raster', allowMultiple=False, defaultValue=[1]))
         self.addParameter(QgsProcessingParameterRasterLayer('flood_raster', 'Flood raster', defaultValue=None))
-        self.addParameter(QgsProcessingParameterEnum('model_name', 'Model name', options=['(none)','ssp2-4.5','ssp3-7.2'], allowMultiple=False, usesStaticStrings=False, defaultValue=[]))
+        self.addParameter(QgsProcessingParameterBand('flood_raster_layer', 'Flood raster layer', parentLayerParameterName='flood_raster', allowMultiple=False, defaultValue=[1]))
+        self.addParameter(QgsProcessingParameterBoolean('depth_in_centimeters_', 'Depth in centimeters ? ', defaultValue=False))
+        self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue=None))
+        self.addParameter(QgsProcessingParameterDatabaseSchema('schema_flood_data', 'Schema, flood data', connectionParameterName='database_connection', defaultValue='fdc_flood'))
+        self.addParameter(QgsProcessingParameterEnum('incident_type', 'Incident type', options=['T1','T5','T10','T20','T50','T100','T200','T500','T1000'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
+        self.addParameter(QgsProcessingParameterNumber('year', 'Year', type=QgsProcessingParameterNumber.Integer, minValue=2000, maxValue=3000, defaultValue=2025))
+        self.addParameter(QgsProcessingParameterEnum('model_name', 'Model name', options=['(none)','ssp2-4.5','ssp3-7.2'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
+        self.addParameter(QgsProcessingParameterString('suffix', 'Suffix', optional=True, multiLine=False, defaultValue=None))
 
     def processAlgorithm(self, parameters: dict[str, Any], context: QgsProcessingContext, model_feedback: QgsProcessingFeedback) -> dict[str, Any]:
         # Use a multi-step feedback, so that individual child algorithm progress reports are adjusted for the
         # overall progress through the model
-        feedback = QgsProcessingMultiStepFeedback(4, model_feedback)
+        feedback = QgsProcessingMultiStepFeedback(6, model_feedback)
         results = {}
         outputs = {}
-
-        # Calculate expression
-        alg_params = {
-            'INPUT': QgsExpression("replace(trim(lower(concat(\r\n  array_get(array('T1','T5','T10','T20','T50','T100','T200','T500','T1000'),@incident_type),\r\n  '_',\r\n  @year,\r\n  array_get(array('','_ssp2-4.5','_ssp3-7.2'),@model_name),\r\n  if (coalesce(@suffix,'')='','','_'||@suffix)))),\r\narray(' ','.','-','æ','ø','å'),array('_','_','_','ae','oe','aa'))\r\n ").evaluate()
-        }
-        outputs['CalculateExpression'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-
-        feedback.setCurrentStep(1)
-        if feedback.isCanceled():
-            return {}
 
         # Raster pixels to polygons
         alg_params = {
@@ -107,6 +97,16 @@ class FDCRasterImportAlgorithm(QgsProcessingAlgorithm):
             'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
         }
         outputs['RasterPixelsToPolygons'] = processing.run('native:pixelstopolygons', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(1)
+        if feedback.isCanceled():
+            return {}
+
+        # Calculate expression
+        alg_params = {
+            'INPUT': QgsExpression("replace(trim(lower(concat(\r\n  array_get(array('T1','T5','T10','T20','T50','T100','T200','T500','T1000'),@incident_type),\r\n  '_',\r\n  @year,\r\n  array_get(array('','_ssp2-4.5','_ssp3-7.2'),@model_name),\r\n  if (coalesce(@suffix,'')='','','_'||@suffix)))),\r\narray(' ','.','-','æ','ø','å'),array('_','_','_','ae','oe','aa'))\r\n ").evaluate()
+        }
+        outputs['CalculateExpression'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
         feedback.setCurrentStep(2)
         if feedback.isCanceled():
@@ -121,6 +121,16 @@ class FDCRasterImportAlgorithm(QgsProcessingAlgorithm):
         outputs['RefactorFields'] = processing.run('native:refactorfields', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
         feedback.setCurrentStep(3)
+        if feedback.isCanceled():
+            return {}
+
+        # Calculate expression2
+        alg_params = {
+            'INPUT': QgsExpression('concat(\'SELECT COUNT(*) AS cnt FROM "\',@schema_flood_data,\'"."\',@Calculate_expression_OUTPUT,\'"\')').evaluate()
+        }
+        outputs['CalculateExpression2'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(4)
         if feedback.isCanceled():
             return {}
 
@@ -157,164 +167,17 @@ class FDCRasterImportAlgorithm(QgsProcessingAlgorithm):
             'WHERE': None
         }
         outputs['ExportToPostgresqlAvailableConnections'] = processing.run('gdal:importvectorintopostgisdatabaseavailableconnections', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        
-        TEMPLATE = """
-        INSERT INTO "{schema}"."{table}" (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable)
-            VALUES ('{name}','{parent}','{value}','{type}', '', '', '', '', '** Autoupdated**', 10, ' ')
-            ON CONFLICT (name) DO UPDATE SET value = '{value}', parent = '{parent}', type = '{type}' 
-        """          
 
-        feedback = QgsProcessingMultiStepFeedback(1, feedback)
-        s = QgsSettings() 
-        s.setValue("QgsCollapsibleGroupBox/QgsProcessingDialogBase/grpAdvanced/collapsed", self.folded) # Restore original state
-    
-        user_options = self.parameterAsEnums(parameters, 'import_layers', context)
-        selected_items = [self.option_list[i] for i in user_options]
-        open_layer = self.parameterAsBoolean(parameters, 'open_layers_after_running_algorithm', context)
+        feedback.setCurrentStep(5)
+        if feedback.isCanceled():
+            return {}
 
-        # Get connection
-        connection_name = self.parameterAsString(parameters, 'database_connection', context)
-        metadata = QgsProviderRegistry.instance().providerMetadata('postgres')
-        connection = metadata.findConnection(connection_name)
-
-        # Find username/password (even if it's hidden in a configuration setup)
-        uri = QgsDataSourceUri(connection.uri())
-        #feedback.pushInfo('URI: {}'.format(uri.uri()))
-
-        myname, mypass = self.get_postgres_conn_info(connection_name)
-        uri.setUsername(myname)
-        uri.setPassword(mypass)
-        #feedback.pushInfo('Username = "{}", Password = "{}"'.format(myname,mypass))
-        #feedback.pushInfo('URI(2): {}'.format(uri.uri()))
-
-        # Find full name for table with parameters
-        schema_name = self.parameterAsString(parameters, 'schema_name_for_parameter_list', context)
-        table_name = self.parameterAsString(parameters, 'table_name_for_parameter_list', context)
-        #feedback.pushInfo('Parameter: Schemaname = "{}", Tablename = "{}"'.format(schema_name,table_name))
-
-        # Setup for progress indicator
-        total = 100.0 / len(selected_items) if len(selected_items) else 0
-        current = 1
-        
-        extr_result = {}
-
-        # Get connection
-
-        # Loop through selected layers        
-        for iteml in selected_items:
-            
-            item = iteml.split(' ... ',1)[0]
-
-            # Stop the algorithm if cancel button has been clicked
-            if feedback.isCanceled():
-                break
-            
-            feedback.pushInfo('\n\nProcessing layer {}....\n'.format(item))
-
-            # Find schema and table name in parameter table
-            parm_table = connection.executeSql('SELECT "value" FROM "{}"."{}" WHERE "name" = \'{}\''.format(schema_name, table_name, self.options[item]['dbkode'][0]))
-
-            if parm_table:                   
-                full_name = parm_table[0][0] 
-            else:
-                full_name = ''
-            
-            if len(full_name.replace(' ',''))==0: 
-                exp_schema = self.options[item]['def_schema']
-                exp_table = self.options[item]['def_table']
-                exp_full_name = '"{}"."{}"'.format (exp_schema.replace('"',''),exp_table.replace('"',''))
-                sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=self.options[item]['dbkode'][0],  value=exp_full_name, parent=self.options[item]['dbkode'][1], type=self.options[item]['dbkode'][2])
-                parm_table = connection.executeSql(sqlstr)
-            else:
-                # Split full name into schema and table name
-                schtab = full_name.split('.',1)
-                exp_schema = schtab[0].replace('"','')
-                exp_table = schtab[1].replace('"','')
-
-            feedback.pushInfo('Export: Full name = {}, Schemaname = {}, Tablename = {}'.format(full_name, exp_schema, exp_table))
-
-            # Update fields information in parameter list
-            for k,v in self.options[item]['dbkeys'].items():
-                feedback.pushInfo('values: {}'.format(str(v)))
-                sqlstr = TEMPLATE.format(schema=schema_name, table=table_name, name=k, value=v[0], parent=v[1], type=v[2])
-                feedback.pushInfo('setting field sql: {}'.format(sqlstr))
-                parm_table = connection.executeSql(sqlstr)
-
-            # Find primary key column name in parameter table
-            sql_pkey = 'SELECT "value" FROM "{}"."{}" WHERE "name" = \'f_pkey_{}\''.format(schema_name, table_name, self.options[item]['dbkode'][0])
-            feedback.pushInfo('Primary key: SQL --> {}'.format(sql_pkey))
-            parm_table = connection.executeSql(sql_pkey)
-            exp_pkey = parm_table[0][0].replace('"','') if parm_table[0] else None 
-            
-            feedback.pushInfo('Primary: Column name: {}'.format(exp_pkey))
-
-            # Find geometry column name in parameter table
-            sql_geom = 'SELECT "value" FROM "{}"."{}" WHERE "name" = \'f_geom_{}\''.format(schema_name, table_name, self.options[item]['dbkode'][0])
-            #feedback.pushInfo('Geometry: SQL --> {}'.format(sql_geom))
-            parm_table = connection.executeSql(sql_geom)
-            exp_geom = parm_table[0][0].replace('"','') if parm_table[0] else None
-            
-            feedback.pushInfo('Geometry: Column name: {}'.format(exp_geom))
-
-
-            # Drop table if it exist beforehand
-            connection.executeSql('DROP TABLE IF EXISTS "{}"."{}"'.format(exp_schema, exp_table))
-
-            # Update uri with datasource
-            uri.setDataSource(exp_schema, exp_table, exp_geom, '', exp_pkey)
-            uri_upd = 'postgres://'+uri.uri()
-
-            feedback.pushInfo('Updated URI: {}'.format(uri_upd))
-
-            feedback.pushInfo('Input ogr: {}'.format(self.options[item]['adresse']))
-
-#            p_opt = '-nlt PROMOTE_TO_MULTI'
-#            p_opt = ''
-
-#            processing.run(
-#                "gdal:clipvectorbypolygon", 
-#                {
-#                    'INPUT':    QgsVectorLayer(self.options[item]['adresse'],self.options[item]['dbkode'][0],self.options[item]['provider']),
-#                    'MASK':     parameters['layer_for_area_selection'],
-#                    'OPTIONS':  p_opt,
-#                    'OUTPUT':   uri_upd
-#                },
-#                is_child_algorithm=True, 
-#                context=context, 
-#                feedback=feedback
-#            )
-
-            # Activate processing algorithm with generated parameters
-            processing.run(
-                "native:extractbylocation", 
-                {
-                    'INPUT':     QgsVectorLayer(self.options[item]['adresse'],self.options[item]['dbkode'][0],self.options[item]['provider']),
-                    'PREDICATE': [0],
-                    'INTERSECT': parameters['layer_for_area_selection'],
-                    'OUTPUT':    uri_upd
-                },
-                is_child_algorithm=True, 
-                context=context, 
-                feedback=feedback
-            )
-            # Create spatial index
-            connection.executeSql('CREATE INDEX ON "{}"."{}" USING GIST ("{}")'.format(exp_schema, exp_table, exp_geom))
-
-            if open_layer:
-                context.addLayerToLoadOnCompletion(
-                    uri_upd,
-                    QgsProcessingContext.LayerDetails(
-                        item,
-                        context.project(),
-                        'LAYER'
-                    )
-                )
-
-            # Update the progress bar
-            feedback.setProgress(int(current* total))
-            current += 1 
-
-        return {'user_options': selected_items, 'connction_name': connection_name, 'schema_name': schema_name, 'table_name': schema_name}
+        # PostgreSQL execute SQL
+        alg_params = {
+            'DATABASE': parameters['database_connection'],
+            'SQL': outputs['CalculateExpression2']['OUTPUT']
+        }
+        outputs['PostgresqlExecuteSql'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
         return results
 
     def name(self):
