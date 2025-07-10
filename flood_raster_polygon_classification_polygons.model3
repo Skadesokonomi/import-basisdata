@@ -364,12 +364,6 @@
             <Option type="invalid" name="static_value"/>
           </Option>
         </Option>
-        <Option type="List" name="CREATION_OPTIONS">
-          <Option type="Map">
-            <Option type="int" name="source" value="2"/>
-            <Option type="invalid" name="static_value"/>
-          </Option>
-        </Option>
         <Option type="List" name="CRS">
           <Option type="Map">
             <Option type="int" name="source" value="2"/>
@@ -378,7 +372,7 @@
         </Option>
         <Option type="List" name="EXPRESSION">
           <Option type="Map">
-            <Option type="QString" name="expression" value="concat(&#xd;&#xa;  '&quot;A@',&#xd;&#xa;  to_string(@layer_number_for_flood_raster_layer),&#xd;&#xa;  '&quot;*',&#xd;&#xa;  if (@is_depth_values_in_centimeters_,'1.0','100.0')&#xd;&#xa;)"/>
+            <Option type="QString" name="expression" value="concat('&quot;A@',to_string(@layer_number_for_flood_raster_layer),'&quot;*',if (@is_depth_values_in_centimeters_,'1.0','100.0'))"/>
             <Option type="int" name="source" value="3"/>
           </Option>
         </Option>
@@ -562,10 +556,11 @@
     </Option>
   </Option>
   <Option type="Map" name="designerParameterValues">
-    <Option type="QString" name="append_text_to_tablename" value="test_model_3xcm"/>
+    <Option type="QString" name="append_text_to_tablename" value="asdasdasd"/>
     <Option type="int" name="climate_scenario" value="3"/>
     <Option type="QString" name="database_connection" value="fdc_hvidovre at localhost as postgres"/>
-    <Option type="QString" name="flood_raster_layer_or_file" value="OUTPUT_e95d99bd_cab7_4f44_af9e_3319cdf89cf8"/>
+    <Option type="QString" name="flood_raster_layer_or_file" value="trae_hojde_2f1aff7f_fedd_4aac_98bb_53b7fc93fa97"/>
+    <Option type="bool" name="is_depth_values_in_centimeters_" value="false"/>
     <Option type="int" name="layer_number_for_flood_raster_layer" value="1"/>
     <Option type="int" name="return_period_of_flood" value="0"/>
     <Option type="int" name="year" value="2000"/>

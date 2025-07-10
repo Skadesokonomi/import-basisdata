@@ -47,6 +47,25 @@ from qgis.core import QgsProcessingParameterString
 from qgis.core import QgsExpression
 from qgis import processing
 
+
+
+from typing import Any, Optional
+
+from qgis.core import QgsProcessing
+from qgis.core import QgsProcessingAlgorithm
+from qgis.core import QgsProcessingContext
+from qgis.core import QgsProcessingFeedback, QgsProcessingMultiStepFeedback
+from qgis.core import QgsProcessingParameterRasterLayer
+from qgis.core import QgsProcessingParameterBand
+from qgis.core import QgsProcessingParameterBoolean
+from qgis.core import QgsProcessingParameterProviderConnection
+from qgis.core import QgsProcessingParameterDatabaseSchema
+from qgis.core import QgsProcessingParameterEnum
+from qgis.core import QgsProcessingParameterNumber
+from qgis.core import QgsProcessingParameterString
+from qgis.core import QgsExpression
+from qgis import processing
+
 class FDCRasterPolygonClassificationMerge(QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config: Optional[dict[str, Any]] = None):
