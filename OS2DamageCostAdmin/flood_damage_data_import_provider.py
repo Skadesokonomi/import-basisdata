@@ -32,10 +32,12 @@ __revision__ = '$Format:%H$'
 
 from qgis.core import QgsProcessingProvider
 from .flood_damage_data_import_algorithm   import FDCDataImportAlgorithm
-from .flood_damage_raster_import_algorithm   import FDCRasterImportAlgorithm
 from .flood_damage_create_system_algorithm import FDCCreateSystemAlgorithm
 from .flood_damage_update_system_algorithm import FDCUpdateSystemAlgorithm
 from .flood_damage_user_admin_algorithm    import FDCUserAdminAlgorithm
+from .flood_damage_raster_polygon_classification_merge_algorithm  import FDCRasterPolygonClassificationMerge
+from .flood_damage_raster_polygon_pixels_classification_algorithm import FDCRasterPolygonClassificationPixels
+from .flood_damage_raster_polygon_pixels_algorithm                import FDCRasterPolygonPixels
 
 
 class FloodDamageCostAdmin(QgsProcessingProvider):
@@ -58,10 +60,12 @@ class FloodDamageCostAdmin(QgsProcessingProvider):
         Loads all algorithms belonging to this provider.
         """
         self.addAlgorithm(FDCDataImportAlgorithm())
-        self.addAlgorithm(FDCRasterImportAlgorithm())
         self.addAlgorithm(FDCCreateSystemAlgorithm())
         self.addAlgorithm(FDCUpdateSystemAlgorithm())
         self.addAlgorithm(FDCUserAdminAlgorithm())
+        self.addAlgorithm(FDCRasterPolygonClassificationMerge())
+        self.addAlgorithm(FDCRasterPolygonClassificationPixels())
+        self.addAlgorithm(FDCRasterPolygonPixels())
         # add additional algorithms here
         # self.addAlgorithm(MyOtherAlgorithm())
 
