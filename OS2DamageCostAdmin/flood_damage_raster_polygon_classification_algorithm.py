@@ -47,69 +47,54 @@ from qgis.core import QgsProcessingParameterString
 from qgis.core import QgsExpression
 from qgis import processing
 
+class FDCRasterPolygonClassification(QgsProcessingAlgorithm):
 
-
-from typing import Any, Optional
-
-from qgis.core import QgsProcessing
-from qgis.core import QgsProcessingAlgorithm
-from qgis.core import QgsProcessingContext
-from qgis.core import QgsProcessingFeedback, QgsProcessingMultiStepFeedback
-from qgis.core import QgsProcessingParameterRasterLayer
-from qgis.core import QgsProcessingParameterBand
-from qgis.core import QgsProcessingParameterBoolean
-from qgis.core import QgsProcessingParameterProviderConnection
-from qgis.core import QgsProcessingParameterDatabaseSchema
-from qgis.core import QgsProcessingParameterEnum
-from qgis.core import QgsProcessingParameterNumber
-from qgis.core import QgsProcessingParameterString
-from qgis.core import QgsExpression
-from qgis import processing
-
-class FDCRasterPolygonClassificationMerge(QgsProcessingAlgorithm):
-
-    def initAlgorithm(self, config: Optional[dict[str, Any]] = None):
+    def initAlgorithm(self, config=None):
         self.addParameter(QgsProcessingParameterRasterLayer('flood_raster_layer_or_file', 'Flood raster layer or file', defaultValue=None))
-        self.addParameter(QgsProcessingParameterBand('layer_number_for_flood_raster_layer', 'Layer number for flood raster layer', parentLayerParameterName='flood_raster_layer_or_file', allowMultiple=False, defaultValue=[1]))
+        self.addParameter(QgsProcessingParameterBand('layer_number_for_flood_raster_layer', 'Layer number for flood raster layer', parentLayerParameterName='flood_raster_layer_or_file', allowMultiple=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterBoolean('is_depth_values_in_centimeters_', 'Is depth values in centimeters ? ', defaultValue=True))
         self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue=None))
         self.addParameter(QgsProcessingParameterDatabaseSchema('schema_flood_data', 'Schema, flood data', connectionParameterName='database_connection', defaultValue='fdc_flood'))
         self.addParameter(QgsProcessingParameterEnum('return_period_of_flood', 'Return period of flood', options=['T1','T5','T10','T20','T50','T100','T200','T500','T1000'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
-        self.addParameter(QgsProcessingParameterNumber('year', 'Year', type=QgsProcessingParameterNumber.Integer, minValue=2000, maxValue=3000, defaultValue=2025))
+        self.addParameter(QgsProcessingParameterNumber('year', 'Year', type=QgsProcessingParameterNumber.Integer, minValue=1900, maxValue=3000, defaultValue=2025))
         self.addParameter(QgsProcessingParameterEnum('climate_scenario', 'Climate scenario', options=['(none)','SSP1-2.6','SSP2-4.5','SSP3-7.0'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterString('append_text_to_tablename', 'Append text to tablename', optional=True, multiLine=False, defaultValue=None))
-        self.addParameter(QgsProcessingParameterNumber('classification_value_in_cm', 'Classification value in cm', type=QgsProcessingParameterNumber.Integer, minValue=2, maxValue=100, defaultValue=10))
+        self.addParameter(QgsProcessingParameterBoolean('merge_to_larger_polygons_', 'Merge to larger polygons ? ', defaultValue=False))
+        self.addParameter(QgsProcessingParameterNumber('classification_value_in_cm', 'Classification value in cm', type=QgsProcessingParameterNumber.Integer, minValue=1, maxValue=100, defaultValue=10))
 
-    def processAlgorithm(self, parameters: dict[str, Any], context: QgsProcessingContext, model_feedback: QgsProcessingFeedback) -> dict[str, Any]:
+    def processAlgorithm(self, parameters, context, model_feedback):
         # Use a multi-step feedback, so that individual child algorithm progress reports are adjusted for the
         # overall progress through the model
         feedback = QgsProcessingMultiStepFeedback(8, model_feedback)
         results = {}
         outputs = {}
 
-        # Raster calculator
+        # Raster calculator GDAL
         alg_params = {
-            'CELL_SIZE': None,
-            'CREATION_OPTIONS': None,
-            'CRS': None,
-            'EXPRESSION': QgsExpression('concat(\r\n  \'"A@\',\r\n  to_string(@layer_number_for_flood_raster_layer),\r\n  \'"*\',\r\n  if (@is_depth_values_in_centimeters_,\'1.0\',\'100.0\')\r\n)').evaluate(),
-            'EXTENT': None,
-            'LAYERS': parameters['flood_raster_layer_or_file'],
+            'BAND_A': parameters['layer_number_for_flood_raster_layer'],
+            'BAND_B': None,
+            'BAND_C': None,
+            'BAND_D': None,
+            'BAND_E': None,
+            'BAND_F': None,
+            'EXTENT_OPT': 0,  # Ignore
+            'EXTRA': None,
+            'FORMULA': QgsExpression('concat(\'"A"\',if(@is_depth_values_in_centimeters_,\'\',\'*100.00\')) \r\n\r\n').evaluate(),
+            'INPUT_A': parameters['flood_raster_layer_or_file'],
+            'INPUT_B': None,
+            'INPUT_C': None,
+            'INPUT_D': None,
+            'INPUT_E': None,
+            'INPUT_F': None,
+            'NO_DATA': None,
+            'OPTIONS': None,
+            'PROJWIN': None,
+            'RTYPE': 5,  # Float32
             'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
         }
-        outputs['RasterCalculator'] = processing.run('native:modelerrastercalc', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        outputs['RasterCalculator'] = processing.run('gdal:rastercalculator', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
         feedback.setCurrentStep(1)
-        if feedback.isCanceled():
-            return {}
-
-        # Calculate expression
-        alg_params = {
-            'INPUT': QgsExpression("replace(trim(lower(concat(\r\n  array_get(array('T1','T5','T10','T20','T50','T100','T200','T500','T1000'),@return_period_of_flood),\r\n  '_',\r\n  @year,\r\n  array_get(array('','_SSP1-2.6','_SSP2-4.5','_SSP3-7.0'),@climate_scenario),\r\n  if (coalesce(@append_text_to_tablename,'')='','','_'||@append_text_to_tablename)))),\r\narray(' ','.','-','æ','ø','å'),array('_','_','_','ae','oe','aa'))\r\n ").evaluate()
-        }
-        outputs['CalculateExpression'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-
-        feedback.setCurrentStep(2)
         if feedback.isCanceled():
             return {}
 
@@ -125,32 +110,59 @@ class FDCRasterPolygonClassificationMerge(QgsProcessingAlgorithm):
         }
         outputs['RoundRaster'] = processing.run('native:roundrastervalues', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
+        feedback.setCurrentStep(2)
+        if feedback.isCanceled():
+            return {}
+
+        # Calculate expression
+        #alg_params = {
+        #    'INPUT': QgsExpression("replace(trim(lower(concat(\r\n  array_get(array('T1','T5','T10','T20','T50','T100','T200','T500','T1000'),@return_period_of_flood),\r\n  '_',\r\n  @year,\r\n  array_get(array('','_SSP1-2.6','_SSP2-4.5','_SSP3-7.0'),@climate_scenario),\r\n  if (coalesce(@append_text_to_tablename,'')='','','_'||@append_text_to_tablename)))),\r\narray(' ','.','-','æ','ø','å'),array('_','_','_','ae','oe','aa'))\r\n ").evaluate()
+        #}
+
+        # Calculate expression workaround
+        rp = self.parameterAsEnum(parameters,'return_period_of_flood',context)
+        ye = self.parameterAsString(parameters,'year',context)
+        sc = self.parameterAsEnum(parameters,'climate_scenario',context)
+        ap = self.parameterAsString(parameters,'append_text_to_tablename',context)
+        rpt = ['T1','T5','T10','T20','T50','T100','T200','T500','T1000'][rp]
+        sct = ['(none)','SSP1-2.6','SSP2-4.5','SSP3-7.0'][sc]
+        apt = '' if ap is None or '' else '_' + ap
+        tablename= '{}_{}_{}{}'.format(rpt,ye,sct,apt).lower().strip()
+        replace_dict= {".":"_",",":"_"," ":"_","!":"_","?":"_","æ":"ae","ø":"oe","å":"aa"}
+        for old, new in replace_dict.items(): tablename = tablename.replace(old, new)
+
+        #outputs['CalculateExpression'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+    
         feedback.setCurrentStep(3)
         if feedback.isCanceled():
             return {}
+        
+        mrg = self.parameterAsBoolean(parameters,'merge_to_larger_polygons_',context)
 
-        # Calculate expression2
-        alg_params = {
-            'INPUT': QgsExpression('concat (\r\n\'WITH one AS (SELECT * FROM fdc_admin.parametre WHERE name LIKE \\\'t_flood_%\\\' AND POSITION(\\\'\', \r\n@schema_flood_data, \r\n\'\\\' in value) > 0 AND POSITION(\\\'\', \r\n@Calculate_expression_OUTPUT, \r\n\'\\\' in value) > 0 \',\r\n\'UNION (SELECT * FROM fdc_admin.parametre WHERE name LIKE \\\'t_flood_%\\\' AND COALESCE(value,\\\'\\\') = \\\'\\\'\',\' ORDER BY name ASC LIMIT 1) ORDER BY value DESC LIMIT 1), \',\r\n\'two   AS (UPDATE fdc_admin.parametre SET value = \\\'"\', \r\n@schema_flood_data,\r\n\'"."\', \r\n@Calculate_expression_OUTPUT,\r\n\'"\\\' WHERE name in (SELECT name FROM one)), \',\r\n\'three AS (UPDATE fdc_admin.parametre SET value = \\\'"fid"\\\' WHERE name in (SELECT \\\'f_pkey_\\\'||name FROM one)), \',\r\n\'four AS (UPDATE fdc_admin.parametre SET value = \\\'"vanddybde_m"\\\' WHERE name in (SELECT \\\'f_depth_\\\'||name FROM one)) \',\r\n\'UPDATE fdc_admin.parametre SET value = \\\'"geom"\\\' WHERE name in (SELECT \\\'f_geom_\\\'||name FROM one);\'\r\n)\r\n').evaluate()
-        }
-        outputs['CalculateExpression2'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        if mrg: 
+            # Polygonize (raster to vector)
+            alg_params = {
+                'BAND': parameters['layer_number_for_flood_raster_layer'],
+                'EIGHT_CONNECTEDNESS': False,
+                'EXTRA': None,
+                'FIELD': 'depth',
+                'INPUT': outputs['RoundRaster']['OUTPUT'],
+                'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+            }
+            outputs['PolygonizeRasterToVector'] = processing.run('gdal:polygonize', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        else:
+            # Raster pixels to polygons
+            alg_params = {
+                'FIELD_NAME': 'depth',
+                'INPUT_RASTER': outputs['RoundRaster']['OUTPUT'],
+                'RASTER_BAND': parameters['layer_number_for_flood_raster_layer'],
+                'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+            }
+            outputs['PolygonizeRasterToVector'] = processing.run('native:pixelstopolygons', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+		
 
         feedback.setCurrentStep(4)
-        if feedback.isCanceled():
-            return {}
-
-        # Polygonize (raster to vector)
-        alg_params = {
-            'BAND': parameters['layer_number_for_flood_raster_layer'],
-            'EIGHT_CONNECTEDNESS': False,
-            'EXTRA': None,
-            'FIELD': 'depth',
-            'INPUT': outputs['RoundRaster']['OUTPUT'],
-            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
-        }
-        outputs['PolygonizeRasterToVector'] = processing.run('gdal:polygonize', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-
-        feedback.setCurrentStep(5)
         if feedback.isCanceled():
             return {}
 
@@ -162,7 +174,7 @@ class FDCRasterPolygonClassificationMerge(QgsProcessingAlgorithm):
         }
         outputs['RefactorFields'] = processing.run('native:refactorfields', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
-        feedback.setCurrentStep(6)
+        feedback.setCurrentStep(5)
         if feedback.isCanceled():
             return {}
 
@@ -194,29 +206,52 @@ class FDCRasterPolygonClassificationMerge(QgsProcessingAlgorithm):
             'SKIPFAILURES': False,
             'SPAT': None,
             'S_SRS': None,
-            'TABLE': outputs['CalculateExpression']['OUTPUT'],
+            'TABLE': tablename,
             'T_SRS': None,
             'WHERE': None
         }
         outputs['ExportToPostgresqlAvailableConnections'] = processing.run('gdal:importvectorintopostgisdatabaseavailableconnections', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
-        feedback.setCurrentStep(7)
+        feedback.setCurrentStep(6)
         if feedback.isCanceled():
             return {}
 
         # PostgreSQL execute SQL
+        
+        # Workaround
+        xxx = """
+WITH 
+  one AS (
+    SELECT * FROM fdc_admin.parametre WHERE name LIKE 't_flood_%' AND POSITION('{schemaname}' in value) > 0 AND POSITION('{tablename}' in value) > 0 
+    UNION ( SELECT * FROM fdc_admin.parametre WHERE name LIKE 't_flood_%' AND COALESCE(value,'') = '' ORDER BY name ASC LIMIT 1) ORDER BY value DESC LIMIT 1), 
+
+  two AS (
+    UPDATE fdc_admin.parametre SET value = '"{schemaname}"."{tablename}"' WHERE name in (SELECT name FROM one)), 
+
+  three AS (
+    UPDATE fdc_admin.parametre SET value = '"fid"' WHERE name in (SELECT 'f_pkey_'||name FROM one)), 
+
+  four AS (
+    UPDATE fdc_admin.parametre SET value = '"vanddybde_m"' WHERE name in (SELECT 'f_depth_'||name FROM one)) 
+
+UPDATE fdc_admin.parametre SET value = '"geom"' WHERE name in (SELECT 'f_geom_'||name FROM one);
+"""
+
+        sqltxt = xxx.format(schemaname=parameters['schema_flood_data'].strip('"'),tablename=tablename.strip('"'))
+        
+        
         alg_params = {
             'DATABASE': parameters['database_connection'],
-            'SQL': outputs['CalculateExpression2']['OUTPUT']
+            'SQL': sqltxt 
         }
         outputs['PostgresqlExecuteSql'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
         return results
 
     def name(self) -> str:
-        return 'flood_raster_polygon_classification_merge'
+        return 'flood_raster_polygon_classification'
 
     def displayName(self) -> str:
-        return 'OS2 Flood Damage Cost convert raster to polygon with calssification and merge'
+        return 'OS2 Flood Damage Cost convert raster to polygon with classification'
 
     def group(self) -> str:
         return ''
