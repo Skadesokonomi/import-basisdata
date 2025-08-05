@@ -60,7 +60,7 @@ class FDCRasterPolygonClassification(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterEnum('climate_scenario', 'Climate scenario', options=['(none)','SSP1-2.6','SSP2-4.5','SSP3-7.0'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterString('append_text_to_tablename', 'Append text to tablename', optional=True, multiLine=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterBoolean('merge_to_larger_polygons_', 'Merge to larger polygons ? ', defaultValue=False))
-        self.addParameter(QgsProcessingParameterNumber('classification_value_in_cm', 'Classification value in cm', type=QgsProcessingParameterNumber.Integer, minValue=1, maxValue=100, defaultValue=10))
+        self.addParameter(QgsProcessingParameterNumber('classification_value_in_cm', 'Classification value in cm', type=QgsProcessingParameterNumber.Integer, minValue=1, maxValue=100, defaultValue=5))
 
     def processAlgorithm(self, parameters, context, model_feedback):
         # Use a multi-step feedback, so that individual child algorithm progress reports are adjusted for the
