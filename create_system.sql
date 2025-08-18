@@ -1,4 +1,6 @@
--- Setup PostGIS
+-- This is the multiple flood models branch
+
+-- Setup PostGIS 
 
 CREATE EXTENSION IF NOT EXISTS postgis;
 
