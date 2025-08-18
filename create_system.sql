@@ -217,7 +217,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_loss_future_q_building', 'q_building', 'vaerditab_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_building', 'q_building', 'risiko_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_building', 'Queries', '
-SELECT
+SELECT /* Multiple flood scenarios version */
     b.*,
     d.{f_category_t_damage} AS skade_kategori,
     d.{f_type_t_damage} AS skade_type,
@@ -282,7 +282,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_future_q_recreative', 'q_recreative', 'skadebeloeb_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_recreative', 'q_recreative', 'risiko_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_recreative', 'Queries', '
-SELECT 
+SELECT /* Multiple flood scenarios version */
     b.*,
     {Antal dage med oversvømmelse} AS periode_dage, 
     st_area(b.{f_geom_t_recreative})::NUMERIC(12,2) AS areal_m2,
@@ -341,7 +341,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_road_traffic', 'q_road_traffic', 'geom', 'T', '', '', '', '', '', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegning, vej og trafik', 'Vej og trafik', '', 'T', '', '', '', 'q_road_traffic', 'Sæt hak såfremt der skal beregnes økonomiske tab for vej og trafik i forbindelse med den pågældende oversvømmelseshændelse.', 10, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_road_traffic', 'Queries', '
-SELECT 
+SELECT /* Multiple flood scenarios version */
     b.*,
     n.*,
     f.*,
@@ -408,7 +408,7 @@ WITH
     of AS (SELECT b.{f_pkey_t_building}, b.{f_geom_t_building} FROM {t_building} b WHERE EXISTS ( SELECT 1 FROM {Oversvømmelsesmodel, fremtid} f WHERE st_intersects (f.{f_geom_Oversvømmelsesmodel, fremtid}, b.{f_geom_t_building}) AND  f.{f_depth_Oversvømmelsesmodel, fremtid} >= {Minimum vanddybde (meter)})),
     op AS (SELECT b.{f_pkey_t_building}, b.{f_geom_t_building} FROM {t_building} b WHERE EXISTS ( SELECT 1 FROM {Oversvømmelsesmodel, nutid} f WHERE st_intersects (f.{f_geom_Oversvømmelsesmodel, nutid}, b.{f_geom_t_building}) AND  f.{f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}))
 
-SELECT 
+SELECT /* Multiple flood scenarios version */
     x.*,
     st_area(x.{f_geom_t_building})::NUMERIC(12,2) AS areal_byg_m2,
     k.{f_sqmprice_t_sqmprice}::NUMERIC(12,2) AS kvm_pris_kr,
@@ -669,7 +669,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 ALTER TABLE {celltable} ADD PRIMARY KEY(fid);
 CREATE INDEX ON {celltable} USING GIST(geom);', 'P', '', '', '', '', '', 1, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_bioscore_spatial', 'Queries', '
-SELECT
+SELECT /* Multiple flood scenarios version */
     c.*,
 	st_area(c.{f_geom_t_bioscore})::NUMERIC(12,2) AS areal_m2,
     n.*,
@@ -698,7 +698,7 @@ FROM {t_bioscore} c,
 WHERE n.cnt_oversvoem_nutid > 0 OR f.cnt_oversvoem_fremtid > 0 
 ', 'P', '', '', '', '', 'SQL template for bioscore spatial - new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_comp_build', 'Queries', '
-SELECT
+SELECT /* Multiple flood scenarios version */
     row_number() OVER () as {f_pkey_q_comp_build},
     c.*,
     b.{f_pkey_t_building} AS byg_id,
@@ -736,7 +736,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_infrastructure', 'q_infrastructure', 'objectid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_infrastructure', 'q_infrastructure', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_infrastructure', 'Queries', '
-SELECT DISTINCT ON (o.{f_pkey_t_infrastructure}) 
+SELECT /* Multiple flood scenarios version */ DISTINCT ON (o.{f_pkey_t_infrastructure}) 
     o.*,
     n.*,
     f.*,
@@ -769,7 +769,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_publicservice', 'q_publicservice', 'objectid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_publicservice', 'q_publicservice', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_publicservice', 'Queries', '
-SELECT DISTINCT ON (o.{f_pkey_t_publicservice}) 
+SELECT /* Multiple flood scenarios version */ DISTINCT ON (o.{f_pkey_t_publicservice}) 
     o.*,
     n.*,
     f.*,
@@ -816,7 +816,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_t_agr_price', 't_agr_price', 'priskategori', 'F', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_price_t_agr_price', 't_agr_price', 'pris', 'F', '', '', '', '', 'Name of field for price in øre', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_agriculture', 'Queries', '
-SELECT
+SELECT /* Multiple flood scenarios version */
     b.*,
     k.afgroedegruppe,
     k.afgroedekategori,
@@ -871,7 +871,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_loss_future_q_build_peri', 'q_build_peri', 'vaerditab_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_build_peri', 'q_build_peri', 'risiko_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_build_peri', 'Queries', '
-SELECT
+SELECT /* Multiple flood scenarios version */
     b.*,
     d.{f_category_t_damage} AS skade_kategori,
     d.{f_type_t_damage} AS skade_type,
@@ -945,7 +945,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_future_q_human_health', 'q_human_health', 'skadebeloeb_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_human_health', 'q_human_health', 'risiko_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_human_health', 'Queries', '
-SELECT 
+SELECT /* Multiple flood scenarios version */
     b.{f_pkey_t_building} as {f_pkey_q_human_health},
     b.{f_muncode_t_building} AS kom_kode,
     b.{f_usage_code_t_building} AS bbr_anv_kode,
@@ -1035,7 +1035,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_future_q_tourism_spatial', 'q_tourism_spatial', 'skadebeloeb_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_tourism_spatial', 'q_tourism_spatial', 'risiko_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_tourism_spatial', 'Queries', '
-SELECT
+SELECT /* Multiple flood scenarios version */
     b.{f_pkey_t_building} as {f_pkey_q_tourism_spatial},
     b.{f_muncode_t_building} AS kom_kode,
     b.{f_usage_code_t_building} AS bbr_anv_kode,
@@ -1188,7 +1188,7 @@ CREATE TABLE IF NOT EXISTS patches_done
 SET search_path = fdc_admin, public;
 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_agriculture', 'Queries', '
-SELECT
+SELECT /* Multiple flood scenarios version */
     b.*,
     k.afgroedegruppe,
     k.afgroedekategori,
