@@ -1230,4 +1230,3 @@ SELECT
 	WHERE f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0
 ', 'P', '', '', '', '', 'SQL template for agriculture model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
-
