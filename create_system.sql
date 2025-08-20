@@ -226,8 +226,11 @@ SELECT /* Multiple flood scenarios version */
     k.{f_sqmprice_t_sqmprice}::NUMERIC(12,2) as kvm_pris_kr,
     st_area(b.{f_geom_t_building})::NUMERIC(12,2) AS areal_byg_m2,
     n.*,
+/*
     f.*,
     r.*
+*/
+    '''' AS omraade
     FROM {t_building} b
     LEFT JOIN {t_build_usage} u on b.{f_usage_code_t_building} = u.{f_pkey_t_build_usage}
     LEFT JOIN {t_damage} d on u.{f_category_t_build_usage} = d.{f_category_t_damage} AND d.{f_type_t_damage} = ''{Skadetype}''   
@@ -244,6 +247,7 @@ SELECT /* Multiple flood scenarios version */
             CASE WHEN COUNT (*) > 0 THEN k.kvm_pris * st_area(b.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}/100.0 ELSE 0 END::NUMERIC(12,2) as {f_loss_present_q_building}             
         FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}
     ) n,
+/*
     LATERAL (
         SELECT
             COUNT (*) AS cnt_oversvoem_fremtid,
@@ -274,7 +278,8 @@ SELECT /* Multiple flood scenarios version */
           END)/{Returperiode, antal år})::NUMERIC(12,2) AS {f_risk_q_building},
           '''' AS omraade
     ) r
-    WHERE f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ');
+*/
+    WHERE /* f.cnt_oversvoem_fremtid > 0 OR */ n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadesberegning, Rekreative områder', 'Rekreative områder', '', 'T', '', '', '', 'q_recreative', 'Sæt hak såfremt der skal beregnes økonomiske tab for overnatningssteder som anvendes til turistformål. De berørte bygninger vises geografisk på et kort.  ', 10, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_recreative', 'q_recreative', 'id', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_recreative', 'q_recreative', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
@@ -287,9 +292,14 @@ SELECT /* Multiple flood scenarios version */
     {Antal dage med oversvømmelse} AS periode_dage, 
     st_area(b.{f_geom_t_recreative})::NUMERIC(12,2) AS areal_m2,
     n.*,
+/*
     f.*,
+*/
     h.*,
+/*
     r.*
+*/
+    '''' AS omraade
     FROM {t_recreative} b,
     LATERAL (
         SELECT
@@ -300,6 +310,7 @@ SELECT /* Multiple flood scenarios version */
             COALESCE((AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00),0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm
         FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_recreative},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}
     ) n,
+/*
     LATERAL (
         SELECT
             COUNT (*) AS cnt_oversvoem_fremtid,
@@ -309,13 +320,19 @@ SELECT /* Multiple flood scenarios version */
             COALESCE((AVG({f_depth_Oversvømmelsesmodel, fremtid}) * 100.00),0)::NUMERIC(12,2) AS avg_vanddybde_fremtid_cm
         FROM {Oversvømmelsesmodel, fremtid} WHERE st_intersects(b.{f_geom_t_recreative},{f_geom_Oversvømmelsesmodel, fremtid}) AND {f_depth_Oversvømmelsesmodel, fremtid} >= {Minimum vanddybde (meter)}
     ) f,
+*/
     LATERAL (
         SELECT
             (100.0 * n.areal_oversvoem_nutid_m2/st_area(b.{f_geom_t_recreative}))::NUMERIC(12,2) AS oversvoem_nutid_pct,
+/*
             (100.0 * f.areal_oversvoem_fremtid_m2/st_area(b.{f_geom_t_recreative}))::NUMERIC(12,2) AS oversvoem_fremtid_pct,
+*/
             (({Antal dage med oversvømmelse}/365.0) * (n.areal_oversvoem_nutid_m2/st_area(b.{f_geom_t_recreative})) * b.valuationk)::NUMERIC(12,2)  AS {f_damage_present_q_recreative},		    
+/*
             (({Antal dage med oversvømmelse}/365.0) * (f.areal_oversvoem_fremtid_m2/st_area(b.{f_geom_t_recreative})) * b.valuationk)::NUMERIC(12,2)  AS {f_damage_future_q_recreative}		    
+*/
     ) h,
+/*
     LATERAL (
         SELECT
             ''{Medtag i risikoberegninger}'' AS risiko_beregning,
@@ -326,7 +343,8 @@ SELECT /* Multiple flood scenarios version */
 			    h.{f_damage_future_q_recreative} ELSE 0 END)/{Returperiode, antal år})::NUMERIC(12,2) AS {f_risk_q_recreative},
             '''' AS omraade
     ) r
-    WHERE f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0
+*/
+    WHERE /* f.cnt_oversvoem_fremtid > 0 OR */ n.cnt_oversvoem_nutid > 0
 ', 'P', '', '', '', '', 'SQL template for recreative new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Industri, personale i bygninger', 'Industri', ' ', 'T', '', '', '', 'q_comp_build', 'Sæt hak såfremt modellen skal identificere de virksomheder som bliver berørt af den pågældende oversvømmelse, og angive antallet af medarbejdere per virksomhed.', 10, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_comp_build', 'q_comp_build', 'rowid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
@@ -344,14 +362,15 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 SELECT /* Multiple flood scenarios version */
     b.*,
     n.*,
-    f.*,
+--    f.*,
     {Oversvømmelsesperiode (timer)} AS blokering_timer,
     0.3 AS vanddybde_bloker_m,
     0.075 AS vanddybde_min_m,
 	{Renovationspris pr meter vej (DKK)} AS pris_renovation_kr_m,
     h.*,
 	i.*,
-    r.*
+--    r.*
+    '''' AS omraade
     FROM {t_road_traffic} b,
     LATERAL (
         SELECT
@@ -363,6 +382,7 @@ SELECT /* Multiple flood scenarios version */
             COALESCE((AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00),0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm
         FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_road_traffic},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= 0.075
     ) n,
+/*
     LATERAL (
         SELECT
             COUNT (*) AS cnt_oversvoem_fremtid,
@@ -372,19 +392,20 @@ SELECT /* Multiple flood scenarios version */
             COALESCE((AVG({f_depth_Oversvømmelsesmodel, fremtid}) * 100.00),0)::NUMERIC(12,2) AS avg_vanddybde_fremtid_cm
         FROM {Oversvømmelsesmodel, fremtid} WHERE st_intersects(b.{f_geom_t_road_traffic},{f_geom_Oversvømmelsesmodel, fremtid}) AND {f_depth_Oversvømmelsesmodel, fremtid} >= 0.075
     ) f,
+*/
     LATERAL (
         SELECT
             CASE WHEN n.avg_vanddybde_nutid_cm >= 30.0 THEN 0.0 ELSE 0.0009 * (n.avg_vanddybde_nutid_cm*10.0)^2.0 - 0.5529 * n.avg_vanddybde_nutid_cm*10.0 + 86.9448 END::NUMERIC(12,2) AS hastighed_red_nutid_km_time,
-            CASE WHEN f.avg_vanddybde_fremtid_cm >= 30.0 THEN 0.0 ELSE 0.0009 * (f.avg_vanddybde_fremtid_cm*10.0)^2.0 - 0.5529 * f.avg_vanddybde_fremtid_cm*10.0 + 86.9448 END::NUMERIC(12,2) AS hastighed_red_fremtid_km_time,
-            n.laengde_oversvoem_nutid_m * {Renovationspris pr meter vej (DKK)} AS skade_renovation_nutid_kr,
-            f.laengde_oversvoem_fremtid_m * {Renovationspris pr meter vej (DKK)} AS skade_renovation_fremtid_kr
+--            CASE WHEN f.avg_vanddybde_fremtid_cm >= 30.0 THEN 0.0 ELSE 0.0009 * (f.avg_vanddybde_fremtid_cm*10.0)^2.0 - 0.5529 * f.avg_vanddybde_fremtid_cm*10.0 + 86.9448 END::NUMERIC(12,2) AS hastighed_red_fremtid_km_time,
+            n.laengde_oversvoem_nutid_m * {Renovationspris pr meter vej (DKK)} AS skade_renovation_nutid_kr --,
+--            f.laengde_oversvoem_fremtid_m * {Renovationspris pr meter vej (DKK)} AS skade_renovation_fremtid_kr
     ) h,
     LATERAL (
         SELECT
-            CASE WHEN h.hastighed_red_nutid_km_time > 50.0 THEN 0.0 ELSE (68.8 - 1.376 * h.hastighed_red_nutid_km_time) * ({Oversvømmelsesperiode (timer)} / 24.0) * n.laengde_org_m * (b.{f_number_cars_t_road_traffic}/6200.00)*2.0 END::NUMERIC(12,2) AS skade_transport_nutid_kr,
-            CASE WHEN h.hastighed_red_fremtid_km_time > 50.0 THEN 0.0 ELSE (68.8 - 1.376 * h.hastighed_red_fremtid_km_time) * ({Oversvømmelsesperiode (timer)} / 24.0) * n.laengde_org_m * (b.{f_number_cars_t_road_traffic}/6200.00)*2.0 END::NUMERIC(12,2) AS skade_transport_fremtid_kr
+            CASE WHEN h.hastighed_red_nutid_km_time > 50.0 THEN 0.0 ELSE (68.8 - 1.376 * h.hastighed_red_nutid_km_time) * ({Oversvømmelsesperiode (timer)} / 24.0) * n.laengde_org_m * (b.{f_number_cars_t_road_traffic}/6200.00)*2.0 END::NUMERIC(12,2) AS skade_transport_nutid_kr --,
+--            CASE WHEN h.hastighed_red_fremtid_km_time > 50.0 THEN 0.0 ELSE (68.8 - 1.376 * h.hastighed_red_fremtid_km_time) * ({Oversvømmelsesperiode (timer)} / 24.0) * n.laengde_org_m * (b.{f_number_cars_t_road_traffic}/6200.00)*2.0 END::NUMERIC(12,2) AS skade_transport_fremtid_kr
     ) i,
-    LATERAL (
+/*    LATERAL (
         SELECT
 		    h.skade_renovation_nutid_kr + i.skade_transport_nutid_kr AS {f_damage_present_q_road_traffic},
 		    h.skade_renovation_fremtid_kr + i.skade_transport_fremtid_kr AS {f_damage_future_q_road_traffic},
@@ -396,7 +417,8 @@ SELECT /* Multiple flood scenarios version */
 			    h.skade_renovation_fremtid_kr + i.skade_transport_fremtid_kr ELSE 0 END)/{Returperiode, antal år})::NUMERIC(12,2) AS {f_risk_q_road_traffic},
             '''' AS omraade
     ) r
-    WHERE f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0
+*/
+    WHERE /* f.cnt_oversvoem_fremtid > 0 OR */ n.cnt_oversvoem_nutid > 0
 ', 'P', '', '', '', '', 'SQL template for road traffic new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_surrounding_loss', 'q_surrounding_loss', 'objectid', 'T', '', '', '', '', '', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_surrounding_loss', 'q_surrounding_loss', 'geom', 'T', '', '', '', '', '', 10, ' ');
@@ -405,7 +427,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_loss_present_q_surrounding_loss', 'q_surrounding_loss', 'vaerditab_nutid_kr', 'T', '', '', '', '', '', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_surrounding_loss', 'Queries', '
 WITH 
-    of AS (SELECT b.{f_pkey_t_building}, b.{f_geom_t_building} FROM {t_building} b WHERE EXISTS ( SELECT 1 FROM {Oversvømmelsesmodel, fremtid} f WHERE st_intersects (f.{f_geom_Oversvømmelsesmodel, fremtid}, b.{f_geom_t_building}) AND  f.{f_depth_Oversvømmelsesmodel, fremtid} >= {Minimum vanddybde (meter)})),
+--    of AS (SELECT b.{f_pkey_t_building}, b.{f_geom_t_building} FROM {t_building} b WHERE EXISTS ( SELECT 1 FROM {Oversvømmelsesmodel, fremtid} f WHERE st_intersects (f.{f_geom_Oversvømmelsesmodel, fremtid}, b.{f_geom_t_building}) AND  f.{f_depth_Oversvømmelsesmodel, fremtid} >= {Minimum vanddybde (meter)})),
     op AS (SELECT b.{f_pkey_t_building}, b.{f_geom_t_building} FROM {t_building} b WHERE EXISTS ( SELECT 1 FROM {Oversvømmelsesmodel, nutid} f WHERE st_intersects (f.{f_geom_Oversvømmelsesmodel, nutid}, b.{f_geom_t_building}) AND  f.{f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}))
 
 SELECT /* Multiple flood scenarios version */
@@ -413,7 +435,7 @@ SELECT /* Multiple flood scenarios version */
     st_area(x.{f_geom_t_building})::NUMERIC(12,2) AS areal_byg_m2,
     k.{f_sqmprice_t_sqmprice}::NUMERIC(12,2) AS kvm_pris_kr,
     ({Værditab, skaderamte bygninger (%)}*{Faktor for værditab})::NUMERIC(12,2) AS tab_procent,
-    CASE WHEN y.{f_pkey_t_building} IS NULL THEN 0.0 ELSE k.{f_sqmprice_t_sqmprice} * st_area(x.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}*{Faktor for værditab} / 100.0 END::NUMERIC(12,2) AS {f_loss_future_q_surrounding_loss},
+--    CASE WHEN y.{f_pkey_t_building} IS NULL THEN 0.0 ELSE k.{f_sqmprice_t_sqmprice} * st_area(x.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}*{Faktor for værditab} / 100.0 END::NUMERIC(12,2) AS {f_loss_future_q_surrounding_loss},
     CASE WHEN z.{f_pkey_t_building} IS NULL THEN 0.0 ELSE k.{f_sqmprice_t_sqmprice} * st_area(x.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}*{Faktor for værditab} / 100.0 END::NUMERIC(12,2) AS {f_loss_present_q_surrounding_loss},
     ''{Medtag i risikoberegninger}'' AS risiko_beregning,
     {Returperiode, antal år} AS retur_periode,
@@ -438,11 +460,10 @@ SELECT /* Multiple flood scenarios version */
         END)/{Returperiode, antal år})::NUMERIC(12,2) AS {f_risk_q_surrounding_loss},
     '''' AS omraade
 FROM {t_building} x 
-LEFT JOIN (SELECT DISTINCT c.{f_pkey_t_building} FROM {t_building} c, of WHERE c.{f_pkey_t_building} NOT IN (SELECT {f_pkey_t_building} from of) and st_dwithin(of.{f_geom_t_building},c.{f_geom_t_building},300.)) y ON x.{f_pkey_t_building} = y.{f_pkey_t_building} 
+-- LEFT JOIN (SELECT DISTINCT c.{f_pkey_t_building} FROM {t_building} c, of WHERE c.{f_pkey_t_building} NOT IN (SELECT {f_pkey_t_building} from of) and st_dwithin(of.{f_geom_t_building},c.{f_geom_t_building},300.)) y ON x.{f_pkey_t_building} = y.{f_pkey_t_building} 
 LEFT JOIN (SELECT DISTINCT c.{f_pkey_t_building} FROM {t_building} c, op WHERE c.{f_pkey_t_building} NOT IN (SELECT {f_pkey_t_building} from op) and st_dwithin(op.{f_geom_t_building},c.{f_geom_t_building},300.)) z ON x.{f_pkey_t_building} = z.{f_pkey_t_building} 
 LEFT JOIN {t_sqmprice} k ON k.kom_kode = x.komkode 
-WHERE y.{f_pkey_t_building} IS NOT NULL OR z.{f_pkey_t_building} IS NOT NULL
-', 'P', '', '', '', '', 'SQL template for surrounding loss - new model ', 8, ' ');
+WHERE /* y.{f_pkey_t_building} IS NOT NULL */ OR z.{f_pkey_t_building} IS NOT NULL', 'P', '', '', '', '', 'SQL template for surrounding loss - new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Værditab nabobygninger', 'Hidden parameters', '', 'T', '', '', '', 'q_surrounding_loss', '', 12, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Admin data', 'Data', '', 'G', '', '', '', '', 'Gruppe for administration af Lookup tabeller', 2, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Flood data', 'Data', '', 'G', '', '', '', '', 'Gruppe for administration af Oversvømmelses tabeller', 2, ' ');
@@ -673,8 +694,10 @@ SELECT /* Multiple flood scenarios version */
     c.*,
 	st_area(c.{f_geom_t_bioscore})::NUMERIC(12,2) AS areal_m2,
     n.*,
+/*
     f.*,
     {Returperiode, antal år} AS retur_periode,
+*/
     '''' AS omraade
 FROM {t_bioscore} c,     
     LATERAL (
@@ -685,7 +708,8 @@ FROM {t_bioscore} c,
             COALESCE((MAX({f_depth_Oversvømmelsesmodel, nutid}) * 100.00),0)::NUMERIC(12,2) AS max_vanddybde_nutid_cm,
             COALESCE((AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00),0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm
         FROM {Oversvømmelsesmodel, nutid} WHERE {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)} AND st_intersects(c.{f_geom_t_bioscore},{f_geom_Oversvømmelsesmodel, nutid})
-    ) n,
+    ) n --,
+/*
     LATERAL (
         SELECT
             COUNT (*) AS cnt_oversvoem_fremtid,
@@ -695,8 +719,8 @@ FROM {t_bioscore} c,
             COALESCE((AVG({f_depth_Oversvømmelsesmodel, fremtid}) * 100.00),0)::NUMERIC(12,2) AS avg_vanddybde_fremtid_cm
         FROM {Oversvømmelsesmodel, fremtid} WHERE {f_depth_Oversvømmelsesmodel, fremtid} >= {Minimum vanddybde (meter)} AND st_intersects(c.{f_geom_t_bioscore},{f_geom_Oversvømmelsesmodel, fremtid})
     ) f
-WHERE n.cnt_oversvoem_nutid > 0 OR f.cnt_oversvoem_fremtid > 0 
-', 'P', '', '', '', '', 'SQL template for bioscore spatial - new model ', 8, ' ');
+*/
+WHERE n.cnt_oversvoem_nutid > 0 /* OR f.cnt_oversvoem_fremtid > 0 */ ', 'P', '', '', '', '', 'SQL template for bioscore spatial - new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_comp_build', 'Queries', '
 SELECT /* Multiple flood scenarios version */
     row_number() OVER () as {f_pkey_q_comp_build},
@@ -706,8 +730,10 @@ SELECT /* Multiple flood scenarios version */
     b.{f_usage_code_t_building} AS bbr_anv_kode,
     b.{f_usage_text_t_building} AS bbr_anv_tekst,
     n.*,
+/*
     f.*,
     {Returperiode, antal år} AS retur_periode,
+*/
     '''' AS omraade
 FROM {t_company} c LEFT JOIN {t_building} b ON st_within(c.{f_geom_t_company},b.{f_geom_t_building}),     
     LATERAL (
@@ -719,7 +745,8 @@ FROM {t_company} c LEFT JOIN {t_building} b ON st_within(c.{f_geom_t_company},b.
         FROM {Oversvømmelsesmodel, nutid} WHERE {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)} AND 
 		    (b.{f_pkey_t_building} IS NOT NULL AND st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}) OR
 			 b.{f_pkey_t_building} IS NULL     AND st_within(c.{f_geom_t_company},{f_geom_Oversvømmelsesmodel, nutid}))
-    ) n,
+    ) n --,
+/*
     LATERAL (
         SELECT
             COUNT (*) AS cnt_oversvoem_fremtid,
@@ -730,8 +757,8 @@ FROM {t_company} c LEFT JOIN {t_building} b ON st_within(c.{f_geom_t_company},b.
 		    (b.{f_pkey_t_building} IS NOT NULL AND st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, fremtid}) OR
 			 b.{f_pkey_t_building} IS NULL     AND st_within(c.{f_geom_t_company},{f_geom_Oversvømmelsesmodel, fremtid}))
     ) f
-WHERE n.cnt_oversvoem_nutid > 0 OR f.cnt_oversvoem_fremtid > 0 
-', 'P', '', '', '', '', 'SQL template for human health new model ', 8, ' ');
+*/
+WHERE n.cnt_oversvoem_nutid > 0 /* OR f.cnt_oversvoem_fremtid > 0 */', 'P', '', '', '', '', 'SQL template for human health new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Oversvømmet infrastruktur', 'Kritisk infrastruktur', '', 'T', '', '', '', 'q_infrastructure', 'Udpegning af oversvømmet kritisk infrastruktur. Den berørte infrastruktur vises geografisk på et kort.  ', 10, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_infrastructure', 'q_infrastructure', 'objectid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_infrastructure', 'q_infrastructure', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
@@ -739,8 +766,10 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 SELECT /* Multiple flood scenarios version */ DISTINCT ON (o.{f_pkey_t_infrastructure}) 
     o.*,
     n.*,
+/*
     f.*,
     {Returperiode, antal år} AS retur_periode,
+*/
     '''' AS omraade
     FROM {t_infrastructure} o,
     LATERAL (
@@ -753,6 +782,7 @@ SELECT /* Multiple flood scenarios version */ DISTINCT ON (o.{f_pkey_t_infrastru
             COALESCE(AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm
         FROM {Oversvømmelsesmodel, nutid} WHERE {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)} AND st_intersects(o.{f_geom_t_infrastructure},{f_geom_Oversvømmelsesmodel, nutid}) 
     ) n,
+/*
     LATERAL (
         SELECT
             COUNT (*) AS cnt_oversvoem_fremtid,
@@ -763,8 +793,8 @@ SELECT /* Multiple flood scenarios version */ DISTINCT ON (o.{f_pkey_t_infrastru
             COALESCE(AVG({f_depth_Oversvømmelsesmodel, fremtid}) * 100.00,0)::NUMERIC(12,2) AS avg_vanddybde_fremtid_cm
         FROM {Oversvømmelsesmodel, fremtid} WHERE {f_depth_Oversvømmelsesmodel, fremtid} >= {Minimum vanddybde (meter)} AND st_intersects(o.{f_geom_t_infrastructure},{f_geom_Oversvømmelsesmodel, fremtid}) 
     ) f
-    WHERE f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0
-', 'P', '', '', '', '', 'SQL template for infrastructure new model ', 8, ' ');
+*/
+    WHERE /* f.cnt_oversvoem_fremtid > 0 OR */ n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for infrastructure new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Oversvømmet offentlig service', 'Offentlig service', '', 'T', '', '', '', 'q_publicservice', 'Udpegning af oversvømmet kritisk infrastruktur. Den berørte infrastruktur vises geografisk på et kort.  ', 10, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_publicservice', 'q_publicservice', 'objectid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_publicservice', 'q_publicservice', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
@@ -772,8 +802,10 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 SELECT /* Multiple flood scenarios version */ DISTINCT ON (o.{f_pkey_t_publicservice}) 
     o.*,
     n.*,
+/*
     f.*,
 	{Returperiode, antal år} AS retur_periode,
+*/
     '''' AS omraade
     FROM {t_publicservice} o,
     LATERAL (
@@ -785,7 +817,8 @@ SELECT /* Multiple flood scenarios version */ DISTINCT ON (o.{f_pkey_t_publicser
             COALESCE(MAX({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS max_vanddybde_nutid_cm,
             COALESCE(AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm
         FROM {Oversvømmelsesmodel, nutid} WHERE {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)} AND st_intersects(o.{f_geom_t_publicservice},{f_geom_Oversvømmelsesmodel, nutid}) 
-    ) n,
+    ) n 
+/*,
     LATERAL (
         SELECT
             COUNT (*) AS cnt_oversvoem_fremtid,
@@ -796,8 +829,8 @@ SELECT /* Multiple flood scenarios version */ DISTINCT ON (o.{f_pkey_t_publicser
             COALESCE(AVG({f_depth_Oversvømmelsesmodel, fremtid}) * 100.00,0)::NUMERIC(12,2) AS avg_vanddybde_fremtid_cm
         FROM {Oversvømmelsesmodel, fremtid} WHERE {f_depth_Oversvømmelsesmodel, fremtid} >= {Minimum vanddybde (meter)} AND st_intersects(o.{f_geom_t_publicservice},{f_geom_Oversvømmelsesmodel, fremtid}) 
     ) f
-    WHERE f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0
-', 'P', '', '', '', '', 'SQL template for public service new model ', 8, ' ');
+*/
+    WHERE f.cnt_oversvoem_fremtid > 0 /* OR n.cnt_oversvoem_nutid > 0 */', 'P', '', '', '', '', 'SQL template for public service new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Landbrug', 'Models', '', 'G', '', '', '', '', 'Skademodeller for landbrug', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Oversvømmede landbrugs arealer', 'Landbrug', '', 'T', '', '', '', 'q_agriculture', 'Sæt hak såfremt der skal beregnes økonomiske tab for oversvømmede landbrugsarealer.', 10, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_agriculture', 'q_agriculture', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
@@ -823,9 +856,12 @@ SELECT /* Multiple flood scenarios version */
     p.*,
     n.*,
     areal_oversvoem_nutid_m2 * p.{f_price_t_agr_price} /100.00 AS {f_damage_present_q_agriculture},
+/*
     f.*,
     areal_oversvoem_fremtid_m2 * p.{f_price_t_agr_price} /100.00 AS {f_damage_future_q_agriculture},
     r.*
+*/
+    '''' AS omraade
     FROM {t_agriculture} b
     LEFT JOIN {t_agr_cat} k ON k.{f_pkey_t_agr_cat} = b.{f_afgcode_t_agriculture} 
     LEFT JOIN {t_agr_price} p ON p.{f_pkey_t_agr_price} = k.{f_pcat_t_agr_cat}, 
@@ -837,7 +873,8 @@ SELECT /* Multiple flood scenarios version */
             COALESCE(MAX({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS max_vanddybde_nutid_cm,
             COALESCE(AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm
         FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_agriculture},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}
-    ) n,
+    ) n
+/* ,
     LATERAL (
         SELECT
             COUNT (*) AS cnt_oversvoem_fremtid,
@@ -857,7 +894,8 @@ SELECT /* Multiple flood scenarios version */
           )/{Returperiode, antal år})::NUMERIC(12,2) AS {f_risk_q_agriculture},
           '''' AS omraade
     ) r
-	WHERE f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0
+*/
+	WHERE /* f.cnt_oversvoem_fremtid > 0 OR */ n.cnt_oversvoem_nutid > 0
 ', 'P', '', '', '', '', 'SQL template for agriculture model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Perimeter cut-off (%)', 'Generelle modelværdier', '5.0', 'R', '0.0', '100.0', '1.0', '', 'Her angives minimum brøkdel af oversvømmet perimeter i procent, før bygning medtages i skadeberegning.', 17, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegninger, Bygninger', 'Bygninger', '', 'T', '', '', '', 'q_build_peri', 'Skadeberegning for bygninger baseret på perimeter', 11, 'T');
@@ -882,8 +920,11 @@ SELECT /* Multiple flood scenarios version */
     st_perimeter(b.{f_geom_t_building})::NUMERIC(12,2) AS perimeter_byg_m,
     v.*,
     n.*,
+/* 
     f.*,
     r.*
+*/
+    '''' AS omraade
     FROM {t_building} b
     LEFT JOIN {t_build_usage} u on b.{f_usage_code_t_building} = u.{f_pkey_t_build_usage}
     LEFT JOIN {t_damage} d on u.{f_category_t_build_usage} = d.{f_category_t_damage} AND d.{f_type_t_damage} = ''{Skadetype}''   
@@ -905,7 +946,8 @@ SELECT /* Multiple flood scenarios version */
             CASE WHEN COUNT(*) > 0 AND COUNT(*) * v.vp_side_laengde_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0 AND ''{Skadeberegning for kælder}'' = ''Medtages'' THEN COALESCE(b.{f_cellar_area_t_building},0.0) * d.c0 ELSE 0 END::NUMERIC(12,2) as {f_damage_cellar_present_q_build_peri},
             CASE WHEN COUNT(*) > 0 THEN k.kvm_pris * st_area(b.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}/100.0 ELSE 0 END::NUMERIC(12,2) as {f_loss_present_q_build_peri}             
         FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}
-    ) n,
+    ) n
+/* ,
     LATERAL (
         SELECT
             COUNT (*) AS cnt_oversvoem_fremtid,
@@ -937,7 +979,8 @@ SELECT /* Multiple flood scenarios version */
           END)/{Returperiode, antal år})::NUMERIC(12,2) AS {f_risk_q_build_peri},
           '''' AS omraade
     ) r
-    WHERE f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ');
+*/
+    WHERE /* f.cnt_oversvoem_fremtid > 0 OR */ n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Humane omkostninger', 'Mennesker og helbred', '', 'T', '', '', '', 'q_human_health', 'Sæt hak såfremt der skal beregnes humane omkostninger', 10, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_human_health', 'q_human_health', 'rowid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_human_health', 'q_human_health', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
@@ -954,9 +997,14 @@ SELECT /* Multiple flood scenarios version */
     st_multi(st_force2d(b.{f_geom_t_building}))::Geometry(Multipolygon,25832) AS {f_geom_q_human_health},
     v.*,
     n.*,
+/*
     f.*,
+*/
     h.*,
+/*
     r.*
+*/
+    '''' AS omraade
     FROM {t_building} b,
     LATERAL (
         SELECT 
@@ -972,6 +1020,7 @@ SELECT /* Multiple flood scenarios version */
             COALESCE((AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00),0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm
         FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}
     ) n,
+/*
     LATERAL (
         SELECT
             COUNT (*) AS cnt_oversvoem_fremtid,
@@ -982,6 +1031,7 @@ SELECT /* Multiple flood scenarios version */
             COALESCE((AVG({f_depth_Oversvømmelsesmodel, fremtid}) * 100.00),0)::NUMERIC(12,2) AS avg_vanddybde_fremtid_cm
         FROM {Oversvømmelsesmodel, fremtid} WHERE st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, fremtid}) AND {f_depth_Oversvømmelsesmodel, fremtid} >= {Minimum vanddybde (meter)}
     ) f,
+*/
     LATERAL (
         SELECT
             COUNT(*) AS mennesker_total,
@@ -993,12 +1043,15 @@ SELECT /* Multiple flood scenarios version */
             CASE WHEN n.cnt_oversvoem_nutid > 0 AND n.oversvoem_peri_nutid_pct >= {Perimeter cut-off (%)} THEN COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) * (23  * 301) ELSE 0 END::integer AS rejsetid_nutid_kr,
             CASE WHEN n.cnt_oversvoem_nutid > 0 AND n.oversvoem_peri_nutid_pct >= {Perimeter cut-off (%)} THEN COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) * (64  * 301) ELSE 0 END::integer AS sygetimer_nutid_kr, 
             CASE WHEN n.cnt_oversvoem_nutid > 0 AND n.oversvoem_peri_nutid_pct >= {Perimeter cut-off (%)} THEN COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) * (26  * 301) ELSE 0 END::integer AS ferietimer_nutid_kr, 
+/*
             CASE WHEN f.cnt_oversvoem_fremtid > 0 AND f.oversvoem_peri_fremtid_pct >= {Perimeter cut-off (%)} THEN COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) * (138 * 301) ELSE 0 END::integer AS arbejdstid_fremtid_kr,
             CASE WHEN f.cnt_oversvoem_fremtid > 0 AND f.oversvoem_peri_fremtid_pct >= {Perimeter cut-off (%)} THEN COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) * (23  * 301) ELSE 0 END::integer AS rejsetid_fremtid_kr,
             CASE WHEN f.cnt_oversvoem_fremtid > 0 AND f.oversvoem_peri_fremtid_pct >= {Perimeter cut-off (%)} THEN COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) * (64  * 301) ELSE 0 END::integer AS sygetimer_fremtid_kr, 
             CASE WHEN f.cnt_oversvoem_fremtid > 0 AND f.oversvoem_peri_fremtid_pct >= {Perimeter cut-off (%)} THEN COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) * (26  * 301) ELSE 0 END::integer AS ferietimer_fremtid_kr 
+*/
         FROM {t_human_health} WHERE ST_CoveredBy({f_geom_t_human_health},b.{f_geom_t_building})
     ) h,
+/*
     LATERAL (
         SELECT
 		    h.arbejdstid_nutid_kr + 
@@ -1026,8 +1079,8 @@ SELECT /* Multiple flood scenarios version */
 				)/{Returperiode, antal år})::NUMERIC(12,2) AS {f_risk_q_human_health},
             '''' AS omraade
     ) r
-    WHERE (f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0) AND h.mennesker_total > 0
-', 'P', '', '', '', '', 'SQL template for human health new model ', 8, ' ');
+*/
+    WHERE (/* f.cnt_oversvoem_fremtid > 0 OR */ n.cnt_oversvoem_nutid > 0) AND h.mennesker_total > 0', 'P', '', '', '', '', 'SQL template for human health new model ', 8, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Turisme, Kort', 'Turisme', '', 'T', '', '', '', 'q_tourism_spatial', 'Sæt hak såfremt der skal beregnes økonomiske tab for overnatningssteder som anvendes til turistformål. De berørte bygninger vises geografisk på et kort.  ', 10, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_tourism_spatial', 'q_tourism_spatial', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_tourism_spatial', 'q_tourism_spatial', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
@@ -1047,8 +1100,11 @@ SELECT /* Multiple flood scenarios version */
     st_force2d(b.{f_geom_t_building}) AS {f_geom_q_tourism_spatial},
 	v.*,
     n.*,
+/*
     f.*,
     r.*
+*/
+    '''' AS omraade
     FROM {t_building} b
     INNER JOIN {t_tourism} t  ON t.{f_pkey_t_tourism} = b.{f_usage_code_t_building},  
     LATERAL (
@@ -1064,7 +1120,8 @@ SELECT /* Multiple flood scenarios version */
             COALESCE(AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm,
             CASE WHEN COUNT (*) > 0 AND 100.0 * COUNT(*) * v.vp_side_laengde_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)} THEN {Antal tabte døgn} * t.omkostning * t.kapacitet ELSE 0 END::NUMERIC(12,2) AS {f_damage_present_q_tourism_spatial}
         FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}
-    ) n,
+    ) n
+/*,
     LATERAL (
         SELECT
             COUNT (*) AS cnt_oversvoem_fremtid,
@@ -1086,8 +1143,8 @@ SELECT /* Multiple flood scenarios version */
           )/{Returperiode, antal år})::NUMERIC(12,2) AS {f_risk_q_tourism_spatial},
           '''' AS omraade
     ) r
-	WHERE f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0
-', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ');
+*/
+	WHERE /* f.cnt_oversvoem_fremtid > 0 OR */ n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ');
 
 
 
@@ -1195,9 +1252,12 @@ SELECT /* Multiple flood scenarios version */
     p.*,
     n.*,
     COALESCE(areal_oversvoem_nutid_m2 * p.{f_price_t_agr_price} /100.00,0.0)::NUMERIC(12,2) AS {f_damage_present_q_agriculture},
+/*
     f.*,
     COALESCE(areal_oversvoem_fremtid_m2 * p.{f_price_t_agr_price} /100.00,0.0)::NUMERIC(12,2) AS {f_damage_future_q_agriculture},
     r.*
+*/
+    '''' AS omraade
     FROM {t_agriculture} b
     LEFT JOIN {t_agr_cat} k ON k.{f_pkey_t_agr_cat} = b.{f_afgcode_t_agriculture} 
     LEFT JOIN {t_agr_price} p ON p.{f_pkey_t_agr_price} = k.{f_pcat_t_agr_cat}, 
@@ -1210,6 +1270,7 @@ SELECT /* Multiple flood scenarios version */
             COALESCE(AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm
         FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_agriculture},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}
     ) n,
+/*
     LATERAL (
         SELECT
             COUNT (*) AS cnt_oversvoem_fremtid,
@@ -1229,7 +1290,7 @@ SELECT /* Multiple flood scenarios version */
           )/{Returperiode, antal år})::NUMERIC(12,2) AS {f_risk_q_agriculture},
           '''' AS omraade
     ) r
-	WHERE f.cnt_oversvoem_fremtid > 0 OR n.cnt_oversvoem_nutid > 0
-', 'P', '', '', '', '', 'SQL template for agriculture model ', 8, ' ')
+*/
+	WHERE /* f.cnt_oversvoem_fremtid > 0 OR */ n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for agriculture model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
