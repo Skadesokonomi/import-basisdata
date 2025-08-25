@@ -854,44 +854,7 @@ SELECT /* Multiple flood scenarios version */
     FROM {t_building} b
 	JOIN b2 ON b2.{f_pkey_t_building} = b.{f_pkey_t_building}
 	JOIN {t_tourism} t  ON t.{f_pkey_t_tourism} = b.{f_usage_code_t_building}  
-	WHERE b3.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0    
-    LATERAL (
-        SELECT
-            COUNT (*) AS cnt_oversvoem_nutid,
-            100.0 * COUNT(*) * v.vp_side_laengde_m / ST_Perimeter(b.{f_geom_t_building}) AS oversvoem_peri_nutid_pct,            
-            COALESCE(SUM(st_area(st_intersection(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}))),0)::NUMERIC(12,2) AS areal_oversvoem_nutid_m2,
-            COALESCE(MIN({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS min_vanddybde_nutid_cm,
-            COALESCE(MAX({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS max_vanddybde_nutid_cm,
-            COALESCE(AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm,
-            CASE WHEN COUNT (*) > 0 AND 100.0 * COUNT(*) * v.vp_side_laengde_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)} THEN {Antal tabte døgn} * t.omkostning * t.kapacitet ELSE 0 END::NUMERIC(12,2) AS {f_damage_present_q_tourism_spatial}
-        FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}
-    ) n
-/*,
-    LATERAL (
-        SELECT
-            COUNT (*) AS cnt_oversvoem_fremtid,
-            100.0 * COUNT(*) * v.vp_side_laengde_m / ST_Perimeter(b.{f_geom_t_building}) AS oversvoem_peri_fremtid_pct,            
-            COALESCE(SUM(st_area(st_intersection(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, fremtid}))),0)::NUMERIC(12,2) AS areal_oversvoem_fremtid_m2,
-            COALESCE(MIN({f_depth_Oversvømmelsesmodel, fremtid}) * 100.00,0)::NUMERIC(12,2) AS min_vanddybde_fremtid_cm,
-            COALESCE(MAX({f_depth_Oversvømmelsesmodel, fremtid}) * 100.00,0)::NUMERIC(12,2) AS max_vanddybde_fremtid_cm,
-            COALESCE(AVG({f_depth_Oversvømmelsesmodel, fremtid}) * 100.00,0)::NUMERIC(12,2) AS avg_vanddybde_fremtid_cm,
-            CASE WHEN COUNT (*) > 0 AND 100.0 * COUNT(*) * v.vp_side_laengde_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)} THEN {Antal tabte døgn} * t.omkostning * t.kapacitet ELSE 0 END::NUMERIC(12,2) AS {f_damage_future_q_tourism_spatial}
-        FROM {Oversvømmelsesmodel, fremtid} WHERE st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, fremtid}) AND {f_depth_Oversvømmelsesmodel, fremtid} >= {Minimum vanddybde (meter)}
-    ) f,
-    LATERAL (
-        SELECT
-          ''{Medtag i risikoberegninger}'' AS risiko_beregning,
-		  {Returperiode, antal år} AS retur_periode,
-          ((
-		      0.219058829 * CASE WHEN ''{Medtag i risikoberegninger}'' IN (''Skadebeløb'',''Skadebeløb og værditab'') THEN n.{f_damage_present_q_tourism_spatial} ELSE 0.0 END + 
-              0.089925625   * CASE WHEN ''{Medtag i risikoberegninger}'' IN (''Skadebeløb'',''Skadebeløb og værditab'') THEN f.{f_damage_future_q_tourism_spatial} ELSE 0.0 END
-          )/{Returperiode, antal år})::NUMERIC(12,2) AS {f_risk_q_tourism_spatial},
-          '''' AS omraade
-    ) r
-*/
-	WHERE /* f.cnt_oversvoem_fremtid > 0 OR */ n.cnt_oversvoem_nutid > 0',
-
-	'P', '', '', '', '', 'SQL template for tourism new model ', 8, ' ')
+	WHERE b3.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0','P', '', '', '', '', 'SQL template for tourism new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegninger, Bygninger ny,', 'Bygninger', '', 'T', '', '', '', 'q_build_peri_new', 'Skadeberegning for bygninger baseret på perimeter', 11, 'T')
@@ -913,4 +876,9 @@ ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_human_health_new', 'q_human_health_new', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_human_health_new', 'q_human_health_new', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Turisme, Kort Ny', 'Turisme', '', 'T', '', '', '', 'q_tourism_spatial_new', 'Sæt hak såfremt der skal beregnes økonomiske tab for overnatningssteder som anvendes til turistformål. De berørte bygninger vises geografisk på et kort.  ', 10, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_tourism_spatial_new', 'q_tourism_spatial_new', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_tourism_spatial_new', 'q_tourism_spatial_new', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
