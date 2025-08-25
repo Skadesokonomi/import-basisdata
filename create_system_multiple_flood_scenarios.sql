@@ -606,6 +606,7 @@ CREATE TABLE IF NOT EXISTS patches_done
     CONSTRAINT patches_done_pkey PRIMARY KEY (patch_name)
 );
 
+/* Update model definitions */ 
 
 SET search_path = fdc_admin, public;
 
@@ -1326,12 +1327,72 @@ SELECT /* Multiple flood scenarios version */
     WHERE b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_build_peri_buffer', 'Queries', '
+WITH b1 AS (
+    SELECT 
+        bg.{f_pkey_t_building},
+        st_length(st_intersection(ov.{f_geom_Oversvømmelsesmodel, nutid},ST_ExteriorRing((ST_Dump(bg.{f_geom_t_building})).geom))) as perimeter_overlap_m,
+        ST_Area(ST_intersection(bg.{f_geom_t_building}, ov.{f_geom_Oversvømmelsesmodel, nutid})) AS areal_overlap_m2,
+        ov.{f_depth_Oversvømmelsesmodel, nutid}
+	FROM {t_building} bg
+	JOIN {Oversvømmelsesmodel, nutid} ov ON st_intersects(st_buffer(bg.{f_geom_t_building},{Bygnings buffer (meter)}),ov.{f_geom_Oversvømmelsesmodel, nutid}) AND ov.{f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)} 
+),
+b2 AS (
+    SELECT 
+        {f_pkey_t_building},
+        SUM (perimeter_overlap_m)::NUMERIC(12,2) AS perimeter_overlap_m,
+        SUM (areal_overlap_m2)::NUMERIC(12,2) AS areal_oversvoem_nutid_m2,
+        (100.0 * (MIN({f_depth_Oversvømmelsesmodel, nutid})))::NUMERIC(12,2) AS min_vanddybde_nutid_cm,
+        (100.0 * (MAX({f_depth_Oversvømmelsesmodel, nutid})))::NUMERIC(12,2) AS max_vanddybde_nutid_cm,
+        (100.0 * (AVG({f_depth_Oversvømmelsesmodel, nutid})))::NUMERIC(12,2) AS avg_vanddybde_nutid_cm,
+        COUNT(*) AS cnt_oversvoem_nutid
+	FROM b1
+    GROUP BY {f_pkey_t_building}
+)
+SELECT /* Multiple flood scenarios version */
+    b.*,
+    d.{f_category_t_damage} AS skade_kategori,
+    d.{f_type_t_damage} AS skade_type,
+	''{Skadeberegning for kælder}'' AS kaelder_beregning,
+    {Værditab, skaderamte bygninger (%)}::NUMERIC(12,2) as tab_procent,
+    k.{f_sqmprice_t_sqmprice}::NUMERIC(12,2) as kvm_pris_kr,
+    st_area(b.{f_geom_t_building})::NUMERIC(12,2) AS areal_byg_m2,
+    st_perimeter(b.{f_geom_t_building})::NUMERIC(12,2) AS perimeter_byg_m,
+    b2.cnt_oversvoem_nutid,            
+    (100.0 * b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}))::NUMERIC(12,2) AS oversvoem_peri_nutid_pct,            
+    b2.areal_oversvoem_nutid_m2::NUMERIC(12,2),
+    b2.min_vanddybde_nutid_cm::NUMERIC(12,2),
+    b2.max_vanddybde_nutid_cm::NUMERIC(12,2),
+    b2.avg_vanddybde_nutid_cm::NUMERIC(12,2),
+    d.b0 + st_area(b.{f_geom_t_building}) * (d.b1 * ln(GREATEST(b2.max_vanddybde_nutid_cm, 1.0)) + d.b2)::NUMERIC(12,2) AS {f_damage_present_q_build_peri},
+    CASE WHEN ''{Skadeberegning for kælder}'' = ''Medtages'' THEN COALESCE(b.{f_cellar_area_t_building},0.0) * d.c0 ELSE 0 END::NUMERIC(12,2) AS {f_damage_cellar_present_q_build_peri},
+    (k.kvm_pris * st_area(b.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}/100.0)::NUMERIC(12,2) as {f_loss_present_q_build_peri},             
+    '''' AS omraade
+    FROM b2
+    LEFT JOIN {t_building} b on b.{f_pkey_t_building} = b2.{f_pkey_t_building}
+    LEFT JOIN {t_build_usage} u on b.{f_usage_code_t_building} = u.{f_pkey_t_build_usage}
+    LEFT JOIN {t_damage} d on u.{f_category_t_build_usage} = d.{f_category_t_damage} AND d.{f_type_t_damage} = ''{Skadetype}''   
+    LEFT JOIN {t_sqmprice} k on (b.{f_muncode_t_building} = k.{f_muncode_t_sqmprice})
+    WHERE b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegninger, Bygninger ny,', 'Bygninger', '', 'T', '', '', '', 'q_build_peri_new', 'Skadeberegning for bygninger baseret på perimeter', 11, 'T')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_build_peri_new', 'q_build_peri_new', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_build_peri_new', 'q_build_peri_new', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_build_peri_buffer', 'q_build_peri_buffer', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_build_peri_buffer', 'q_build_peri_buffer', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Bygnings buffer (meter)', 'Generelle modelværdier', '1.0', 'R', '0.0', '100.0', '1.0', '', 'Her angives størresle i meter af bygnings bufferzone', 17, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegninger, Bygninger buffer,', 'Bygninger', '', 'T', '', '', '', 'q_build_peri_buffer', 'Skadeberegning for bygninger baseret på perimeter', 11, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+
+
+
 
 
 
