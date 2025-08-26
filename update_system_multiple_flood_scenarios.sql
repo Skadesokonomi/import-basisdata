@@ -851,10 +851,10 @@ SELECT /* Multiple flood scenarios version */
     {Antal tabte døgn} * t.kapacitet AS tabte_overnatninger,
     st_multi(st_force2d(b.{f_geom_t_building}))::Geometry(Multipolygon,25832) AS {f_geom_q_tourism_spatial},
     '''' AS omraade
-    FROM {t_building} b
-	JOIN b2 ON b2.{f_pkey_t_building} = b.{f_pkey_t_building}
+    FROM b2 
+	JOIN {t_building} b ON b2.{f_pkey_t_building} = b.{f_pkey_t_building}
 	JOIN {t_tourism} t  ON t.{f_pkey_t_tourism} = b.{f_usage_code_t_building}  
-	WHERE b3.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0','P', '', '', '', '', 'SQL template for tourism new model ', 8, ' ')
+	WHERE b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0','P', '', '', '', '', 'SQL template for tourism new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegninger, Bygninger ny,', 'Bygninger', '', 'T', '', '', '', 'q_build_peri_new', 'Skadeberegning for bygninger baseret på perimeter', 11, 'T')
