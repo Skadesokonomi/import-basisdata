@@ -789,22 +789,7 @@ b2 AS (
     GROUP BY {f_pkey_t_building}
 ),
 b3 AS (
-    SELECT 
-        b2.*,
-        COUNT(*) AS mennesker_total,
-        COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 0 AND 6) AS mennesker_0_6,
-        COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 7 AND 17) AS mennesker_7_17,
-        COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) AS mennesker_18_70,
-        COUNT(*) FILTER (WHERE h.{f_age_t_human_health} > 70) AS mennesker_71plus,
-        COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) * (138 * 301)::integer AS arbejdstid_nutid_kr,
-        COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) * (23  * 301)::integer AS rejsetid_nutid_kr,
-        COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) * (64  * 301)::integer AS sygetimer_nutid_kr, 
-        COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) * (26  * 301)::integer AS ferietimer_nutid_kr
-	FROM b2
-	JOIN {t_human_health} h ON ST_CoveredBy(h.{f_geom_t_human_health},b2.{f_geom_t_building}) 
-    GROUP BY b2.{f_pkey_t_building})
-SELECT /* Multiple flood scenarios version */
-    b3.*,
+    b2.*,
 	b.{f_pkey_t_building} as {f_pkey_q_human_health},
     b.{f_muncode_t_building} AS kom_kode,
     b.{f_usage_code_t_building} AS bbr_anv_kode,
@@ -814,7 +799,22 @@ SELECT /* Multiple flood scenarios version */
     '''' AS omraade
     FROM {t_building} b
 	JOIN b3 ON b3.{f_pkey_t_building} = b.{f_pkey_t_building}
-	WHERE b3.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0', 'P', '', '', '', '', 'SQL template for human health new model ', 8, ' ')
+	WHERE b3.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0)
+SELECT /* Multiple flood scenarios version */
+    b3.*,
+    COUNT(*) AS mennesker_total,
+    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 0 AND 6) AS mennesker_0_6,
+    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 7 AND 17) AS mennesker_7_17,
+    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) AS mennesker_18_70,
+    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} > 70) AS mennesker_71plus,
+    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) * (138 * 301)::integer AS arbejdstid_nutid_kr,
+    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) * (23  * 301)::integer AS rejsetid_nutid_kr,
+    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) * (64  * 301)::integer AS sygetimer_nutid_kr, 
+    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) * (26  * 301)::integer AS ferietimer_nutid_kr
+	FROM b3
+	JOIN {t_human_health} h ON ST_CoveredBy(h.{f_geom_t_human_health},b3.{f_geom_t_building}) 
+    GROUP BY b3.{f_pkey_t_building})
+', 'P', '', '', '', '', 'SQL template for human health new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
 
@@ -854,7 +854,7 @@ SELECT /* Multiple flood scenarios version */
     FROM {t_building} b
 	JOIN b2 ON b2.{f_pkey_t_building} = b.{f_pkey_t_building}
 	JOIN {t_tourism} t  ON t.{f_pkey_t_tourism} = b.{f_usage_code_t_building}  
-	WHERE b3.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0','P', '', '', '', '', 'SQL template for tourism new model ', 8, ' ')
+	WHERE b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0','P', '', '', '', '', 'SQL template for tourism new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegninger, Bygninger ny,', 'Bygninger', '', 'T', '', '', '', 'q_build_peri_new', 'Skadeberegning for bygninger baseret på perimeter', 11, 'T')
@@ -877,7 +877,8 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_human_health_new', 'q_human_health_new', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Turisme, Kort Ny', 'Turisme', '', 'T', '', '', '', 'q_tourism_spatial_new', 'Sæt hak såfremt der skal beregnes økonomiske tab for overnatningssteder som anvendes til turistformål. De berørte bygninger vises geografisk på et kort.  ', 10, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Turisme, Kort Ny', 'Turisme', '', 'T', '', '', '', 'q_tourism_spatial_new', 'Sæt hak såfremt der skal beregnes økonomiske tab for overnatningssteder som anvendes til turistformål. De berørte bygninger vises geografisk på et kort.  ', 10, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_tourism_spatial_new', 'q_tourism_spatial_new', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_tourism_spatial_new', 'q_tourism_spatial_new', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ')
