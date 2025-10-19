@@ -125,7 +125,7 @@ class FDCRasterPolygonClassification(QgsProcessingAlgorithm):
         sc = self.parameterAsEnum(parameters,'climate_scenario',context)
         ap = self.parameterAsString(parameters,'append_text_to_tablename',context)
         rpt = ['T1','T5','T10','T20','T50','T100','T200','T500','T1000'][rp]
-        sct = ['(none)','SSP1-2.6','SSP2-4.5','SSP3-7.0'][sc]
+        sct = ['no_model','SSP1-2.6','SSP2-4.5','SSP3-7.0'][sc]
         apt = '' if ap is None or '' else '_' + ap
         tablename= '{}_{}_{}{}'.format(rpt,ye,sct,apt).lower().strip()
         replace_dict= {".":"_",",":"_"," ":"_","!":"_","?":"_","æ":"ae","ø":"oe","å":"aa"}

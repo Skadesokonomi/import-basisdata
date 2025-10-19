@@ -75,16 +75,28 @@ class FDCRasterPolygonPixels(QgsProcessingAlgorithm):
             'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
         }
         outputs['RasterPixelsToPolygons'] = processing.run('native:pixelstopolygons', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-
         feedback.setCurrentStep(1)
         if feedback.isCanceled():
             return {}
 
         # Calculate expression
-        alg_params = {
-            'INPUT': QgsExpression("replace(trim(lower(concat(\r\n  array_get(array('T1','T5','T10','T20','T50','T100','T200','T500','T1000'),@return_period_of_flood),\r\n  '_',\r\n  @year,\r\n  array_get(array('','_SSP1-2.6','_SSP2-4.5','_SSP3-7.0'),@climate_scenario),\r\n  if (coalesce(@append_text_to_tablename,'')='','','_'||@append_text_to_tablename)))),\r\narray(' ','.','-','æ','ø','å'),array('_','_','_','ae','oe','aa'))\r\n ").evaluate()
-        }
-        outputs['CalculateExpression'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        #alg_params = {
+        #    'INPUT': QgsExpression("replace(trim(lower(concat(\r\n  array_get(array('T1','T5','T10','T20','T50','T100','T200','T500','T1000'),@return_period_of_flood),\r\n  '_',\r\n  @year,\r\n  array_get(array('','_SSP1-2.6','_SSP2-4.5','_SSP3-7.0'),@climate_scenario),\r\n  if (coalesce(@append_text_to_tablename,'')='','','_'||@append_text_to_tablename)))),\r\narray(' ','.','-','æ','ø','å'),array('_','_','_','ae','oe','aa'))\r\n ").evaluate()
+        #}
+
+        # Calculate expression workaround
+        rp = self.parameterAsEnum(parameters,'return_period_of_flood',context)
+        ye = self.parameterAsString(parameters,'year',context)
+        sc = self.parameterAsEnum(parameters,'climate_scenario',context)
+        ap = self.parameterAsString(parameters,'append_text_to_tablename',context)
+        rpt = ['T1','T5','T10','T20','T50','T100','T200','T500','T1000'][rp]
+        sct = ['no_model','SSP1-2.6','SSP2-4.5','SSP3-7.0'][sc]
+        apt = '' if ap is None or '' else '_' + ap
+        tablename= '{}_{}_{}{}'.format(rpt,ye,sct,apt).lower().strip()
+        replace_dict= {".":"_",",":"_"," ":"_","!":"_","?":"_","æ":"ae","ø":"oe","å":"aa"}
+        for old, new in replace_dict.items(): tablename = tablename.replace(old, new)
+
+        #outputs['CalculateExpression'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
         feedback.setCurrentStep(2)
         if feedback.isCanceled():
@@ -130,7 +142,8 @@ class FDCRasterPolygonPixels(QgsProcessingAlgorithm):
             'SKIPFAILURES': False,
             'SPAT': None,
             'S_SRS': None,
-            'TABLE': outputs['CalculateExpression']['OUTPUT'],
+#            'TABLE': outputs['CalculateExpression']['OUTPUT'],
+            'TABLE': tablename,
             'T_SRS': None,
             'WHERE': None
         }
@@ -151,10 +164,40 @@ class FDCRasterPolygonPixels(QgsProcessingAlgorithm):
             return {}
 
         # PostgreSQL execute SQL
+
+        # Workaround
+        xxx = """
+WITH 
+  one AS (
+    SELECT * FROM fdc_admin.parametre WHERE name LIKE 't_flood_%' AND POSITION('{schemaname}' in value) > 0 AND POSITION('{tablename}' in value) > 0 
+    UNION ( SELECT * FROM fdc_admin.parametre WHERE name LIKE 't_flood_%' AND COALESCE(value,'') = '' ORDER BY name ASC LIMIT 1) ORDER BY value DESC LIMIT 1), 
+
+  two AS (
+    UPDATE fdc_admin.parametre SET value = '"{schemaname}"."{tablename}"' WHERE name in (SELECT name FROM one)), 
+
+  three AS (
+    UPDATE fdc_admin.parametre SET value = '"fid"' WHERE name in (SELECT 'f_pkey_'||name FROM one)), 
+
+  four AS (
+    UPDATE fdc_admin.parametre SET value = '"vanddybde_m"' WHERE name in (SELECT 'f_depth_'||name FROM one)) 
+
+UPDATE fdc_admin.parametre SET value = '"geom"' WHERE name in (SELECT 'f_geom_'||name FROM one);
+"""
+
+        sqltxt = xxx.format(schemaname=parameters['schema_flood_data'].strip('"'),tablename=tablename.strip('"'))
+        
+        
         alg_params = {
             'DATABASE': parameters['database_connection'],
-            'SQL': outputs['CalculateExpression2']['OUTPUT']
+            'SQL': sqltxt 
         }
+        outputs['PostgresqlExecuteSql'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+
+#        alg_params = {
+#            'DATABASE': parameters['database_connection'],
+#            'SQL': outputs['CalculateExpression2']['OUTPUT']
+#        }
         outputs['PostgresqlExecuteSql'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
         return results
 
