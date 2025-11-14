@@ -786,16 +786,9 @@ b2 AS (
         COUNT(*) AS cnt_oversvoem_nutid
 	FROM b1
     GROUP BY {f_pkey_t_building}
-<<<<<<< HEAD
 ),
-b3 AS (
+SELECT 
     b2.*,
-	b.{f_pkey_t_building} as {f_pkey_q_human_health},
-=======
-)
-SELECT /* Multiple flood scenarios version */
-    b2.*,
->>>>>>> de8fdf08f04add90a8ad4e9542bdcb5531a1e523
     b.{f_muncode_t_building} AS kom_kode,
     b.{f_usage_code_t_building} AS bbr_anv_kode,
     b.{f_usage_text_t_building} AS bbr_anv_tekst,
@@ -803,26 +796,6 @@ SELECT /* Multiple flood scenarios version */
     st_multi(st_force2d(b.{f_geom_t_building}))::Geometry(Multipolygon,25832) AS {f_geom_q_human_health},
     h.*,
     '''' AS omraade
-<<<<<<< HEAD
-    FROM {t_building} b
-	JOIN b3 ON b3.{f_pkey_t_building} = b.{f_pkey_t_building}
-	WHERE b3.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0)
-SELECT /* Multiple flood scenarios version */
-    b3.*,
-    COUNT(*) AS mennesker_total,
-    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 0 AND 6) AS mennesker_0_6,
-    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 7 AND 17) AS mennesker_7_17,
-    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) AS mennesker_18_70,
-    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} > 70) AS mennesker_71plus,
-    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) * (138 * 301)::integer AS arbejdstid_nutid_kr,
-    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) * (23  * 301)::integer AS rejsetid_nutid_kr,
-    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) * (64  * 301)::integer AS sygetimer_nutid_kr, 
-    COUNT(*) FILTER (WHERE h.{f_age_t_human_health} BETWEEN 18 AND 70) * (26  * 301)::integer AS ferietimer_nutid_kr
-	FROM b3
-	JOIN {t_human_health} h ON ST_CoveredBy(h.{f_geom_t_human_health},b3.{f_geom_t_building}) 
-    GROUP BY b3.{f_pkey_t_building})
-', 'P', '', '', '', '', 'SQL template for human health new model ', 8, ' ')
-=======
     FROM b2
 	JOIN {t_building} b ON b2.{f_pkey_t_building} = b.{f_pkey_t_building},
     LATERAL (
@@ -838,11 +811,9 @@ SELECT /* Multiple flood scenarios version */
             COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) * (26  * 301)::integer AS ferietimer_nutid_kr
         FROM {t_human_health} WHERE ST_CoveredBy({f_geom_t_human_health},b.{f_geom_t_building})
     ) h
-	WHERE h.mennesker_total >0 AND b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0', 'P', '', '', '', '', 'SQL template for human health new model ', 8, ' ')
->>>>>>> de8fdf08f04add90a8ad4e9542bdcb5531a1e523
+	WHERE h.mennesker_total >0 AND b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0;',
+'P', '', '', '', '', 'SQL template for human health new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
-
-
 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_tourism_spatial_new', 'Queries', '
 WITH b1 AS (
