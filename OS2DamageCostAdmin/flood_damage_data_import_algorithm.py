@@ -92,7 +92,7 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
         url += '' if url[-1]=='/' else '/'
         s.setValue("flood_damage/url", url)
  
-        data = urlopen(url + 'fdlayers.json').read().decode('utf-8')
+        data = urlopen(url + 'fdlayers_mfms.json').read().decode('utf-8')
         self.options = loads(data)
         self.option_list =[key for key in self.options]
 
@@ -104,7 +104,7 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
         #param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(param)
 
-        param = QgsProcessingParameterString('repository_url', 'Repository URL (Reference only)', defaultValue=url + 'fdlayers.json')
+        param = QgsProcessingParameterString('repository_url', 'Repository URL (Reference only)', defaultValue=url + 'fdlayers_mfms.json')
         param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(param)
 
@@ -128,6 +128,24 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
             VALUES ('{name}','{parent}','{value}','{type}', '', '', '', '', '** Autoupdated**', 10, ' ')
             ON CONFLICT (name) DO UPDATE SET value = '{value}', parent = '{parent}', type = '{type}' 
         """          
+        TEMPLATE2 = """
+        INSERT INTO fdc_admin.parametre (name, parent, "value", type, minval, maxval, lookupvalues, "default", explanation, sort, checkable)
+            VALUES ('{name}', '{parent}', '{value}', '{type}', '{minval}', '{maxval}', '{lookupvalues}', '{default}', '{explanation}', {sort}, '{checkable}') 
+            ON CONFLICT(name) DO UPDATE SET 
+        	    parent       = EXCLUDED.parent,
+        		"value"      = EXCLUDED."value", 
+        		type         = EXCLUDED.type, 
+        		minval       = EXCLUDED.minval, 
+        		maxval       = EXCLUDED.maxval, 
+        		lookupvalues = EXCLUDED.lookupvalues, 
+        		"default"    = EXCLUDED."default", 
+        		explanation  = EXCLUDED.explanation, 
+        		sort         = EXCLUDED.sort, 
+        		checkable    = EXCLUDED.checkable;
+        """
+
+
+
 
         feedback = QgsProcessingMultiStepFeedback(1, feedback)
         s = QgsSettings() 
@@ -264,6 +282,19 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
             )
             # Create spatial index
             connection.executeSql('CREATE INDEX ON "{}"."{}" USING GIST ("{}")'.format(exp_schema, exp_table, exp_geom))
+
+            # Insert/update model information for flood data
+            if 'flood_model' in self.options[item]:
+               
+                fdm = self.options[item]['flood_model']
+
+            # PostgreSQL execute SQL
+            
+    
+            # Workaround
+
+                sqltxt = TEMPLATE2.format(name=fdm['name'], parent=fdm['parent'], value=fdm['value'], type=fdm['type'], minval=fdm['minval'], maxval=fdm['maxval'], lookupvalues=fdm['lookupvalues'], default=fdm['default'], explanation=fdm['explanation'], sort=fdm['sort'], checkable=fdm['checkable'])
+                connection.executeSql(sqltxt)
 
             if open_layer:
                 context.addLayerToLoadOnCompletion(

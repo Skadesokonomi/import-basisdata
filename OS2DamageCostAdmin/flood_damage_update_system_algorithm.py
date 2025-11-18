@@ -93,7 +93,7 @@ class FDCUpdateSystemAlgorithm(QgsProcessingAlgorithm):
         url += '' if url[-1]=='/' else '/'
         s.setValue("flood_damage/url", url)
  
-        data = urlopen(url + 'updatescripts.json').read().decode('utf-8')
+        data = urlopen(url + 'updatescripts_mfms.json').read().decode('utf-8')
         self.options = loads(data)
         self.option_list =[key for key in self.options]
  

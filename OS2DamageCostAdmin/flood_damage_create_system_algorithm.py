@@ -91,7 +91,7 @@ class FDCCreateSystemAlgorithm(QgsProcessingAlgorithm):
         url += '' if url[-1]=='/' else '/'
         s.setValue("flood_damage/url", url)
  
-        data = urlopen(url + 'createscripts.json').read().decode('utf-8')
+        data = urlopen(url + 'createscripts_mfms.json').read().decode('utf-8')
         self.options = loads(data)
         self.option_list =[key for key in self.options]
  
@@ -105,7 +105,7 @@ class FDCCreateSystemAlgorithm(QgsProcessingAlgorithm):
         #fdc_connection.setFlags(adm_database.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(fdc_connection)
 
-        param = QgsProcessingParameterString('repository_url', 'Repository URL (Reference only)', defaultValue=url + 'createscripts.json')
+        param = QgsProcessingParameterString('repository_url', 'Repository URL (Reference only)', defaultValue=url + 'createscripts_mfms.json')
         param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(param)
 

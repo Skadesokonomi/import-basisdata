@@ -1,5 +1,0 @@
-EPSG:4647 
-EPSG 4979 - EPSG 4326 3D med ellipsoide højde i meter
-
-
-EPSG:7416 - ETRS89 / UTM zone 32N (EPSG:25832) + DVR90 height

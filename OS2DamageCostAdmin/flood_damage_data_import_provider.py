@@ -37,6 +37,7 @@ from .flood_damage_update_system_algorithm import FDCUpdateSystemAlgorithm
 from .flood_damage_user_admin_algorithm    import FDCUserAdminAlgorithm
 from .flood_damage_raster_polygon_classification_algorithm  import FDCRasterPolygonClassification
 from .flood_damage_raster_polygon_pixels_algorithm          import FDCRasterPolygonPixels
+from .flood_damage_vector_polygon_db_algorithm              import FDCVectorPolygonDB
 
 
 class FloodDamageCostAdmin(QgsProcessingProvider):
@@ -64,6 +65,7 @@ class FloodDamageCostAdmin(QgsProcessingProvider):
         self.addAlgorithm(FDCUserAdminAlgorithm())
         self.addAlgorithm(FDCRasterPolygonClassification())
         self.addAlgorithm(FDCRasterPolygonPixels())
+        self.addAlgorithm(FDCVectorPolygonDB())
         # add additional algorithms here
         # self.addAlgorithm(MyOtherAlgorithm())
 

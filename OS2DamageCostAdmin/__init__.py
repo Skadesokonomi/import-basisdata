@@ -23,8 +23,8 @@
 """
 
 __author__ = 'Bo Victor Thomsen AestasGIS Denmark'
-__date__ = '2023-10-24'
-__copyright__ = '(C) 2023 by Bo Victor Thomsen AestasGIS Denmark'
+__date__ = '2025-11-15'
+__copyright__ = '(C) 2023-now by Bo Victor Thomsen AestasGIS Denmark'
 
 
 # noinspection PyPep8Naming

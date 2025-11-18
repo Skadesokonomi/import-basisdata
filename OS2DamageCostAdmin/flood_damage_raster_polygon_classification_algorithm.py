@@ -23,7 +23,7 @@
 """
 
 __author__ = 'Bo Victor Thomsen, AestasGIS Denmark'
-__date__ = '2025-07-10'
+__date__ = '2025-11-16'
 __copyright__ = '(C) 2025 by Bo Victor Thomsen, AestasGIS Denmark'
 
 # This will get replaced with a git SHA1 when you do a git archive
@@ -49,12 +49,13 @@ from qgis import processing
 
 class FDCRasterPolygonClassification(QgsProcessingAlgorithm):
 
-    def initAlgorithm(self, config=None):
+    def initAlgorithm(self, config: Optional[dict[str, Any]] = None):
         self.addParameter(QgsProcessingParameterRasterLayer('flood_raster_layer_or_file', 'Flood raster layer or file', defaultValue=None))
-        self.addParameter(QgsProcessingParameterBand('layer_number_for_flood_raster_layer', 'Layer number for flood raster layer', parentLayerParameterName='flood_raster_layer_or_file', allowMultiple=False, defaultValue=None))
+        self.addParameter(QgsProcessingParameterBand('layer_number_for_flood_raster_layer', 'Layer number for flood raster layer', parentLayerParameterName='flood_raster_layer_or_file', allowMultiple=False, defaultValue=[1]))
         self.addParameter(QgsProcessingParameterBoolean('is_depth_values_in_centimeters_', 'Is depth values in centimeters ? ', defaultValue=True))
         self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue=None))
         self.addParameter(QgsProcessingParameterDatabaseSchema('schema_flood_data', 'Schema, flood data', connectionParameterName='database_connection', defaultValue='fdc_flood'))
+        self.addParameter(QgsProcessingParameterEnum('flooding_type', 'Flooding type', options=['Storm surge','Rain','Shallow groundwater','Other'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterEnum('return_period_of_flood', 'Return period of flood', options=['T1','T5','T10','T20','T50','T100','T200','T500','T1000'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterNumber('year', 'Year', type=QgsProcessingParameterNumber.Integer, minValue=1900, maxValue=3000, defaultValue=2025))
         self.addParameter(QgsProcessingParameterEnum('climate_scenario', 'Climate scenario', options=['(none)','SSP1-2.6','SSP2-4.5','SSP3-7.0'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
@@ -62,10 +63,10 @@ class FDCRasterPolygonClassification(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterBoolean('merge_to_larger_polygons_', 'Merge to larger polygons ? ', defaultValue=False))
         self.addParameter(QgsProcessingParameterNumber('classification_value_in_cm', 'Classification value in cm', type=QgsProcessingParameterNumber.Integer, minValue=1, maxValue=100, defaultValue=5))
 
-    def processAlgorithm(self, parameters, context, model_feedback):
+    def processAlgorithm(self, parameters: dict[str, Any], context: QgsProcessingContext, model_feedback: QgsProcessingFeedback) -> dict[str, Any]:
         # Use a multi-step feedback, so that individual child algorithm progress reports are adjusted for the
         # overall progress through the model
-        feedback = QgsProcessingMultiStepFeedback(8, model_feedback)
+        feedback = QgsProcessingMultiStepFeedback(6, model_feedback)
         results = {}
         outputs = {}
 
@@ -120,15 +121,17 @@ class FDCRasterPolygonClassification(QgsProcessingAlgorithm):
         #}
 
         # Calculate expression workaround
+        ft = self.parameterAsEnum(parameters,'flooding_type',context)
         rp = self.parameterAsEnum(parameters,'return_period_of_flood',context)
         ye = self.parameterAsString(parameters,'year',context)
         sc = self.parameterAsEnum(parameters,'climate_scenario',context)
         ap = self.parameterAsString(parameters,'append_text_to_tablename',context)
+        ftt = ['SS','RN','SG','OT'][ft]
         rpt = ['T1','T5','T10','T20','T50','T100','T200','T500','T1000'][rp]
         sct = ['no_model','SSP1-2.6','SSP2-4.5','SSP3-7.0'][sc]
         apt = '' if ap is None or '' else '_' + ap
-        tablename= '{}_{}_{}{}'.format(rpt,ye,sct,apt).lower().strip()
-        replace_dict= {".":"_",",":"_"," ":"_","!":"_","?":"_","æ":"ae","ø":"oe","å":"aa"}
+        tablename= '{}_{}_{}_{}{}'.format(ftt,rpt,ye,sct,apt).lower().strip()
+        replace_dict= {"-":"_",".":"_",",":"_"," ":"_","!":"_","?":"_","æ":"ae","ø":"oe","å":"aa"}
         for old, new in replace_dict.items(): tablename = tablename.replace(old, new)
 
         #outputs['CalculateExpression'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
@@ -218,6 +221,7 @@ class FDCRasterPolygonClassification(QgsProcessingAlgorithm):
 
         # PostgreSQL execute SQL
         
+
         # Workaround
         xxx = """
 WITH 
@@ -232,19 +236,53 @@ WITH
     UPDATE fdc_admin.parametre SET value = '"fid"' WHERE name in (SELECT 'f_pkey_'||name FROM one)), 
 
   four AS (
-    UPDATE fdc_admin.parametre SET value = '"vanddybde_m"' WHERE name in (SELECT 'f_depth_'||name FROM one)) 
+    UPDATE fdc_admin.parametre SET value = '"vanddybde_m"' WHERE name in (SELECT 'f_depth_'||name FROM one)), 
 
-UPDATE fdc_admin.parametre SET value = '"geom"' WHERE name in (SELECT 'f_geom_'||name FROM one);
+  five AS (
+    UPDATE fdc_admin.parametre SET value = '"geom"' WHERE name in (SELECT 'f_geom_'||name FROM one)) 
+
+INSERT INTO fdc_admin.parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable)
+    SELECT 
+	    '{modelname}' AS name, 
+		'Oversvømmelsesmodeller' AS parent, 
+		one.name AS value, 
+		'T' AS type, 
+		'{rpt}' AS minval, 
+		'{ye}' AS maxval, 
+		'{sct}' AS lookupvalues, 
+		'{ap}' AS "default", 
+		'Importeret via processing' AS explanation, 
+		'16' AS sort, 
+		'T' AS checkable 
+	FROM one 
+    ON CONFLICT("name") DO UPDATE SET 
+	    parent = EXCLUDED.parent,
+		"value" = EXCLUDED."value", 
+		type = EXCLUDED.type, 
+		minval = EXCLUDED.minval, 
+		maxval = EXCLUDED.maxval, 
+		lookupvalues = EXCLUDED.lookupvalues, 
+		"default" = EXCLUDED."default", 
+		explanation = EXCLUDED.explanation, 
+		sort = EXCLUDED.sort, 
+		checkable = EXCLUDED.checkable;
 """
 
-        sqltxt = xxx.format(schemaname=parameters['schema_flood_data'].strip('"'),tablename=tablename.strip('"'))
-        
-        
+        ap2 = '' if ap is None or '' else ap
+        modelname= '{}:{}/{}/{},{}'.format(ftt,rpt,ye,sct,ap2)
+
+        sqltxt = xxx.format(schemaname=parameters['schema_flood_data'].strip('"'),tablename=tablename.strip('"'), modelname=modelname,ftt=ftt,rpt=rpt,sct=sct,ye=ye,ap=ap2)
+        ftt = ['SS','RN','SG','OT'][ft]
+        rpt = ['T1','T5','T10','T20','T50','T100','T200','T500','T1000'][rp]
+        sct = ['no_model','SSP1-2.6','SSP2-4.5','SSP3-7.0'][sc]
+        apt = '' if ap is None or '' else '_' + ap
+
         alg_params = {
             'DATABASE': parameters['database_connection'],
             'SQL': sqltxt 
         }
         outputs['PostgresqlExecuteSql'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
         return results
 
     def name(self) -> str:
