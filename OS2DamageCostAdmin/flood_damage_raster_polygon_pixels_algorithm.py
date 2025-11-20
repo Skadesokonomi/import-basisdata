@@ -30,6 +30,51 @@ __copyright__ = '(C) 2025 by Bo Victor Thomsen, AestasGIS Denmark'
 
 __revision__ = '$Format:%H$'
 
+TEMPLATE = """
+WITH 
+  one AS (
+    SELECT * FROM fdc_admin.parametre WHERE name LIKE 't_flood_%' AND POSITION('{schemaname}' in value) > 0 AND POSITION('{tablename}' in value) > 0 
+    UNION ( SELECT * FROM fdc_admin.parametre WHERE name LIKE 't_flood_%' AND COALESCE(value,'') = '' ORDER BY name ASC LIMIT 1) ORDER BY value DESC LIMIT 1), 
+
+  two AS (
+    UPDATE fdc_admin.parametre SET value = '"{schemaname}"."{tablename}"' WHERE name in (SELECT name FROM one)), 
+
+  three AS (
+    UPDATE fdc_admin.parametre SET value = '"fid"' WHERE name in (SELECT 'f_pkey_'||name FROM one)), 
+
+  four AS (
+    UPDATE fdc_admin.parametre SET value = '"vanddybde_m"' WHERE name in (SELECT 'f_depth_'||name FROM one)), 
+
+  five AS (
+    UPDATE fdc_admin.parametre SET value = '"geom"' WHERE name in (SELECT 'f_geom_'||name FROM one)) 
+
+INSERT INTO fdc_admin.parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable)
+    SELECT 
+	    '{modelname}' AS name, 
+		'Oversvømmelsesmodeller' AS parent, 
+		one.name AS value, 
+		'U' AS type, 
+		'{rpt}' AS minval, 
+		'{ye}' AS maxval, 
+		'{sct}' AS lookupvalues, 
+		'{ap}' AS "default", 
+		'Importeret via processing' AS explanation, 
+		REPLACE(one.name,'t_flood_','')::integer AS sort, 
+		'T' AS checkable 
+	FROM one 
+    ON CONFLICT("name") DO UPDATE SET 
+	    parent = EXCLUDED.parent,
+		"value" = EXCLUDED."value", 
+		type = EXCLUDED.type, 
+		minval = EXCLUDED.minval, 
+		maxval = EXCLUDED.maxval, 
+		lookupvalues = EXCLUDED.lookupvalues, 
+		"default" = EXCLUDED."default", 
+		explanation = EXCLUDED.explanation, 
+		sort = EXCLUDED.sort, 
+		checkable = EXCLUDED.checkable;
+"""
+
 from typing import Any, Optional
 
 from qgis.core import QgsProcessing
@@ -47,6 +92,13 @@ from qgis.core import QgsProcessingParameterString
 from qgis.core import QgsExpression
 from qgis import processing
 
+def sanitize(modelname):
+
+    tablename = modelname.lower()
+    replace_dict= {"%":"_","&":"_","-":"_",".":"_",",":"_"," ":"_","!":"_","?":"_","æ":"ae","ø":"oe","å":"aa"}
+    for old, new in replace_dict.items(): tablename = tablename.replace(old, new)
+    return tablename
+
 class FDCRasterPolygonPixels(QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config: Optional[dict[str, Any]] = None):
@@ -55,11 +107,11 @@ class FDCRasterPolygonPixels(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterBoolean('is_depth_values_in_centimeters_', 'Is depth values in centimeters ? ', defaultValue=True))
         self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue=None))
         self.addParameter(QgsProcessingParameterDatabaseSchema('schema_flood_data', 'Schema, flood data', connectionParameterName='database_connection', defaultValue='fdc_flood'))
-        self.addParameter(QgsProcessingParameterEnum('flooding_type', 'Flooding type', options=['Storm surge','Rain','Shallow groundwater','Other'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
+        self.addParameter(QgsProcessingParameterEnum('flooding_type', 'Flooding type', options=['Stormflod','Nedbør','Terrænært grundvand','Andet'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterEnum('return_period_of_flood', 'Return period of flood', options=['T1','T5','T10','T20','T50','T100','T200','T500','T1000'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterNumber('year', 'Year', type=QgsProcessingParameterNumber.Integer, minValue=1900, maxValue=3000, defaultValue=2025))
         self.addParameter(QgsProcessingParameterEnum('climate_scenario', 'Climate scenario', options=['(none)','SSP1-2.6','SSP2-4.5','SSP3-7.0'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
-        self.addParameter(QgsProcessingParameterString('append_text_to_tablename', 'Append text to tablename', optional=True, multiLine=False, defaultValue=None))
+        self.addParameter(QgsProcessingParameterString('append_text_to_tablename', 'Extra information', optional=True, multiLine=False, defaultValue=None))
 
     def processAlgorithm(self, parameters: dict[str, Any], context: QgsProcessingContext, model_feedback: QgsProcessingFeedback) -> dict[str, Any]:
         # Use a multi-step feedback, so that individual child algorithm progress reports are adjusted for the
@@ -67,6 +119,25 @@ class FDCRasterPolygonPixels(QgsProcessingAlgorithm):
         feedback = QgsProcessingMultiStepFeedback(5, model_feedback)
         results = {}
         outputs = {}
+
+        feedback.setCurrentStep(1)
+        if feedback.isCanceled():
+            return {}
+
+        # Calculate expression workaround
+        ft = self.parameterAsEnum(parameters,'flooding_type',context)
+        rp = self.parameterAsEnum(parameters,'return_period_of_flood',context)
+        ye = self.parameterAsString(parameters,'year',context)
+        sc = self.parameterAsEnum(parameters,'climate_scenario',context)
+        ap = self.parameterAsString(parameters,'append_text_to_tablename',context)
+
+        ftt = ['Stormflod','Nedbør','Terrænært grundvand','Andet'][ft]
+        rpt = ['T1','T5','T10','T20','T50','T100','T200','T500','T1000'][rp]
+        sct = ['','SSP1-2.6','SSP2-4.5','SSP3-7.0'][sc]
+        ap2 = '' if ap is None else ap
+
+        modelname= '{} {} {} {} {}'.format(ftt,ap2,ye,rpt,sct).rstrip()
+        tablename= sanitize(modelname)
 
         # Raster pixels to polygons
         alg_params = {
@@ -76,31 +147,6 @@ class FDCRasterPolygonPixels(QgsProcessingAlgorithm):
             'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
         }
         outputs['RasterPixelsToPolygons'] = processing.run('native:pixelstopolygons', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        feedback.setCurrentStep(1)
-        if feedback.isCanceled():
-            return {}
-
-        # Calculate expression
-        #alg_params = {
-        #    'INPUT': QgsExpression("replace(trim(lower(concat(\r\n  array_get(array('T1','T5','T10','T20','T50','T100','T200','T500','T1000'),@return_period_of_flood),\r\n  '_',\r\n  @year,\r\n  array_get(array('','_SSP1-2.6','_SSP2-4.5','_SSP3-7.0'),@climate_scenario),\r\n  if (coalesce(@append_text_to_tablename,'')='','','_'||@append_text_to_tablename)))),\r\narray(' ','.','-','æ','ø','å'),array('_','_','_','ae','oe','aa'))\r\n ").evaluate()
-        #}
-
-        # Calculate expression workaround
-        ft = self.parameterAsEnum(parameters,'flooding_type',context)
-        rp = self.parameterAsEnum(parameters,'return_period_of_flood',context)
-        ye = self.parameterAsString(parameters,'year',context)
-        sc = self.parameterAsEnum(parameters,'climate_scenario',context)
-        ap = self.parameterAsString(parameters,'append_text_to_tablename',context)
-        ftt = ['SS','RN','SG','OT'][ft]
-        rpt = ['T1','T5','T10','T20','T50','T100','T200','T500','T1000'][rp]
-        sct = ['no_model','SSP1-2.6','SSP2-4.5','SSP3-7.0'][sc]
-        apt = '' if ap is None or '' else '_' + ap
-        tablename= '{}_{}_{}_{}{}'.format(ftt,rpt,ye,sct,apt).lower().strip()
-        replace_dict= {"-":"_",".":"_",",":"_"," ":"_","!":"_","?":"_","æ":"ae","ø":"oe","å":"aa"}
-
-        for old, new in replace_dict.items(): tablename = tablename.replace(old, new)
-
-        #outputs['CalculateExpression'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
         feedback.setCurrentStep(2)
         if feedback.isCanceled():
@@ -156,79 +202,14 @@ class FDCRasterPolygonPixels(QgsProcessingAlgorithm):
         if feedback.isCanceled():
             return {}
 
-        # Calculate expression2
-        alg_params = {
-            'INPUT': QgsExpression('concat (\r\n\'WITH one AS (SELECT * FROM fdc_admin.parametre WHERE name LIKE \\\'t_flood_%\\\' AND POSITION(\\\'\', \r\n@schema_flood_data, \r\n\'\\\' in value) > 0 AND POSITION(\\\'\', \r\n@Calculate_expression_OUTPUT, \r\n\'\\\' in value) > 0 \',\r\n\'UNION (SELECT * FROM fdc_admin.parametre WHERE name LIKE \\\'t_flood_%\\\' AND COALESCE(value,\\\'\\\') = \\\'\\\'\',\' ORDER BY name ASC LIMIT 1) ORDER BY value DESC LIMIT 1), \',\r\n\'two   AS (UPDATE fdc_admin.parametre SET value = \\\'"\', \r\n@schema_flood_data,\r\n\'"."\', \r\n@Calculate_expression_OUTPUT,\r\n\'"\\\' WHERE name in (SELECT name FROM one)), \',\r\n\'three AS (UPDATE fdc_admin.parametre SET value = \\\'"fid"\\\' WHERE name in (SELECT \\\'f_pkey_\\\'||name FROM one)), \',\r\n\'four AS (UPDATE fdc_admin.parametre SET value = \\\'"vanddybde_m"\\\' WHERE name in (SELECT \\\'f_depth_\\\'||name FROM one)) \',\r\n\'UPDATE fdc_admin.parametre SET value = \\\'"geom"\\\' WHERE name in (SELECT \\\'f_geom_\\\'||name FROM one);\'\r\n)\r\n').evaluate()
-        }
-        outputs['CalculateExpression2'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-
-        feedback.setCurrentStep(5)
-        if feedback.isCanceled():
-            return {}
-
-        # PostgreSQL execute SQL
-        
-
-        # Workaround
-        xxx = """
-WITH 
-  one AS (
-    SELECT * FROM fdc_admin.parametre WHERE name LIKE 't_flood_%' AND POSITION('{schemaname}' in value) > 0 AND POSITION('{tablename}' in value) > 0 
-    UNION ( SELECT * FROM fdc_admin.parametre WHERE name LIKE 't_flood_%' AND COALESCE(value,'') = '' ORDER BY name ASC LIMIT 1) ORDER BY value DESC LIMIT 1), 
-
-  two AS (
-    UPDATE fdc_admin.parametre SET value = '"{schemaname}"."{tablename}"' WHERE name in (SELECT name FROM one)), 
-
-  three AS (
-    UPDATE fdc_admin.parametre SET value = '"fid"' WHERE name in (SELECT 'f_pkey_'||name FROM one)), 
-
-  four AS (
-    UPDATE fdc_admin.parametre SET value = '"vanddybde_m"' WHERE name in (SELECT 'f_depth_'||name FROM one)), 
-
-  five AS (
-    UPDATE fdc_admin.parametre SET value = '"geom"' WHERE name in (SELECT 'f_geom_'||name FROM one)) 
-
-INSERT INTO fdc_admin.parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable)
-    SELECT 
-	    '{modelname}' AS name, 
-		'Oversvømmelsesmodeller' AS parent, 
-		one.name AS value, 
-		'T' AS type, 
-		'{rpt}' AS minval, 
-		'{ye}' AS maxval, 
-		'{sct}' AS lookupvalues, 
-		'{ap}' AS "default", 
-		'Importeret via processing' AS explanation, 
-		'16' AS sort, 
-		'T' AS checkable 
-	FROM one 
-    ON CONFLICT("name") DO UPDATE SET 
-	    parent = EXCLUDED.parent,
-		"value" = EXCLUDED."value", 
-		type = EXCLUDED.type, 
-		minval = EXCLUDED.minval, 
-		maxval = EXCLUDED.maxval, 
-		lookupvalues = EXCLUDED.lookupvalues, 
-		"default" = EXCLUDED."default", 
-		explanation = EXCLUDED.explanation, 
-		sort = EXCLUDED.sort, 
-		checkable = EXCLUDED.checkable;
-"""
-
-        ap2 = '' if ap is None or '' else ap
-        modelname= '{}:{}/{}/{},{}'.format(ftt,rpt,ye,sct,ap2)
-
-        sqltxt = xxx.format(schemaname=parameters['schema_flood_data'].strip('"'),tablename=tablename.strip('"'), modelname=modelname,ftt=ftt,rpt=rpt,sct=sct,ye=ye,ap=ap2)
-        ftt = ['SS','RN','SG','OT'][ft]
-        rpt = ['T1','T5','T10','T20','T50','T100','T200','T500','T1000'][rp]
-        sct = ['no_model','SSP1-2.6','SSP2-4.5','SSP3-7.0'][sc]
-        apt = '' if ap is None or '' else '_' + ap
+        sqltxt = TEMPLATE.format(schemaname=parameters['schema_flood_data'].strip('"'),tablename=tablename.strip('"'), modelname=modelname,ftt=ftt,rpt=rpt,sct=sct,ye=ye,ap=ap2)
 
         alg_params = {
             'DATABASE': parameters['database_connection'],
             'SQL': sqltxt 
         }
         outputs['PostgresqlExecuteSql'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
         return results
 
     def name(self) -> str:

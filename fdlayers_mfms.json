@@ -285,13 +285,13 @@
       },
       "dato":"2023-11-19"
    },
-   "Nedbør, 25mm, år 2025 - T100":{
+   "Nedbør 25mm 2025 T10":{
       "forklaring":"Oversvømmelsespolygoner 25 mm / 10 m. grid",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/nedbor_25mm.fgb",
       "dbkode":["t_flood_40","Flood data","S"],
       "def_schema":"fdc_flood",
-      "def_table":"nedboer_25mm_2025_T100",
+      "def_table":"nedboer_25mm_2025_t10",
       "clip_table":"no",
       "dbkeys":{
          "f_depth_t_flood_40":[
@@ -311,11 +311,11 @@
          ]
       },
       "flood_model":{
-         "name":"Nedbør 25mm 2025 T100",
+         "name":"Nedbør 25mm 2025 T10",
 		 "parent":"Oversvømmelsesmodeller", 
 		 "value":"t_flood_40", 
 		 "type":"U", 
-		 "minval":"T100", 
+		 "minval":"T10", 
 		 "maxval":"2025", 
 		 "lookupvalues":"Nedbør", 
 		 "default":"25mm", 
@@ -325,13 +325,13 @@
       },
       "dato":"2025-11-16"
    },
-   "Nedbør, 50mm, år 2100 T100 SSP2-4.5":{
+   "Nedbør 50mm 2100 T100 SSP2-4.5":{
       "forklaring":"Oversvømmelsespolygoner 50 mm / 10 m. grid",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/oversvommelse_50mm_10m_grid.fgb",
       "dbkode":["t_flood_41","Flood data","S"],
       "def_schema":"fdc_flood",
-      "def_table":"nedboer_50mm_2100_T100_SSP2_4_5",
+      "def_table":"nedboer_50mm_2100_t100_SSP2_4_5",
      "clip_table":"no",
       "dbkeys":{
          "f_depth_t_flood_41":[
@@ -356,7 +356,7 @@
 		 "value":"t_flood_41", 
 		 "type":"U", 
 		 "minval":"T100", 
-		 "maxval":"2025", 
+		 "maxval":"2100", 
 		 "lookupvalues":"SSP2-4.5", 
 		 "default":"50mm", 
 		 "explanation":"", 
@@ -364,14 +364,15 @@
 		 "checkable":"T"
       },
       "dato":"2025-11-16"
+	  
    },
-   "Stormflod, rcp85, år 2025 T100":{
+   "Stormflod 2025 T100":{
       "forklaring":"Oversvømmelsespolygoner, flood_rp100_presentday",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/flood_rp100_presentday.fgb",
       "dbkode":["t_flood_42","Flood data","S"],
       "def_schema":"fdc_flood",
-      "def_table":"stormflod_rcp85_2025_T100",
+      "def_table":"stormflod_2025_t100",
       "clip_table":"no",
       "dbkeys":{
          "f_depth_t_flood_42":[
@@ -391,27 +392,28 @@
          ]
       },
       "flood_model":{
-         "name":"Stormflod rcp85 2025 T100",
+         "name":"Stormflod 2025 T100",
 		 "parent":"Oversvømmelsesmodeller", 
 		 "value":"t_flood_42", 
 		 "type":"U", 
 		 "minval":"T100", 
 		 "maxval":"2025", 
 		 "lookupvalues":"", 
-		 "default":"rcp85", 
+		 "default":"", 
 		 "explanation":"", 
 		 "sort":"42", 
 		 "checkable":"T"
       },
       "dato":"2025-11-16"
    },
-   "Stormflod, rcp85, år 2100 T100 SSP3-7.0":{
+
+   "Stormflod 2100 T100 SSP3-7.0":{
       "forklaring":"Oversvømmelsespolygoner, flood_rp100_2071_2100_rcp85mean",
       "provider":"ogr",
       "adresse":"/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/flood_rp100_2071_2100_rcp85mean.fgb",
       "dbkode":["t_flood_43","Flood data","S"],
       "def_schema":"fdc_flood",
-      "def_table":"stormflod_rcp85_2100_T100_SSP3_7_0",
+      "def_table":"stormflod_2100_t100_ssp3_7_0",
       "clip_table":"no",
       "dbkeys":{
          "f_depth_t_flood_43":[
@@ -431,14 +433,14 @@
          ]
       },
       "flood_model":{
-         "name":"Stormflod rcp85 2100 T100 SSP3-7.0",
+         "name":"Stormflod 2100 T100 SSP3-7.0",
 		 "parent":"Oversvømmelsesmodeller", 
 		 "value":"t_flood_43", 
 		 "type":"U", 
 		 "minval":"T100", 
 		 "maxval":"2100", 
 		 "lookupvalues":"SSP3-7.0", 
-		 "default":"rcp85", 
+		 "default":"", 
 		 "explanation":"", 
 		 "sort":43, 
 		 "checkable":"T"

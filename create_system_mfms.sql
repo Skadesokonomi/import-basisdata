@@ -1070,6 +1070,7 @@ SELECT /* Multiple flood scenarios version */
     st_area(b.{f_geom_t_building})::NUMERIC(12,2) AS areal_byg_m2,
     st_multi(st_force2d(b.{f_geom_t_building}))::Geometry(Multipolygon,25832) AS {f_geom_q_human_health},
     h.*,
+    (h.arbejdstid_nutid_kr + h.rejsetid_nutid_kr + h.sygetimer_nutid_kr + h.ferietimer_nutid_kr)::NUMERIC(12,2) AS {f_damage_present_q_human_health},
     '''' AS omraade
     FROM b2
 	JOIN {t_building} b ON b2.{f_pkey_t_building} = b.{f_pkey_t_building},
@@ -1123,6 +1124,7 @@ SELECT /* Multiple flood scenarios version */
     t.omkostning AS omkostninger,
     {Antal tabte døgn} AS tabte_dage,
     {Antal tabte døgn} * t.kapacitet AS tabte_overnatninger,
+    ({Antal tabte døgn} * t.omkostning * t.kapacitet)::NUMERIC(12,2) AS {f_damage_present_q_tourism_spatial},
     st_multi(st_force2d(b.{f_geom_t_building}))::Geometry(Multipolygon,25832) AS {f_geom_q_tourism_spatial},
     '''' AS omraade
     FROM b2 
