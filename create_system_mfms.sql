@@ -1161,9 +1161,16 @@ ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_tourism_spatial_new', 'q_tourism_spatial_new', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
-
-
-
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_build_peri_new', 'q_build_peri_new', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_cellar_present_q_build_peri_new', 'q_build_peri_new', 'skadebeloeb_kaelder_nutid_kr', 'T', '', '', '', '', '', 1, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_loss_present_q_build_peri_new', 'q_build_peri_new', 'vaerditab_nutid_kr', 'T', '', '', '', '', '', 1, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_presentq_tourism_spatial_new', 'q_tourism_spatial_new', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_human_health_new', 'q_human_health_new', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
 
 
