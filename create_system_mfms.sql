@@ -888,4 +888,6 @@ ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Mennesker', 'Mennesker og helbred', '', 'T', '', '', '', 'q_human_health', 'Sæt hak såfremt der skal beregnes humane omkostninger', 10, 'T')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Datostempel', 'Name templates', '20251121-1000', 'T', '', '', '', '', '', 99, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 

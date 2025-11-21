@@ -18,26 +18,6 @@
             "q_building",
             "F"
          ],
-         "f_pkey_q_build_peri":[
-            "fid",
-            "q_build_peri",
-            "F"
-         ],
-         "f_geom_q_build_peri":[
-            "geom",
-            "q_build_peri",
-            "F"
-         ],
-         "f_pkey_q_surrounding_loss":[
-            "fid",
-            "q_surrounding_loss",
-            "F"
-         ],
-         "f_geom_q_surrounding_loss":[
-            "geom",
-            "q_surrounding_loss",
-            "F"
-         ],
          "f_pkey_t_building":[
             "fid",
             "t_building",
@@ -81,14 +61,14 @@
       "def_table":"bioscore",
       "clip_table":"yes",
       "dbkeys":{
-         "f_pkey_q_bioscore_spatial":[
+         "f_pkey_q_bioscore":[
             "fid",
-            "q_bioscore_spatial",
+            "q_bioscore",
             "F"
          ],
-         "f_geom_q_bioscore_spatial":[
+         "f_geom_q_bioscore":[
             "geom",
-            "q_bioscore_spatial",
+            "q_bioscore",
             "F"
          ],
          "f_pkey_t_bioscore":[
