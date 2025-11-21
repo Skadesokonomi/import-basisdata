@@ -766,7 +766,6 @@ SELECT /* Multiple flood scenarios version */
     b.*,
     d.{f_category_t_damage} AS skade_kategori,
     d.{f_type_t_damage} AS skade_type,
-	''{Skadeberegning for kælder}'' AS kaelder_beregning,
     {Værditab, skaderamte bygninger (%)}::NUMERIC(12,2) as tab_procent,
     k.{f_sqmprice_t_sqmprice}::NUMERIC(12,2) as kvm_pris_kr,
     st_area(b.{f_geom_t_building})::NUMERIC(12,2) AS areal_byg_m2,
@@ -778,7 +777,7 @@ SELECT /* Multiple flood scenarios version */
     b2.max_vanddybde_cm::NUMERIC(12,2),
     b2.avg_vanddybde_cm::NUMERIC(12,2),
     d.b0 + st_area(b.{f_geom_t_building}) * (d.b1 * ln(GREATEST(b2.max_vanddybde_cm, 1.0)) + d.b2)::NUMERIC(12,2) AS {f_damage_q_building},
-    CASE WHEN ''{Skadeberegning for kælder}'' = ''Medtages'' THEN COALESCE(b.{f_cellar_area_t_building},0.0) * d.c0 ELSE 0 END::NUMERIC(12,2) AS {f_damage_cellar_q_building},
+    (COALESCE(b.{f_cellar_area_t_building},0.0) * d.c0)::NUMERIC(12,2) AS {f_damage_cellar_q_building},
     (k.kvm_pris * st_area(b.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}/100.0)::NUMERIC(12,2) as {f_loss_q_building},             
     '''' AS omraade
     FROM b2
@@ -888,6 +887,15 @@ ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Mennesker', 'Mennesker og helbred', '', 'T', '', '', '', 'q_human_health', 'Sæt hak såfremt der skal beregnes humane omkostninger', 10, 'T')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Datostempel', 'Name templates', '20251121-1000', 'T', '', '', '', '', '', 99, ' ')
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Hidden parameters', 'General', '', 'G', '', '', '', '', 'Grupper til administration af skjulte semipermanente parametre', 2, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Værditab, skaderamte bygninger (%)', 'Hidden parameters', '4', 'R', '0.0', '100.0', '5.0', '', 'Her angives størrelsen på reduktionen i salgspris for de bygninger som bliver berørt af den pågældende oversvømmelse. Tabet beregnes som en procentsats, som angives af brugeren, af den gennemsnitlige kommunale m2 pris for solgte boliger i løbet af de seneste år. Det anbefales at anvende værdien 10% såfremt man ikke har bedre data.', 3, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Faktor for værditab', 'Hidden parameters', '0.50', 'R', '0.0', '1.0', '0.1', '', 'Faktor værdi til beregning af værditab for nabobygninger ud fra værditab for skaderamte bygninger', 4, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Datostempel', 'Name templates', '20251121-1110', 'T', '', '', '', '', '', 99, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+
+
 
