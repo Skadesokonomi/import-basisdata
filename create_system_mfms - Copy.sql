@@ -93,6 +93,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Cell administration', 'General', '', 'G', '', '', '', '', 'Grupper til administration af celle generering', 1, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Name templates', 'General', '', 'G', '', '', '', '', 'Grupper til administration af celle generering', 1, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('SQL templates', 'General', '', 'G', '', '', '', '', 'Grupper til administration af celle generering', 1, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Hidden parameters', 'General', '', 'G', '', '', '', '', 'Grupper til administration af skjulte semipermanente parametre', 2, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Cell layername', 'Cell administration', 'celler', 'T', '', '', '', '', '', 1, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Name of model value section', 'Name templates', 'Generelle modelværdier', 'T', '', '', '', '', '', 1, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Clear cell layer template', 'Cell administration', 'UPDATE "{schema}"."{table}" SET val_intersect = 0.0, num_intersect = 0
@@ -148,6 +149,8 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Mennesker og helbred', 'Sektor modeller', '', 'G', '', '', '', '', 'Skademodeller for Mennesker og helbred', 7, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Oversvømmelsesperiode (timer)', 'Vej og trafik', '24', 'I', '0', '100', '1', '', 'Her angives det antal dage, hvor vejene ikke kan benyttes pga. oversvømmelsen.', 4, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Renovationspris pr meter vej (DKK)', 'Vej og trafik', '20', 'I', '0', '1000', '10', '', 'Her angives den økonomiske omkostning til oprydning per meter vej som bliver oversvømmet. Omkostningen angives i DKK per meter.', 5, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Bredde af nabozone (meter)', 'Hidden parameters', '300.0', 'R', '0.0', '1000.0', '10.0', '', 'Maks. afstand for nabobygninger fra skaderamte bygningerder som medtages i beregningen', 3, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Medtag i risikoberegninger', 'Hidden parameters', 'Skadebeløb', 'O', '', '', 'Skadebeløb¤Værditab¤Skadebeløb og værditab¤Intet (0 kr.)', '', 'Her vælger man om det kun er skadeomkostningen eller skadeomkostning inkl. værditab for bygninger som inkluderes i risikoberegningen.', 3, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Minimum vanddybde (meter)', 'Generelle modelværdier', '0.2', 'R', '0.10', '10.0', '0.05', '', 'Her angives den minimale vanddybde på terræn som der skal til for at der opstår økonomiske tab i forbindelse med oversvømmelsen. Denne værdi angives i m, og anvendes kun for de sektorer hvor der ikke er angivet en alternativ minimum vanddybde.', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Antal tabte døgn', 'Turisme', '60', 'I', '0', '365', '5', '', 'Her angives antallet af dage hvor bygningerne som bliver berørt af den pågældende oversvømmelse ikke kan anvendes til turistformål pga. skader eller oprydning efter oversvømmelsen.  ', 1, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Reports', '', '', 'G', '', '', '', '', 'Hovedgruppe til administration og kørsel af Rapporter', 4, ' ');
@@ -160,6 +163,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_t_road_traffic', 't_road_traffic', 'geom', 'F', '', '', '', '', '', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_t_road_traffic', 't_road_traffic', 'objectid', 'F', '', '', '', '', '', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Antal dage med oversvømmelse', 'Rekreative områder', '24', 'I', '0', '100', '1', '', 'Angiv antallet af dage hvor de rekreative områder ikke kan anvendes som en konsekvens af den pågældende oversvømmelse.', 3, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Faktor for værditab', 'Hidden parameters', '0.50', 'R', '0.0', '1.0', '0.1', '', 'Faktor værdi til beregning af værditab for nabobygninger ud fra værditab for skaderamte bygninger', 4, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Result_schema', 'Name templates', 'fdc_results', 'T', '', '', '', '', 'Name of schema to place result tables in', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_t_publicservice', 't_publicservice', 'objectid', 'F', '', '', '', '', '', 1, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_t_publicservice', 't_publicservice', 'geom', 'F', '', '', '', '', '', 1, ' ');
@@ -187,7 +191,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_t_infrastructure', 't_infrastructure', 'geom', 'F', '', '', '', '', '', 1, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_muncode_t_building', 't_building', 'komkode', 'F', '', '', '', '', 'Fieldname for municipality code for building table', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_t_building', 't_building', 'geom', 'F', '', '', '', '', 'Field name for geometry field in building table', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_t_building', 't_building', 'fid', 'F', '', '', '', '', 'Field name for keyfield in Building table ', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_t_building', 't_building', 'objectid', 'F', '', '', '', '', 'Field name for keyfield in Building table ', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_cellar_area_t_building', 't_building', 'kaelder_areal', 'F', '', '', '', '', '', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_usage_code_t_building', 't_building', 'bbr_anv_kode', 'F', '', '', '', '', 'Fieldname for usage code for building table', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_usage_text_t_building', 't_building', 'bbr_anv_tekst', 'F', '', '', '', '', 'Fieldname for usage code for building table', 10, ' ');
@@ -198,27 +202,44 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_sqmprice_t_sqmprice', 't_sqmprice', 'kvm_pris', 'F', '', '', '', '', 'Fieldname for sqm price', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_t_damage', 't_damage', 'skade_type, skade_kategori', 'F', '', '', '', '', 'Field name for keyfield in damage function table ', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_category_t_damage', 't_damage', 'skade_kategori', 'F', '', '', '', '', 'Field name for keyfield in damage function table ', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegning for kælder', 'Hidden parameters', 'Medtages', 'O', '', '', 'Medtages ikke¤Medtages', ' ', 'Bestemmer skadeberegning for kælder medtages i udregningen', 2, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadetype', 'Generelle modelværdier', 'Stormflod', 'O', '', '', 'Stormflod¤Skybrud¤Vandløb', ' ', 'Valg af økonomisk skademodel', 1, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_type_t_damage', 't_damage', 'skade_type', 'F', '', '', '', '', 'Field name for keyfield in damage function table ', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_building', 'q_building', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Returperiode, antal år', 'Hidden parameters', '100', 'I', '0', '1000', '10', '', 'Indtast returperioden i hele år, dvs. gennemsnitligt antal år mellem hændelser (Nutidshændelse og fremtidshændelse skal have samme returperiode)', 14, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegninger, Bygninger gl. model', 'Hidden parameters', '', 'T', '', '', '', 'q_building', 'Skadeberegning for bygninger, forskellige skademodeller, med eller uden kælderberegning, ny metode', 11, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_building', 'q_building', 'objectid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_building', 'q_building', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_q_building', 'q_building', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_cellar_q_building', 'q_building', 'skadebeloeb_kaelder_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_loss_q_building', 'q_building', 'vaerditab_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_building', 'q_building', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+--INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_future_q_building', 'q_building', 'skadebeloeb_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_cellar_present_q_building', 'q_building', 'skadebeloeb_kaelder_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+--INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_cellar_future_q_building', 'q_building', 'skadebeloeb_kaelder_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_loss_present_q_building', 'q_building', 'vaerditab_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+--INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_loss_future_q_building', 'q_building', 'vaerditab_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_building', 'q_building', 'risiko_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Rekreative omr', 'Rekreative områder', '', 'T', '', '', '', 'q_recreative', 'Sæt hak såfremt der skal beregnes økonomiske tab for overnatningssteder som anvendes til turistformål. De berørte bygninger vises geografisk på et kort.  ', 10, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_recreative', 'q_recreative', 'id', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_recreative', 'q_recreative', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_q_recreative', 'q_recreative', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_recreative', 'q_recreative', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+--INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_future_q_recreative', 'q_recreative', 'skadebeloeb_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_recreative', 'q_recreative', 'risiko_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Personale', 'Industri', ' ', 'T', '', '', '', 'q_comp_build', 'Sæt hak såfremt modellen skal identificere de virksomheder som bliver berørt af den pågældende oversvømmelse, og angive antallet af medarbejdere per virksomhed.', 10, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_comp_build', 'q_comp_build', 'rowid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_comp_build', 'q_comp_build', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Bioværdi', 'Biodiversitet', '', 'T', '', '', '', 'q_bioscore', 'Sæt hak såfremt modellen skal identificere særlige levesteder for rødlistede arter som bliver berørt i forbindelse med den pågældende oversvømmelseshændelse. Her vises levestederne geografisk på et kort.', 10, 'T');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_bioscore', 'q_bioscore', 'id', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_bioscore', 'q_bioscore', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_q_road_traffic', 'q_road_traffic', 'pris_total_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Bioværdi', 'Biodiversitet', '', 'T', '', '', '', 'q_bioscore_spatial', 'Sæt hak såfremt modellen skal identificere særlige levesteder for rødlistede arter som bliver berørt i forbindelse med den pågældende oversvømmelseshændelse. Her vises levestederne geografisk på et kort.', 10, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_bioscore_spatial', 'q_bioscore_spatial', 'id', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_bioscore_spatial', 'q_bioscore_spatial', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_road_traffic', 'q_road_traffic', 'risiko_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_road_traffic', 'q_road_traffic', 'pris_total_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+--INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_future_q_road_traffic', 'q_road_traffic', 'pris_total_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_road_traffic', 'q_road_traffic', 'id', 'T', '', '', '', '', '', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_road_traffic', 'q_road_traffic', 'geom', 'T', '', '', '', '', '', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('vej&trafik', 'Vej og trafik', '', 'T', '', '', '', 'q_road_traffic', 'Sæt hak såfremt der skal beregnes økonomiske tab for vej og trafik i forbindelse med den pågældende oversvømmelseshændelse.', 10, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_surrounding_loss', 'q_surrounding_loss', 'objectid', 'T', '', '', '', '', '', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_surrounding_loss', 'q_surrounding_loss', 'geom', 'T', '', '', '', '', '', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_surrounding_loss', 'q_surrounding_loss', 'risiko_kr', 'T', '', '', '', '', '', 10, ' ');
+--INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_loss_future_q_surrounding_loss', 'q_surrounding_loss', 'vaerditab_fremtid_kr', 'T', '', '', '', '', '', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_loss_present_q_surrounding_loss', 'q_surrounding_loss', 'vaerditab_nutid_kr', 'T', '', '', '', '', '', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Værditab nabobygninger', 'Hidden parameters', '', 'T', '', '', '', 'q_surrounding_loss', '', 12, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Admin data', 'Data', '', 'G', '', '', '', '', 'Gruppe for administration af Lookup tabeller', 2, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Flood data', 'Data', '', 'G', '', '', '', '', 'Gruppe for administration af Oversvømmelses tabeller', 2, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Sector data', 'Data', '', 'G', '', '', '', '', 'Gruppe for administration af Sektor tabeller', 2, ' ');
@@ -423,6 +444,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('t_flood_48', 'Flood data', '', 'S', '', '', '', '', 'Parametergruppe til tabel "oversvømmelser"', 48, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('t_flood_49', 'Flood data', '', 'S', '', '', '', '', 'Parametergruppe til tabel "oversvømmelser"', 49, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('t_flood_50', 'Flood data', '', 'S', '', '', '', '', 'Parametergruppe til tabel "oversvømmelser"', 50, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Værditab, skaderamte bygninger (%)', 'Hidden parameters', '4', 'R', '0.0', '100.0', '5.0', '', 'Her angives størrelsen på reduktionen i salgspris for de bygninger som bliver berørt af den pågældende oversvømmelse. Tabet beregnes som en procentsats, som angives af brugeren, af den gennemsnitlige kommunale m2 pris for solgte boliger i løbet af de seneste år. Det anbefales at anvende værdien 10% såfremt man ikke har bedre data.', 3, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Create cell layer template', 'Cell administration', 'CREATE TABLE IF NOT EXISTS {celltable} AS
   WITH g AS (
     SELECT (
@@ -452,7 +474,9 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Markarealer', 'Landbrug', '', 'T', '', '', '', 'q_agriculture', 'Sæt hak såfremt der skal beregnes økonomiske tab for oversvømmede landbrugsarealer.', 10, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_agriculture', 'q_agriculture', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_agriculture', 'q_agriculture', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_q_agriculture', 'q_agriculture', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_agriculture', 'q_agriculture', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+--INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_future_q_agriculture', 'q_agriculture', 'skadebeloeb_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_agriculture', 'q_agriculture', 'risiko_kr', 'T', '', '', '', '', '', 1, 'T');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('t_agriculture', 'Sector data', '', 'S', '', '', '', '', 'Parametergruppe til tabel "Landbrug"', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('t_agr_cat', 'Admin data', 'fdc_lookup.afgroede_kategori', 'S', '', '', '', '', 'Parametergruppe til opslagstabel "afgrøde-kategori"', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('t_agr_price', 'Admin data', 'fdc_lookup.afgroede_pris', 'S', '', '', '', '', 'Parametergruppe til opslagstabel "afgrøde-pris"', 10, ' ');
@@ -464,12 +488,28 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_t_agr_price', 't_agr_price', 'priskategori', 'F', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_price_t_agr_price', 't_agr_price', 'pris', 'F', '', '', '', '', 'Name of field for price in øre', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Perimeter cut-off (%)', 'Generelle modelværdier', '5.0', 'R', '0.0', '100.0', '1.0', '', 'Her angives minimum brøkdel af oversvømmet perimeter i procent, før bygning medtages i skadeberegning.', 17, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_human_health', 'q_human_health', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegninger, Bygninger 2023', 'Hidden parameters', '', 'T', '', '', '', 'q_build_peri', 'Skadeberegning for bygninger baseret på perimeter', 11, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_build_peri', 'q_build_peri', 'objectid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_build_peri', 'q_build_peri', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_build_peri', 'q_build_peri', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+--INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_future_q_build_peri', 'q_build_peri', 'skadebeloeb_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_cellar_present_q_build_peri', 'q_build_peri', 'skadebeloeb_kaelder_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+--INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_cellar_future_q_build_peri', 'q_build_peri', 'skadebeloeb_kaelder_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_loss_present_q_build_peri', 'q_build_peri', 'vaerditab_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+--INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_loss_future_q_build_peri', 'q_build_peri', 'vaerditab_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_build_peri', 'q_build_peri', 'risiko_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Humane omkostninger 2023', 'Hidden parameters', '', 'T', '', '', '', 'q_human_health', 'Sæt hak såfremt der skal beregnes humane omkostninger', 10, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_human_health', 'q_human_health', 'rowid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_human_health', 'q_human_health', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_q_human_health', 'q_human_health', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_tourism', 'q_tourism_spatial', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_tourism', 'q_tourism_spatial', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_q_tourism', 'q_tourism_spatial', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_human_health', 'q_human_health', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+--INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_future_q_human_health', 'q_human_health', 'skadebeloeb_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_human_health', 'q_human_health', 'risiko_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Turisme Kort 2023', 'Hidden parameters', '', 'T', '', '', '', 'q_tourism_spatial', 'Sæt hak såfremt der skal beregnes økonomiske tab for overnatningssteder som anvendes til turistformål. De berørte bygninger vises geografisk på et kort.  ', 10, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_tourism_spatial', 'q_tourism_spatial', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_tourism_spatial', 'q_tourism_spatial', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_tourism_spatial', 'q_tourism_spatial', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T');
+--INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_future_q_tourism_spatial', 'q_tourism_spatial', 'skadebeloeb_fremtid_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_risk_q_tourism_spatial', 'q_tourism_spatial', 'risiko_kr', 'T', '', '', '', '', '', 1, 'T');
 
 
 
@@ -570,6 +610,35 @@ CREATE TABLE IF NOT EXISTS patches_done
 
 SET search_path = fdc_admin, public;
 
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_building', 'Queries', '
+SELECT /* Multiple flood scenarios version */
+    b.*,
+    d.{f_category_t_damage} AS skade_kategori,
+    d.{f_type_t_damage} AS skade_type,
+	''{Skadeberegning for kælder}'' AS kaelder_beregning,
+    {Værditab, skaderamte bygninger (%)}::NUMERIC(12,2) as tab_procent,
+    k.{f_sqmprice_t_sqmprice}::NUMERIC(12,2) as kvm_pris_kr,
+    st_area(b.{f_geom_t_building})::NUMERIC(12,2) AS areal_byg_m2,
+    n.*,
+    '''' AS omraade
+    FROM {t_building} b
+    LEFT JOIN {t_build_usage} u on b.{f_usage_code_t_building} = u.{f_pkey_t_build_usage}
+    LEFT JOIN {t_damage} d on u.{f_category_t_build_usage} = d.{f_category_t_damage} AND d.{f_type_t_damage} = ''{Skadetype}''   
+    LEFT JOIN {t_sqmprice} k on (b.{f_muncode_t_building} = k.{f_muncode_t_sqmprice}),
+    LATERAL (
+        SELECT
+            COUNT (*) AS cnt_oversvoem_nutid,
+            COALESCE(SUM(st_area(st_intersection(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}))),0)::NUMERIC(12,2) AS areal_oversvoem_nutid_m2,
+            COALESCE(MIN({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS min_vanddybde_nutid_cm,
+            COALESCE(MAX({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS max_vanddybde_nutid_cm,
+            COALESCE(AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm,
+            CASE WHEN COUNT (*) > 0 THEN d.b0 + st_area(b.{f_geom_t_building}) * (d.b1 * ln(GREATEST(MAX({f_depth_Oversvømmelsesmodel, nutid})*100.00, 1.0)) + d.b2) ELSE 0 END::NUMERIC(12,2) AS {f_damage_present_q_building},
+            CASE WHEN COUNT (*) > 0 AND ''{Skadeberegning for kælder}'' = ''Medtages'' THEN COALESCE(b.{f_cellar_area_t_building},0.0) * d.c0 ELSE 0 END::NUMERIC(12,2) as {f_damage_cellar_present_q_building},
+            CASE WHEN COUNT (*) > 0 THEN k.kvm_pris * st_area(b.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}/100.0 ELSE 0 END::NUMERIC(12,2) as {f_loss_present_q_building}             
+        FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}
+    ) n
+    WHERE n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_recreative', 'Queries', '
 SELECT /* Multiple flood scenarios version */
@@ -592,7 +661,7 @@ SELECT /* Multiple flood scenarios version */
     LATERAL (
         SELECT
             (100.0 * n.areal_oversvoem_nutid_m2/st_area(b.{f_geom_t_recreative}))::NUMERIC(12,2) AS oversvoem_nutid_pct,
-            (({Antal dage med oversvømmelse}/365.0) * (n.areal_oversvoem_nutid_m2/st_area(b.{f_geom_t_recreative})) * b.valuationk)::NUMERIC(12,2)  AS {f_damage_q_recreative}
+            (({Antal dage med oversvømmelse}/365.0) * (n.areal_oversvoem_nutid_m2/st_area(b.{f_geom_t_recreative})) * b.valuationk)::NUMERIC(12,2)  AS {f_damage_present_q_recreative}
     ) h
     WHERE n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for recreative new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
@@ -633,7 +702,24 @@ SELECT /* Multiple flood scenarios version */
     WHERE n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for road traffic new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_bioscore', 'Queries', '
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_surrounding_loss', 'Queries', '
+WITH 
+    op AS (SELECT b.{f_pkey_t_building}, b.{f_geom_t_building} FROM {t_building} b WHERE EXISTS ( SELECT 1 FROM {Oversvømmelsesmodel, nutid} f WHERE st_intersects (f.{f_geom_Oversvømmelsesmodel, nutid}, b.{f_geom_t_building}) AND  f.{f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}))
+
+SELECT /* Multiple flood scenarios version */
+    x.*,
+    st_area(x.{f_geom_t_building})::NUMERIC(12,2) AS areal_byg_m2,
+    k.{f_sqmprice_t_sqmprice}::NUMERIC(12,2) AS kvm_pris_kr,
+    ({Værditab, skaderamte bygninger (%)}*{Faktor for værditab})::NUMERIC(12,2) AS tab_procent,
+    CASE WHEN z.{f_pkey_t_building} IS NULL THEN 0.0 ELSE k.{f_sqmprice_t_sqmprice} * st_area(x.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}*{Faktor for værditab} / 100.0 END::NUMERIC(12,2) AS {f_loss_present_q_surrounding_loss},
+    '''' AS omraade
+FROM {t_building} x 
+LEFT JOIN (SELECT DISTINCT c.{f_pkey_t_building} FROM {t_building} c, op WHERE c.{f_pkey_t_building} NOT IN (SELECT {f_pkey_t_building} from op) and st_dwithin(op.{f_geom_t_building},c.{f_geom_t_building},300.)) z ON x.{f_pkey_t_building} = z.{f_pkey_t_building} 
+LEFT JOIN {t_sqmprice} k ON k.kom_kode = x.komkode 
+WHERE z.{f_pkey_t_building} IS NOT NULL', 'P', '', '', '', '', 'SQL template for surrounding loss - new model ', 8, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_bioscore_spatial', 'Queries', '
 SELECT /* Multiple flood scenarios version */
     c.*,
 	st_area(c.{f_geom_t_bioscore})::NUMERIC(12,2) AS areal_m2,
@@ -714,6 +800,122 @@ SELECT /* Multiple flood scenarios version */ DISTINCT ON (o.{f_pkey_t_publicser
     WHERE n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for public service new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
+
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_build_peri', 'Queries', '
+SELECT
+    b.*,
+    d.{f_category_t_damage} AS skade_kategori,
+    d.{f_type_t_damage} AS skade_type,
+	''{Skadeberegning for kælder}'' AS kaelder_beregning,
+    {Værditab, skaderamte bygninger (%)}::NUMERIC(12,2) as tab_procent,
+    k.{f_sqmprice_t_sqmprice}::NUMERIC(12,2) as kvm_pris_kr,
+    st_area(b.{f_geom_t_building})::NUMERIC(12,2) AS areal_byg_m2,
+    st_perimeter(b.{f_geom_t_building})::NUMERIC(12,2) AS perimeter_byg_m,
+    v.*,
+    n.*,
+    '''' AS omraade
+    FROM {t_building} b
+    LEFT JOIN {t_build_usage} u on b.{f_usage_code_t_building} = u.{f_pkey_t_build_usage}
+    LEFT JOIN {t_damage} d on u.{f_category_t_build_usage} = d.{f_category_t_damage} AND d.{f_type_t_damage} = ''{Skadetype}''   
+    LEFT JOIN {t_sqmprice} k on (b.{f_muncode_t_building} = k.{f_muncode_t_sqmprice}),
+    LATERAL (
+        SELECT 
+            ST_perimeter({f_geom_Oversvømmelsesmodel, nutid}) / 4.0 AS vp_side_laengde_m
+        FROM {Oversvømmelsesmodel, nutid} LIMIT 1
+    ) v, 
+    LATERAL (
+        SELECT
+            COUNT (*) AS cnt_oversvoem_nutid,            
+            100.0 * COUNT(*) * v.vp_side_laengde_m / ST_Perimeter(b.{f_geom_t_building}) AS oversvoem_peri_nutid_pct,            
+            COALESCE(SUM(st_area(st_intersection(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}))),0)::NUMERIC(12,2) AS areal_oversvoem_nutid_m2,
+            COALESCE(MIN({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS min_vanddybde_nutid_cm,
+            COALESCE(MAX({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS max_vanddybde_nutid_cm,
+            COALESCE(AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm,
+            CASE WHEN COUNT(*) > 0 AND COUNT(*) * v.vp_side_laengde_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0 THEN d.b0 + st_area(b.{f_geom_t_building}) * (d.b1 * ln(GREATEST(MAX({f_depth_Oversvømmelsesmodel, nutid})*100.00, 1.0)) + d.b2) ELSE 0 END::NUMERIC(12,2) AS {f_damage_present_q_build_peri},
+            CASE WHEN COUNT(*) > 0 AND COUNT(*) * v.vp_side_laengde_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0 AND ''{Skadeberegning for kælder}'' = ''Medtages'' THEN COALESCE(b.{f_cellar_area_t_building},0.0) * d.c0 ELSE 0 END::NUMERIC(12,2) as {f_damage_cellar_present_q_build_peri},
+            CASE WHEN COUNT(*) > 0 THEN k.kvm_pris * st_area(b.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}/100.0 ELSE 0 END::NUMERIC(12,2) as {f_loss_present_q_build_peri}             
+        FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}
+    ) n
+    WHERE n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_human_health', 'Queries', '
+SELECT /* Multiple flood scenarios version */
+    b.{f_pkey_t_building} as {f_pkey_q_human_health},
+    b.{f_muncode_t_building} AS kom_kode,
+    b.{f_usage_code_t_building} AS bbr_anv_kode,
+    b.{f_usage_text_t_building} AS bbr_anv_tekst,
+    st_area(b.{f_geom_t_building})::NUMERIC(12,2) AS areal_byg_m2,
+    st_multi(st_force2d(b.{f_geom_t_building}))::Geometry(Multipolygon,25832) AS {f_geom_q_human_health},
+    v.*,
+    n.*,
+    h.*,
+    '''' AS omraade
+    FROM {t_building} b,
+    LATERAL (
+        SELECT 
+            ST_perimeter({f_geom_Oversvømmelsesmodel, nutid}) / 4.0 AS vp_side_laengde_m FROM {Oversvømmelsesmodel, nutid} LIMIT 1
+    ) v, 
+    LATERAL (
+        SELECT
+            COUNT (*) AS cnt_oversvoem_nutid,
+            100.0 * COUNT(*) * v.vp_side_laengde_m / ST_Perimeter(b.{f_geom_t_building}) AS oversvoem_peri_nutid_pct,            
+            COALESCE((SUM(st_area(st_intersection(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid})))),0)::NUMERIC(12,2) AS areal_oversvoem_nutid_m2,
+            COALESCE((MIN({f_depth_Oversvømmelsesmodel, nutid}) * 100.00),0)::NUMERIC(12,2) AS min_vanddybde_nutid_cm,
+            COALESCE((MAX({f_depth_Oversvømmelsesmodel, nutid}) * 100.00),0)::NUMERIC(12,2) AS max_vanddybde_nutid_cm,
+            COALESCE((AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00),0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm
+        FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}
+    ) n,
+    LATERAL (
+        SELECT
+            COUNT(*) AS mennesker_total,
+            COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 0 AND 6) AS mennesker_0_6,
+            COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 7 AND 17) AS mennesker_7_17,
+            COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) AS mennesker_18_70,
+            COUNT(*) FILTER (WHERE {f_age_t_human_health} > 70) AS mennesker_71plus,
+            CASE WHEN n.cnt_oversvoem_nutid > 0 AND n.oversvoem_peri_nutid_pct >= {Perimeter cut-off (%)} THEN COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) * (138 * 301) ELSE 0 END::integer AS arbejdstid_nutid_kr,
+            CASE WHEN n.cnt_oversvoem_nutid > 0 AND n.oversvoem_peri_nutid_pct >= {Perimeter cut-off (%)} THEN COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) * (23  * 301) ELSE 0 END::integer AS rejsetid_nutid_kr,
+            CASE WHEN n.cnt_oversvoem_nutid > 0 AND n.oversvoem_peri_nutid_pct >= {Perimeter cut-off (%)} THEN COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) * (64  * 301) ELSE 0 END::integer AS sygetimer_nutid_kr, 
+            CASE WHEN n.cnt_oversvoem_nutid > 0 AND n.oversvoem_peri_nutid_pct >= {Perimeter cut-off (%)} THEN COUNT(*) FILTER (WHERE {f_age_t_human_health} BETWEEN 18 AND 70) * (26  * 301) ELSE 0 END::integer AS ferietimer_nutid_kr
+        FROM {t_human_health} WHERE ST_CoveredBy({f_geom_t_human_health},b.{f_geom_t_building})
+    ) h
+    WHERE (n.cnt_oversvoem_nutid > 0) AND h.mennesker_total > 0', 'P', '', '', '', '', 'SQL template for human health new model ', 8, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_tourism_spatial', 'Queries', '
+SELECT /* Multiple flood scenarios version */
+    b.{f_pkey_t_building} as {f_pkey_q_tourism_spatial},
+    b.{f_muncode_t_building} AS kom_kode,
+    b.{f_usage_code_t_building} AS bbr_anv_kode,
+    t.bbr_anv_tekst AS bbr_anv_tekst,
+    t.kapacitet AS kapacitet,
+    t.omkostning AS omkostninger,
+    {Antal tabte døgn} AS tabte_dage,
+    {Antal tabte døgn} * t.kapacitet AS tabte_overnatninger,
+    st_force2d(b.{f_geom_t_building}) AS {f_geom_q_tourism_spatial},
+	v.*,
+    n.*,
+
+    '''' AS omraade
+    FROM {t_building} b
+    INNER JOIN {t_tourism} t  ON t.{f_pkey_t_tourism} = b.{f_usage_code_t_building},  
+    LATERAL (
+        SELECT ST_perimeter({f_geom_Oversvømmelsesmodel, nutid}) / 4.0 AS vp_side_laengde_m FROM {Oversvømmelsesmodel, nutid} LIMIT 1
+    ) v, 
+    LATERAL (
+        SELECT
+            COUNT (*) AS cnt_oversvoem_nutid,
+            100.0 * COUNT(*) * v.vp_side_laengde_m / ST_Perimeter(b.{f_geom_t_building}) AS oversvoem_peri_nutid_pct,            
+            COALESCE(SUM(st_area(st_intersection(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}))),0)::NUMERIC(12,2) AS areal_oversvoem_nutid_m2,
+            COALESCE(MIN({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS min_vanddybde_nutid_cm,
+            COALESCE(MAX({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS max_vanddybde_nutid_cm,
+            COALESCE(AVG({f_depth_Oversvømmelsesmodel, nutid}) * 100.00,0)::NUMERIC(12,2) AS avg_vanddybde_nutid_cm,
+            CASE WHEN COUNT (*) > 0 AND 100.0 * COUNT(*) * v.vp_side_laengde_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)} THEN {Antal tabte døgn} * t.omkostning * t.kapacitet ELSE 0 END::NUMERIC(12,2) AS {f_damage_present_q_tourism_spatial}
+        FROM {Oversvømmelsesmodel, nutid} WHERE st_intersects(b.{f_geom_t_building},{f_geom_Oversvømmelsesmodel, nutid}) AND {f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)}
+    ) n
+	WHERE n.cnt_oversvoem_nutid > 0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_agriculture', 'Queries', '
 SELECT /* Multiple flood scenarios version */
     b.*,
@@ -721,7 +923,7 @@ SELECT /* Multiple flood scenarios version */
     k.afgroedekategori,
     p.*,
     n.*,
-    COALESCE(areal_oversvoem_nutid_m2 * p.{f_price_t_agr_price} /100.00,0.0)::NUMERIC(12,2) AS {f_damage_q_agriculture},
+    COALESCE(areal_oversvoem_nutid_m2 * p.{f_price_t_agr_price} /100.00,0.0)::NUMERIC(12,2) AS {f_damage_present_q_agriculture},
     '''' AS omraade
     FROM {t_agriculture} b
     LEFT JOIN {t_agr_cat} k ON k.{f_pkey_t_agr_cat} = b.{f_afgcode_t_agriculture} 
@@ -740,7 +942,7 @@ ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
 SET search_path = fdc_admin, public;
 
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_building', 'Queries', '
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_build_peri_new', 'Queries', '
 WITH b1 AS (
     SELECT 
         bg.{f_pkey_t_building},
@@ -777,9 +979,9 @@ SELECT /* Multiple flood scenarios version */
     b2.min_vanddybde_nutid_cm::NUMERIC(12,2),
     b2.max_vanddybde_nutid_cm::NUMERIC(12,2),
     b2.avg_vanddybde_nutid_cm::NUMERIC(12,2),
-    d.b0 + st_area(b.{f_geom_t_building}) * (d.b1 * ln(GREATEST(b2.max_vanddybde_nutid_cm, 1.0)) + d.b2)::NUMERIC(12,2) AS {f_damage_q_building},
-    CASE WHEN ''{Skadeberegning for kælder}'' = ''Medtages'' THEN COALESCE(b.{f_cellar_area_t_building},0.0) * d.c0 ELSE 0 END::NUMERIC(12,2) AS {f_damage_cellar_q_building},
-    (k.kvm_pris * st_area(b.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}/100.0)::NUMERIC(12,2) as {f_loss_q_building},             
+    d.b0 + st_area(b.{f_geom_t_building}) * (d.b1 * ln(GREATEST(b2.max_vanddybde_nutid_cm, 1.0)) + d.b2)::NUMERIC(12,2) AS {f_damage_present_q_build_peri},
+    CASE WHEN ''{Skadeberegning for kælder}'' = ''Medtages'' THEN COALESCE(b.{f_cellar_area_t_building},0.0) * d.c0 ELSE 0 END::NUMERIC(12,2) AS {f_damage_cellar_present_q_build_peri},
+    (k.kvm_pris * st_area(b.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}/100.0)::NUMERIC(12,2) as {f_loss_present_q_build_peri},             
     '''' AS omraade
     FROM b2
     LEFT JOIN {t_building} b on b.{f_pkey_t_building} = b2.{f_pkey_t_building}
@@ -789,7 +991,56 @@ SELECT /* Multiple flood scenarios version */
     WHERE b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_human_health', 'Queries', '
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_build_peri_buffer', 'Queries', '
+WITH b1 AS (
+    SELECT 
+        bg.{f_pkey_t_building},
+        st_length(st_intersection(ov.{f_geom_Oversvømmelsesmodel, nutid},ST_ExteriorRing((ST_Dump(bg.{f_geom_t_building})).geom))) as perimeter_overlap_m,
+        ST_Area(ST_intersection(bg.{f_geom_t_building}, ov.{f_geom_Oversvømmelsesmodel, nutid})) AS areal_overlap_m2,
+        ov.{f_depth_Oversvømmelsesmodel, nutid}
+	FROM {t_building} bg
+	JOIN {Oversvømmelsesmodel, nutid} ov ON st_intersects(st_buffer(bg.{f_geom_t_building},{Bygnings buffer (meter)}),ov.{f_geom_Oversvømmelsesmodel, nutid}) AND ov.{f_depth_Oversvømmelsesmodel, nutid} >= {Minimum vanddybde (meter)} 
+),
+b2 AS (
+    SELECT 
+        {f_pkey_t_building},
+        SUM (perimeter_overlap_m)::NUMERIC(12,2) AS perimeter_overlap_m,
+        SUM (areal_overlap_m2)::NUMERIC(12,2) AS areal_oversvoem_nutid_m2,
+        (100.0 * (MIN({f_depth_Oversvømmelsesmodel, nutid})))::NUMERIC(12,2) AS min_vanddybde_nutid_cm,
+        (100.0 * (MAX({f_depth_Oversvømmelsesmodel, nutid})))::NUMERIC(12,2) AS max_vanddybde_nutid_cm,
+        (100.0 * (AVG({f_depth_Oversvømmelsesmodel, nutid})))::NUMERIC(12,2) AS avg_vanddybde_nutid_cm,
+        COUNT(*) AS cnt_oversvoem_nutid
+	FROM b1
+    GROUP BY {f_pkey_t_building}
+)
+SELECT /* Multiple flood scenarios version */
+    b.*,
+    d.{f_category_t_damage} AS skade_kategori,
+    d.{f_type_t_damage} AS skade_type,
+	''{Skadeberegning for kælder}'' AS kaelder_beregning,
+    {Værditab, skaderamte bygninger (%)}::NUMERIC(12,2) as tab_procent,
+    k.{f_sqmprice_t_sqmprice}::NUMERIC(12,2) as kvm_pris_kr,
+    st_area(b.{f_geom_t_building})::NUMERIC(12,2) AS areal_byg_m2,
+    st_perimeter(b.{f_geom_t_building})::NUMERIC(12,2) AS perimeter_byg_m,
+    b2.cnt_oversvoem_nutid,            
+    (100.0 * b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}))::NUMERIC(12,2) AS oversvoem_peri_nutid_pct,            
+    b2.areal_oversvoem_nutid_m2::NUMERIC(12,2),
+    b2.min_vanddybde_nutid_cm::NUMERIC(12,2),
+    b2.max_vanddybde_nutid_cm::NUMERIC(12,2),
+    b2.avg_vanddybde_nutid_cm::NUMERIC(12,2),
+    d.b0 + st_area(b.{f_geom_t_building}) * (d.b1 * ln(GREATEST(b2.max_vanddybde_nutid_cm, 1.0)) + d.b2)::NUMERIC(12,2) AS {f_damage_present_q_build_peri},
+    CASE WHEN ''{Skadeberegning for kælder}'' = ''Medtages'' THEN COALESCE(b.{f_cellar_area_t_building},0.0) * d.c0 ELSE 0 END::NUMERIC(12,2) AS {f_damage_cellar_present_q_build_peri},
+    (k.kvm_pris * st_area(b.{f_geom_t_building}) * {Værditab, skaderamte bygninger (%)}/100.0)::NUMERIC(12,2) as {f_loss_present_q_build_peri},             
+    '''' AS omraade
+    FROM b2
+    LEFT JOIN {t_building} b on b.{f_pkey_t_building} = b2.{f_pkey_t_building}
+    LEFT JOIN {t_build_usage} u on b.{f_usage_code_t_building} = u.{f_pkey_t_build_usage}
+    LEFT JOIN {t_damage} d on u.{f_category_t_build_usage} = d.{f_category_t_damage} AND d.{f_type_t_damage} = ''{Skadetype}''   
+    LEFT JOIN {t_sqmprice} k on (b.{f_muncode_t_building} = k.{f_muncode_t_sqmprice})
+    WHERE b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0', 'P', '', '', '', '', 'SQL template for buildings new model ', 8, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_human_health_new', 'Queries', '
 WITH b1 AS (
     SELECT 
         bg.{f_pkey_t_building},
@@ -819,7 +1070,7 @@ SELECT /* Multiple flood scenarios version */
     st_area(b.{f_geom_t_building})::NUMERIC(12,2) AS areal_byg_m2,
     st_multi(st_force2d(b.{f_geom_t_building}))::Geometry(Multipolygon,25832) AS {f_geom_q_human_health},
     h.*,
-    (h.arbejdstid_nutid_kr + h.rejsetid_nutid_kr + h.sygetimer_nutid_kr + h.ferietimer_nutid_kr)::NUMERIC(12,2) AS {f_damage_q_human_health},
+    (h.arbejdstid_nutid_kr + h.rejsetid_nutid_kr + h.sygetimer_nutid_kr + h.ferietimer_nutid_kr)::NUMERIC(12,2) AS {f_damage_present_q_human_health},
     '''' AS omraade
     FROM b2
 	JOIN {t_building} b ON b2.{f_pkey_t_building} = b.{f_pkey_t_building},
@@ -839,7 +1090,10 @@ SELECT /* Multiple flood scenarios version */
 	WHERE h.mennesker_total >0 AND b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0', 'P', '', '', '', '', 'SQL template for human health new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_tourism_spatial', 'Queries', '
+
+
+
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_tourism_spatial_new', 'Queries', '
 WITH b1 AS (
     SELECT 
         bg.{f_pkey_t_building},
@@ -870,8 +1124,8 @@ SELECT /* Multiple flood scenarios version */
     t.omkostning AS omkostninger,
     {Antal tabte døgn} AS tabte_dage,
     {Antal tabte døgn} * t.kapacitet AS tabte_overnatninger,
-    ({Antal tabte døgn} * t.omkostning * t.kapacitet)::NUMERIC(12,2) AS {f_damage_q_tourism},
-    st_multi(st_force2d(b.{f_geom_t_building}))::Geometry(Multipolygon,25832) AS {f_geom_q_tourism},
+    ({Antal tabte døgn} * t.omkostning * t.kapacitet)::NUMERIC(12,2) AS {f_damage_present_q_tourism_spatial},
+    st_multi(st_force2d(b.{f_geom_t_building}))::Geometry(Multipolygon,25832) AS {f_geom_q_tourism_spatial},
     '''' AS omraade
     FROM b2 
 	JOIN {t_building} b ON b2.{f_pkey_t_building} = b.{f_pkey_t_building}
@@ -879,13 +1133,44 @@ SELECT /* Multiple flood scenarios version */
 	WHERE b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0','P', '', '', '', '', 'SQL template for tourism new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
+
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Bygningskade', 'Bygninger', '', 'T', '', '', '', 'q_build_peri_new', 'Skadeberegning for bygninger baseret på perimeter', 11, 'T')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
-
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skade,turisme', 'Turisme', '', 'T', '', '', '', 'q_tourism_spatial', 'Sæt hak såfremt der skal beregnes økonomiske tab for overnatningssteder som anvendes til turistformål. De berørte bygninger vises geografisk på et kort.  ', 10, 'T')
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_build_peri_new', 'q_build_peri_new', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_build_peri_new', 'q_build_peri_new', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_build_peri_buffer', 'q_build_peri_buffer', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_build_peri_buffer', 'q_build_peri_buffer', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Bygnings buffer (meter)', 'Hidden parameters', '1.0', 'R', '0.0', '100.0', '1.0', '', 'Her angives størresle i meter af bygnings bufferzone', 17, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skadeberegninger, Bygninger buffer 2023,', 'Hidden parameters', '', 'T', '', '', '', 'q_build_peri_buffer', 'Skadeberegning for bygninger baseret på perimeter', 11, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Mennesker', 'Mennesker og helbred', '', 'T', '', '', '', 'q_human_health_new', 'Sæt hak såfremt der skal beregnes humane omkostninger', 10, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_human_health_new', 'q_human_health_new', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_human_health_new', 'q_human_health_new', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skade,turisme', 'Turisme', '', 'T', '', '', '', 'q_tourism_spatial_new', 'Sæt hak såfremt der skal beregnes økonomiske tab for overnatningssteder som anvendes til turistformål. De berørte bygninger vises geografisk på et kort.  ', 10, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_tourism_spatial_new', 'q_tourism_spatial_new', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_tourism_spatial_new', 'q_tourism_spatial_new', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Mennesker', 'Mennesker og helbred', '', 'T', '', '', '', 'q_human_health', 'Sæt hak såfremt der skal beregnes humane omkostninger', 10, 'T')
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_build_peri_new', 'q_build_peri_new', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_cellar_present_q_build_peri_new', 'q_build_peri_new', 'skadebeloeb_kaelder_nutid_kr', 'T', '', '', '', '', '', 1, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_loss_present_q_build_peri_new', 'q_build_peri_new', 'vaerditab_nutid_kr', 'T', '', '', '', '', '', 1, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_tourism_spatial_new', 'q_tourism_spatial_new', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_present_q_human_health_new', 'q_human_health_new', 'skadebeloeb_nutid_kr', 'T', '', '', '', '', '', 1, 'T')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+
 
 
