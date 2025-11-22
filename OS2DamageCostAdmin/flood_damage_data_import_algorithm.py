@@ -193,6 +193,9 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
         # Extract by attribute
         
         opslagsnavn = self.area_list[self.parameterAsEnums(parameters, 'import_layers', context)[0]]
+        feedback.pushInfo('Extraction area is named: ' + opslagsnavn)
+
+
         alg_params = {
             'FIELD': 'opslagsnavn',
             'INPUT': '/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/omraader.fgb|layername=omraader',
