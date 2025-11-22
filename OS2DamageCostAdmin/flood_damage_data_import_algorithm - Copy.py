@@ -77,6 +77,9 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
         with some other properties.
         """
 
+
+       #QgsProject.instance().addMapLayer(vlayer)
+
         s = QgsSettings()  
 
         # Force advanced section to be folded         
@@ -100,9 +103,9 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
         #self.addParameter(QgsProcessingParameterFeatureSource('layer_for_area_selection', 'Layer for area selection', types=[QgsProcessing.TypeVectorPolygon], defaultValue=None))
 
         vlayer = QgsVectorLayer('/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/omraader.fgb|layername=omraader', 'omraader', 'ogr')
-        idx = vlayer.fields().indexFromName('opslagsnavn')
-        self.area_list = sorted(vlayer.uniqueValues(idx))
-        self.addParameter(QgsProcessingParameterEnum('import_area', 'Choose area to import', self.area_list, allowMultiple=False, defaultValue=[0]))
+        idx = self.vlayer.fields().indexFromName('opslagsnavn')
+        self.area_list = self.vlayer.uniqueValues(idx)
+        self.addParameter(QgsProcessingParameterEnum('import_area', 'Choose area to import', area_list, allowMultiple=False, defaultValue=[0]))
 
         self.addParameter(QgsProcessingParameterBoolean('open_layers_after_running_algorithm', 'Open layer(s) after running algorithm', defaultValue=False))
 
@@ -150,7 +153,6 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
         		checkable    = EXCLUDED.checkable;
         """
 
-        outputs = {}
 
 
 
@@ -191,16 +193,18 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
         # Get temp file with extraction polygon        
         
         # Extract by attribute
-        
-        opslagsnavn = self.area_list[self.parameterAsEnums(parameters, 'import_layers', context)[0]]
         alg_params = {
             'FIELD': 'opslagsnavn',
-            'INPUT': '/vsicurl/https://storage.googleapis.com/skadesokonomi-dk-data/omraader.fgb|layername=omraader',
+            'INPUT': 'omraader_6f8648af_3b98_41f5_be7f_5236d31b5476',
             'OPERATOR': 0,  # =
-            'VALUE': opslagsnavn,
+            'VALUE': parameters['navn'],
             'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
         }
-        oplags_layer = processing.run('native:extractbyattribute', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        outputs['ExtractByAttribute'] = processing.run('native:extractbyattribute', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+
+
+
 
         # Loop through selected layers        
         for iteml in selected_items:
@@ -292,7 +296,7 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
                 {
                     'INPUT':     QgsVectorLayer(self.options[item]['adresse'],self.options[item]['dbkode'][0],self.options[item]['provider']),
                     'PREDICATE': [0],
-                    'INTERSECT': oplags_layer['OUTPUT'],
+                    'INTERSECT': parameters['layer_for_area_selection'],
                     'OUTPUT':    uri_upd
                 },
                 is_child_algorithm=True, 
