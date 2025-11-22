@@ -191,8 +191,12 @@ class FDCDataImportAlgorithm(QgsProcessingAlgorithm):
         # Get temp file with extraction polygon        
         
         # Extract by attribute
+        feedback.pushInfo('Extraction area list : ' + str(self.area_list))
+        index =  self.parameterAsEnums(parameters, 'import_area', context)
+        index2 = index[0]
+        feedback.pushInfo('Extraction area index : ' + str(index) + ' -> ' + str(index2))
         
-        opslagsnavn = self.area_list[self.parameterAsEnums(parameters, 'import_layers', context)[0]]
+        opslagsnavn = self.area_list[index2]
         feedback.pushInfo('Extraction area is named: ' + opslagsnavn)
 
 
