@@ -897,7 +897,7 @@ ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Faktor for værditab', 'Hidden parameters', '0.50', 'R', '0.0', '1.0', '0.1', '', 'Faktor værdi til beregning af værditab for nabobygninger ud fra værditab for skaderamte bygninger', 4, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Datostempel', 'Name templates', '20251123-1000', 'T', '', '', '', '', '', 99, ' ')
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Datostempel', 'Name templates', '20251123-1845', 'T', '', '', '', '', '', 99, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
 
