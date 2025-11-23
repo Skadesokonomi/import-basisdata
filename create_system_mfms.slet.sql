@@ -601,14 +601,13 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 SELECT /* Multiple flood scenarios version */
     b.*,
     n.*,
---    f.*,
     {Oversvømmelsesperiode (timer)} AS blokering_timer,
     0.3 AS vanddybde_bloker_m,
     0.075 AS vanddybde_min_m,
-	{Renovationspris pr meter vej (DKK)} AS pris_renovation_kr_m,
+    {Renovationspris pr meter vej (DKK)} AS pris_renovation_kr_m,
     h.*,
-	i.*,
---    r.*
+    i.*,
+    r.*,
     '''' AS omraade
     FROM {t_road_traffic} b,
     LATERAL (
@@ -624,12 +623,16 @@ SELECT /* Multiple flood scenarios version */
     LATERAL (
         SELECT
             CASE WHEN n.avg_vanddybde_cm >= 30.0 THEN 0.0 ELSE 0.0009 * (n.avg_vanddybde_cm*10.0)^2.0 - 0.5529 * n.avg_vanddybde_cm*10.0 + 86.9448 END::NUMERIC(12,2) AS hastighed_red_km_time,
-            n.laengde_oversvoem_m * {Renovationspris pr meter vej (DKK)} AS skade_renovation_kr --,
+            n.laengde_oversvoem_m * {Renovationspris pr meter vej (DKK)} AS skade_renovation_kr
     ) h,
     LATERAL (
         SELECT
-            CASE WHEN h.hastighed_red_km_time > 50.0 THEN 0.0 ELSE (68.8 - 1.376 * h.hastighed_red_km_time) * ({Oversvømmelsesperiode (timer)} / 24.0) * n.laengde_org_m * (b.{f_number_cars_t_road_traffic}/6200.00)*2.0 END::NUMERIC(12,2) AS skade_transport_kr --,
-    ) i
+            CASE WHEN h.hastighed_red_km_time > 50.0 THEN 0.0 ELSE (68.8 - 1.376 * h.hastighed_red_km_time) * ({Oversvømmelsesperiode (timer)} / 24.0) * n.laengde_org_m * (b.{f_number_cars_t_road_traffic}/6200.00)*2.0 END::NUMERIC(12,2) AS skade_transport_kr
+    ) i,
+    LATERAL (
+        SELECT
+            h.skade_renovation_kr + i.skade_transport_kr AS {f_damage_q_road_traffic}
+    ) r
     WHERE n.cnt_oversvoem > 0', 'P', '', '', '', '', 'SQL template for road traffic new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
@@ -894,7 +897,7 @@ ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Faktor for værditab', 'Hidden parameters', '0.50', 'R', '0.0', '1.0', '0.1', '', 'Faktor værdi til beregning af værditab for nabobygninger ud fra værditab for skaderamte bygninger', 4, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Datostempel', 'Name templates', '20251121-1110', 'T', '', '', '', '', '', 99, ' ')
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Datostempel', 'Name templates', '20251121-1400', 'T', '', '', '', '', '', 99, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
 
