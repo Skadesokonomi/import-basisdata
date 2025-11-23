@@ -467,9 +467,9 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_human_health', 'q_human_health', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_human_health', 'q_human_health', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_q_human_health', 'q_human_health', 'skadebeloeb_kr', 'T', '', '', '', '', '', 1, 'T');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_tourism', 'q_tourism_spatial', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_tourism', 'q_tourism_spatial', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_q_tourism', 'q_tourism_spatial', 'skadebeloeb_kr', 'T', '', '', '', '', '', 1, 'T');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_pkey_q_tourism', 'q_tourism', 'fid', 'T', '', '', '', '', 'Name of primary keyfield for query', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_geom_q_tourism', 'q_tourism', 'geom', 'T', '', '', '', '', 'Field name for geometry column', 10, ' ');
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('f_damage_q_tourism', 'q_tourism', 'skadebeloeb_kr', 'T', '', '', '', '', '', 1, 'T');
 
 
 
@@ -841,7 +841,7 @@ SELECT /* Multiple flood scenarios version */
 	WHERE h.mennesker_total >0 AND b2.perimeter_overlap_m / ST_Perimeter(b.{f_geom_t_building}) >= {Perimeter cut-off (%)}/100.0', 'P', '', '', '', '', 'SQL template for human health new model ', 8, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_tourism_spatial', 'Queries', '
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('q_tourism', 'Queries', '
 WITH b1 AS (
     SELECT 
         bg.{f_pkey_t_building},
@@ -884,7 +884,7 @@ ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Bygningskade', 'Bygninger', '', 'T', '', '', '', 'q_building', 'Skadeberegning for bygninger baseret på perimeter', 11, 'T')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skade,turisme', 'Turisme', '', 'T', '', '', '', 'q_tourism_spatial', 'Sæt hak såfremt der skal beregnes økonomiske tab for overnatningssteder som anvendes til turistformål. De berørte bygninger vises geografisk på et kort.  ', 10, 'T')
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Skade,turisme', 'Turisme', '', 'T', '', '', '', 'q_tourism', 'Sæt hak såfremt der skal beregnes økonomiske tab for overnatningssteder som anvendes til turistformål. De berørte bygninger vises geografisk på et kort.  ', 10, 'T')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Mennesker', 'Mennesker og helbred', '', 'T', '', '', '', 'q_human_health', 'Sæt hak såfremt der skal beregnes humane omkostninger', 10, 'T')
@@ -897,7 +897,7 @@ ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Faktor for værditab', 'Hidden parameters', '0.50', 'R', '0.0', '1.0', '0.1', '', 'Faktor værdi til beregning af værditab for nabobygninger ud fra værditab for skaderamte bygninger', 4, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Datostempel', 'Name templates', '20251121-1400', 'T', '', '', '', '', '', 99, ' ')
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Datostempel', 'Name templates', '20251123-1000', 'T', '', '', '', '', '', 99, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
 
