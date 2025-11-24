@@ -111,7 +111,7 @@ class FDCRasterPolygonClassification(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterEnum('flooding_type', 'Flooding type', options=['Stormflod','Nedbør','Terrænært grundvand','Andet'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterEnum('return_period_of_flood', 'Return period of flood', options=['T1','T5','T10','T20','T50','T100','T200','T500','T1000'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterNumber('year', 'Year', type=QgsProcessingParameterNumber.Integer, minValue=1900, maxValue=3000, defaultValue=2025))
-        self.addParameter(QgsProcessingParameterEnum('climate_scenario', 'Climate scenario', options=['(none)','SSP1-2.6','SSP2-4.5','SSP3-7.0'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
+        self.addParameter(QgsProcessingParameterEnum('climate_scenario', 'Climate scenario', options=['(none)','SSP1-2.6','SSP2-4.5','SSP3-7.0','SSP5-8.5'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterString('append_text_to_tablename', 'Extra information', optional=True, multiLine=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterBoolean('merge_to_larger_polygons_', 'Merge to larger polygons ? ', defaultValue=False))
         self.addParameter(QgsProcessingParameterNumber('classification_value_in_cm', 'Classification value in cm', type=QgsProcessingParameterNumber.Integer, minValue=1, maxValue=100, defaultValue=5))
@@ -136,7 +136,7 @@ class FDCRasterPolygonClassification(QgsProcessingAlgorithm):
 
         ftt = ['Stormflod','Nedbør','Terrænært grundvand','Andet'][ft]
         rpt = ['T1','T5','T10','T20','T50','T100','T200','T500','T1000'][rp]
-        sct = ['','SSP1-2.6','SSP2-4.5','SSP3-7.0'][sc]
+        sct = ['','SSP1-2.6','SSP2-4.5','SSP3-7.0','SSP5-8.5'][sc]
         ap2 = '' if ap is None else ap
 
         modelname= '{} {} {} {} {}'.format(ftt,ap2,ye,rpt,sct).rstrip()
