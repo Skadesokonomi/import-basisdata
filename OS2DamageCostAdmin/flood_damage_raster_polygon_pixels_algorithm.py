@@ -104,7 +104,7 @@ class FDCRasterPolygonPixels(QgsProcessingAlgorithm):
     def initAlgorithm(self, config: Optional[dict[str, Any]] = None):
         self.addParameter(QgsProcessingParameterRasterLayer('flood_raster_layer_or_file', 'Flood raster layer or file', defaultValue=None))
         self.addParameter(QgsProcessingParameterBand('layer_number_for_flood_raster_layer', 'Layer number for flood raster layer', parentLayerParameterName='flood_raster_layer_or_file', allowMultiple=False, defaultValue=[1]))
-        self.addParameter(QgsProcessingParameterBoolean('is_depth_values_in_centimeters_', 'Is depth values in centimeters ? ', defaultValue=True))
+        self.addParameter(QgsProcessingParameterBoolean('is_depth_values_in_centimeters', 'Is depth values in centimeters ? ', defaultValue=True))
         self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue=None))
         self.addParameter(QgsProcessingParameterDatabaseSchema('schema_flood_data', 'Schema, flood data', connectionParameterName='database_connection', defaultValue='fdc_flood'))
         self.addParameter(QgsProcessingParameterEnum('flooding_type', 'Flooding type', options=['Stormflod','Nedbør','Terrænært grundvand','Andet'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
@@ -136,6 +136,8 @@ class FDCRasterPolygonPixels(QgsProcessingAlgorithm):
         sct = ['','SSP1-2.6','SSP2-4.5','SSP3-7.0','SSP5-8.5'][sc]
         ap2 = '' if ap is None else ap
 
+        # Raster calculator GDAL
+
         modelname= '{} {} {} {} {}'.format(ftt,ap2,ye,rpt,sct).rstrip()
         tablename= sanitize(modelname)
 
@@ -152,9 +154,12 @@ class FDCRasterPolygonPixels(QgsProcessingAlgorithm):
         if feedback.isCanceled():
             return {}
 
+        cm = self.parameterAsBoolean(parameters,'is_depth_values_in_centimeters',context)
+        formula = '"depth"/100.0' if cm else '"depth"'
+        feedback.pushInfo('Formula is: ' + formula)
         # Refactor fields
         alg_params = {
-            'FIELDS_MAPPING': [{'alias': None,'comment': None,'expression': 'if (@is_depth_values_in_centimeters_ , "depth"/100.0, "depth") ','length': 7,'name': 'vanddybde_m','precision': 2,'sub_type': 0,'type': 6,'type_name': 'double precision'}],
+            'FIELDS_MAPPING': [{'alias': None,'comment': None,'expression': formula,'length': 7,'name': 'vanddybde_m','precision': 2,'sub_type': 0,'type': 6,'type_name': 'double precision'}],
             'INPUT': outputs['RasterPixelsToPolygons']['OUTPUT'],
             'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
         }

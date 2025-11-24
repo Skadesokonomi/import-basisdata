@@ -107,7 +107,7 @@ class FDCVectorPolygonDB(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterVectorLayer('flood_layer', 'Flood layer', types=[QgsProcessing.TypeVectorPolygon], defaultValue=None))
         self.addParameter(QgsProcessingParameterField('primary_key', 'Primary key', type=QgsProcessingParameterField.Numeric, parentLayerParameterName='flood_layer', allowMultiple=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterField('water_depth', 'Water depth', type=QgsProcessingParameterField.Numeric, parentLayerParameterName='flood_layer', allowMultiple=False, defaultValue=None))
-        self.addParameter(QgsProcessingParameterBoolean('is_depth_values_in_centimeters_', 'Is depth values in centimeters ? ', defaultValue=True))
+        self.addParameter(QgsProcessingParameterBoolean('is_depth_values_in_centimeters', 'Is depth values in centimeters ? ', defaultValue=True))
         self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue=None))
         self.addParameter(QgsProcessingParameterDatabaseSchema('schema_flood_data', 'Schema, flood data', connectionParameterName='database_connection', defaultValue='fdc_flood'))
         self.addParameter(QgsProcessingParameterEnum('flooding_type', 'Flooding type', options=['Stormflod','Nedbør','Terrænært grundvand','Andet'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
@@ -144,8 +144,16 @@ class FDCVectorPolygonDB(QgsProcessingAlgorithm):
         tablename= sanitize(modelname)
             
         # Refactor fields
+        pkfelt = self.parameterAsString(parameters,'primary_key',context)
+        vdfelt = self.parameterAsString(parameters,'water_depth',context)
+        cm = self.parameterAsBoolean(parameters,'is_depth_values_in_centimeters',context)
+        feedback.pushInfo('Field values are: pk: {}, vd: {}, cm:{}'.format(pkfelt,vdfelt,cm))
+
+        formula = '"{}"'.format(vdfelt) + ('/100.0' if cm else '')
+        feedback.pushInfo('Formula is: ' + formula)
+        
         alg_params = {
-            'FIELDS_MAPPING': [{'alias': '','comment': '','expression': ' @primary_key ','length': -1,'name': 'fid','precision': 0,'sub_type': 0,'type': 2,'type_name': 'integer'},{'alias': '','comment': '','expression': 'if (@is_depth_in_cm, @water_depth/100.0, @water_depth ) ','length': 12,'name': 'vanddybde_m','precision': 2,'sub_type': 0,'type': 6,'type_name': 'double precision'}],
+            'FIELDS_MAPPING': [{'alias': '','comment': '','expression': ' @primary_key ','length': -1,'name': 'fid','precision': 0,'sub_type': 0,'type': 2,'type_name': 'integer'},{'alias': '','comment': '','expression': formula,'length': 12,'name': 'vanddybde_m','precision': 2,'sub_type': 0,'type': 6,'type_name': 'double precision'}],
             'INPUT': parameters['flood_layer'],
             'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
         }
