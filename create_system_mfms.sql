@@ -423,7 +423,7 @@ INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, 
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('t_flood_48', 'Flood data', '', 'S', '', '', '', '', 'Parametergruppe til tabel "oversvømmelser"', 48, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('t_flood_49', 'Flood data', '', 'S', '', '', '', '', 'Parametergruppe til tabel "oversvømmelser"', 49, ' ');
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('t_flood_50', 'Flood data', '', 'S', '', '', '', '', 'Parametergruppe til tabel "oversvømmelser"', 50, ' ');
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Create cell layer template', 'Cell administration', 'CREATE TABLE IF NOT EXISTS {celltable} AS
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Create cell layer template', 'Cell administration', 'CREATE TABLE /*IF NOT EXISTS*/ {celltable} AS
   WITH g AS (
     SELECT (
       st_squaregrid({cellsize}, st_geomfromewkt(''SRID={epsg}; POLYGON(({xmin} {ymin},{xmax} {ymin},{xmax} {ymax},{xmin} {ymax},{xmin} {ymin}))''))
@@ -897,7 +897,7 @@ ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Faktor for værditab', 'Hidden parameters', '0.50', 'R', '0.0', '1.0', '0.1', '', 'Faktor værdi til beregning af værditab for nabobygninger ud fra værditab for skaderamte bygninger', 4, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
-INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Datostempel', 'Name templates', '20251123-1845', 'T', '', '', '', '', '', 99, ' ')
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Datostempel', 'Name templates', '20251124-1230', 'T', '', '', '', '', '', 99, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
 
