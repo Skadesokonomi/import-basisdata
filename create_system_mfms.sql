@@ -956,11 +956,6 @@ t6 AS (
     FROM t5)
 -- Alle delresultater samles 
 (SELECT * from t4 UNION SELECT * FROM t5 UNION SELECT * FROM t6) ORDER BY 1;
-		
-		
-		
-		
-		
 ', 'P', '', '', '', '', '', 10, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
