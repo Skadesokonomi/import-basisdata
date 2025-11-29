@@ -900,5 +900,45 @@ ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Datostempel', 'Name templates', '20251124-1230', 'T', '', '', '', '', '', 99, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Create EAD command', 'SQL templates', '
+CREATE TABLE "{result_schema}"."{aed_table}" AS 
+WITH t1 AS (
+{ead_union_part}
+),
+-- t2 tilføjer kolonne dtd2 som ligning: d(t)/d^2 
+t2 AS (
+    SELECT *,(damage/period^2)::DECIMAL(15,2) AS dtd2 FROM t1),
+-- t3 tilføjer kolonnerne previous_period (forrige periodeværd) samt previous_dtd2 (forrige dtdt2) vha. Windows funktion "LAG"
+t3 AS (
+    SELECT 
+        *, 
+	    LAG(period) OVER (PARTITION BY groupname ORDER BY period) previous_period,
+	    LAG(dtd2) OVER (PARTITION BY groupname ORDER BY period) previous_dtd2
+	    FROM t2)
+-- Endelig udregnes EAD som ligning: (nuv.dtdt + forr.dtd2)/ 2.0 * (nuv.periode - forr.periode) 
+SELECT 
+    *,
+	((dtd2 + previous_dtd2)/2.0*(period - previous_period))::DECIMAL(15,2) AS ead
+FROM t3
+', 'P', '', '', '', '', '', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+
+INSERT INTO parametre (name, parent, value, type, minval, maxval, lookupvalues, "default", explanation, sort, checkable) VALUES ('Create EAD unionpart', 'SQL templates', '
+    SELECT 
+        ''{groupname}''::TEXT AS groupname,
+        ''{sector}''::TEXT AS sector,
+        ''{floodtype}''::TEXT AS floodtype,
+        ''{extra}''::TEXT AS extra,
+        {year}::INTEGER AS year,
+        ''{model}''::TEXT AS model,
+	    REPLACE(''{period}'',''T'','''')::INTEGER AS period,
+		COUNT(*) AS number,
+		SUM({damage})::DECIMAL(15,2) AS damage
+    FROM {part_table}
+
+', 'P', '', '', '', '', '', 10, ' ')
+ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
+
+
 
 

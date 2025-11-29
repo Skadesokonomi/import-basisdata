@@ -57,8 +57,8 @@ INSERT INTO fdc_admin.parametre (name, parent, value, type, minval, maxval, look
 		'{rpt}' AS minval, 
 		'{ye}' AS maxval, 
 		'{sct}' AS lookupvalues, 
-		'{ap}' AS "default", 
-		'Importeret via processing' AS explanation, 
+		'{ftt}' AS "default", 
+		'{ap}' AS explanation, 
 		REPLACE(one.name,'t_flood_','')::integer AS sort, 
 		'T' AS checkable 
 	FROM one 
@@ -213,6 +213,7 @@ class FDCRasterPolygonPixels(QgsProcessingAlgorithm):
             'DATABASE': parameters['database_connection'],
             'SQL': sqltxt 
         }
+        feedback.pushInfo('INSERT/UPDAT SQL: ' + sqltxt)
         outputs['PostgresqlExecuteSql'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
         return results

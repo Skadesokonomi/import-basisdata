@@ -297,9 +297,9 @@
 		 "type":"U", 
 		 "minval":"T10", 
 		 "maxval":"2025", 
-		 "lookupvalues":"Nedbør", 
-		 "default":"25mm", 
-		 "explanation":"", 
+		 "lookupvalues":"", 
+		 "default":"Nedbør", 
+		 "explanation":"25mm", 
 		 "sort":40, 
 		 "checkable":"T"
       },
@@ -338,8 +338,8 @@
 		 "minval":"T100", 
 		 "maxval":"2100", 
 		 "lookupvalues":"SSP2-4.5", 
-		 "default":"50mm", 
-		 "explanation":"", 
+		 "default":"Nedbør", 
+		 "explanation":"50mm", 
 		 "sort":41, 
 		 "checkable":"T"
       },
@@ -379,7 +379,7 @@
 		 "minval":"T100", 
 		 "maxval":"2025", 
 		 "lookupvalues":"", 
-		 "default":"", 
+		 "default":"Stormflod", 
 		 "explanation":"", 
 		 "sort":"42", 
 		 "checkable":"T"
@@ -420,7 +420,7 @@
 		 "minval":"T100", 
 		 "maxval":"2100", 
 		 "lookupvalues":"SSP3-7.0", 
-		 "default":"", 
+		 "default":"Stormflod", 
 		 "explanation":"", 
 		 "sort":43, 
 		 "checkable":"T"
