@@ -914,12 +914,53 @@ t3 AS (
         *, 
 	    LAG(period) OVER (PARTITION BY groupname ORDER BY period) previous_period,
 	    LAG(dtd2) OVER (PARTITION BY groupname ORDER BY period) previous_dtd2
-	    FROM t2)
--- Endelig udregnes EAD som ligning: (nuv.dtdt + forr.dtd2)/ 2.0 * (nuv.periode - forr.periode) 
-SELECT 
-    *,
-	((dtd2 + previous_dtd2)/2.0*(period - previous_period))::DECIMAL(15,2) AS ead
-FROM t3
+	    FROM t2),
+-- t4 tilføjer EAD som ligning: (nuv.dtdt + forr.dtd2)/ 2.0 * (nuv.periode - forr.periode) 
+t4 AS (
+    SELECT 
+        *,
+        ((dtd2 + previous_dtd2)/2.0*(period - previous_period))::DECIMAL(15,2) AS ead
+    FROM t3),
+    -- t5 foretager summering baseret på gruppenavn
+t5 AS (
+    SELECT concat(groupname,'' - total'') AS groupname,
+        MIN(sector) AS sector,
+        MIN(floodtype) AS floodtype,
+        MIN(extra) AS extra,
+        MIN(year) AS year,
+        MIN(model) AS model,
+        NULL::INTEGER AS period,			 
+        NULL::INTEGER AS number, 
+        SUM(damage) AS damage,
+        NULL::DECIMAL(15,2) AS dtd2,
+        NULL::INTEGER AS previous_period,
+        NULL::DECIMAL(15,2) AS previous_dtd2,
+        SUM(ead) AS ead
+    FROM t4
+    GROUP BY groupname),
+        -- t6 er total summering
+t6 AS (
+    SELECT ''X - Total'' AS groupname,
+        ''-'' AS sector,
+        ''-'' AS floodtype,
+        ''-'' AS extra,
+        NULL::INTEGER AS year,
+        ''-'' AS model,
+        NULL::INTEGER AS period,			 
+        NULL::INTEGER AS number, 
+        SUM(damage) AS damage,
+        NULL::DECIMAL(15,2) AS dtd2,
+        NULL::INTEGER AS previous_period,
+        NULL::DECIMAL(15,2) AS previous_dtd2,
+        SUM(ead) AS ead
+    FROM t5)
+-- Alle delresultater samles 
+(SELECT * from t4 UNION SELECT * FROM t5 UNION SELECT * FROM t6) ORDER BY 1;
+		
+		
+		
+		
+		
 ', 'P', '', '', '', '', '', 10, ' ')
 ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
 
