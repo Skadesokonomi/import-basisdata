@@ -1,0 +1,711 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+CAUTION: Do not modify this file unless you know what you are doing.
+ Unexpected results may occur if the code is changed deliberately.
+-->
+<dbmodel pgmodeler-ver="1.1.3" use-changelog="false" max-obj-count="10"
+	 last-position="0,0" last-zoom="1"
+	 default-schema="public" default-owner="postgres"
+	 layers="Default layer"
+	 active-layers="0"
+	 layer-name-colors="#000000"
+	 layer-rect-colors="#b4b4b4"
+	 show-layer-names="false" show-layer-rects="false">
+<database name="tgv" encoding="UTF8" lc-collate="English_Denmark.1252" lc-ctype="English_Denmark.1252" is-template="false" allow-conns="true">
+	<role name="postgres"/>
+	<tablespace name="pg_default"/>
+</database>
+
+<schema name="public" layers="0" rect-visible="true" fill-color="#e1e1e1" name-color="#000000" sql-disabled="true">
+</schema>
+
+<schema name="fdc_tgv_data" layers="0" rect-visible="true" fill-color="#ffffff" name-color="#000000">
+	<role name="postgres"/>
+</schema>
+
+<schema name="fdc_tgv_functions" layers="0" rect-visible="true" fill-color="#c5713c" name-color="#000000">
+	<role name="postgres"/>
+</schema>
+
+<table name="tgv_models" layers="0" collapse-mode="2" max-obj-count="7" z-value="0">
+	<schema name="fdc_tgv_data"/>
+	<role name="postgres"/>
+	<position x="418" y="410"/>
+	<column name="model_id" not-null="true" default-value="gen_random_uuid()">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="model_name" not-null="true">
+		<type name="character varying" length="0"/>
+	</column>
+	<column name="project_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="original" not-null="true" default-value="false">
+		<type name="boolean" length="0"/>
+	</column>
+	<column name="parameter_1" not-null="true">
+		<type name="double precision" length="0"/>
+	</column>
+	<column name="parameter_2" not-null="true">
+		<type name="double precision" length="0"/>
+	</column>
+	<constraint name="tgv_models_model_name_key" type="uq-constr" table="fdc_tgv_data.tgv_models">
+		<columns names="model_name" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="tgv_models_pkey" type="pk-constr" table="fdc_tgv_data.tgv_models">
+		<columns names="model_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="tgv_cells" layers="0" collapse-mode="2" max-obj-count="3" z-value="0">
+	<schema name="fdc_tgv_data"/>
+	<role name="postgres"/>
+	<position x="742.641" y="434"/>
+	<column name="cell_id" not-null="true" default-value="gen_random_uuid()">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="project_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="geom">
+		<type name="geometry" length="0" spatial-type="MULTIPOLYGON" variation="0" srid="25832"/>
+	</column>
+	<constraint name="tgv_cells_pkey" type="pk-constr" table="fdc_tgv_data.tgv_cells">
+		<columns names="cell_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="tgv_cell_values" layers="0" collapse-mode="2" max-obj-count="4" z-value="0">
+	<schema name="fdc_tgv_data"/>
+	<role name="postgres"/>
+	<position x="564.719" y="609"/>
+	<column name="model_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="cell_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="date_value" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="depth">
+		<type name="double precision" length="0"/>
+	</column>
+	<constraint name="tgv_cell_values_pkey" type="pk-constr" table="fdc_tgv_data.tgv_cell_values">
+		<columns names="model_id,cell_id,date_value" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="tgv_cell_calculations" layers="0" collapse-mode="2" max-obj-count="4" z-value="0">
+	<schema name="fdc_tgv_data"/>
+	<role name="postgres"/>
+	<position x="541" y="887"/>
+	<column name="model_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="cell_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="year" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="days">
+		<type name="integer" length="0"/>
+	</column>
+	<constraint name="tgv_cell_calculations_year_check" type="ck-constr" table="fdc_tgv_data.tgv_cell_calculations">
+			<expression> <![CDATA[((year >= 1900) AND (year <= 2300))]]> </expression>
+	</constraint>
+	<constraint name="tgv_cell_calculations_pkey" type="pk-constr" table="fdc_tgv_data.tgv_cell_calculations">
+		<columns names="model_id,cell_id,year" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="tgv_buildings" layers="0" collapse-mode="2" max-obj-count="6" z-value="0">
+	<schema name="fdc_tgv_data"/>
+	<role name="postgres"/>
+	<position x="278.578" y="189"/>
+	<column name="building_id" not-null="true" default-value="gen_random_uuid()">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="build_usage_code">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="build_usage_text">
+		<type name="character varying" length="0"/>
+	</column>
+	<column name="municipality_code">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="geom">
+		<type name="geometry" length="0" spatial-type="MULTIPOLYGON" variation="0" srid="25832"/>
+	</column>
+	<constraint name="tgv_buildings_pkey" type="pk-constr" table="fdc_tgv_data.tgv_buildings">
+		<columns names="building_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="tgv_building_costs" layers="0" collapse-mode="2" max-obj-count="7" z-value="0">
+	<schema name="fdc_tgv_data"/>
+	<role name="postgres"/>
+	<position x="283" y="920.524"/>
+	<column name="building_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="model_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="cell_id" not-null="true">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="year" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="cost" not-null="true" default-value="0.0">
+		<type name="numeric" length="12" precision="2"/>
+	</column>
+	<constraint name="tgv_building_costs_year_check" type="ck-constr" table="fdc_tgv_data.tgv_building_costs">
+			<expression> <![CDATA[((year >= 1900) AND (year <= 2300))]]> </expression>
+	</constraint>
+	<constraint name="tgv_building_costs_cost_check" type="ck-constr" table="fdc_tgv_data.tgv_building_costs">
+			<expression> <![CDATA[(cost >= 0.0)]]> </expression>
+	</constraint>
+	<constraint name="tgv_building_costs_pkey" type="pk-constr" table="fdc_tgv_data.tgv_building_costs">
+		<columns names="building_id,model_id,cell_id,year" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<function name="create_project"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="fdc_tgv_functions"/>
+	<role name="postgres"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="record" length="0"/>
+	</return-type>
+	<parameter name="new_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="new_wkt">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<definition> <![CDATA[
+    DECLARE 
+	     return_value record;
+		 new_srid integer := 25832;
+
+    BEGIN
+        IF (NOT EXISTS(SELECT 1 FROM fdc_tgv_data.tgv_projects WHERE project_name = new_name)) THEN  
+            INSERT INTO fdc_tgv_data.tgv_projects (project_name, parameter_1, parameter_2, geom) VALUES (new_name, 0.0, 0.0, ST_GeomFromText(new_wkt, new_srid));
+            return_value = ('Succes','New project created', new_name, new_wkt);
+        ELSE
+            return_value = ('Error','Project already exists', new_name, new_wkt);
+        END IF;               
+        RETURN return_value;
+    END;
+]]> </definition>
+</function>
+
+<function name="set_project_parameters"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="fdc_tgv_functions"/>
+	<role name="postgres"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="record" length="0"/>
+	</return-type>
+	<parameter name="proj_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="new_param_1">
+		<type name="double precision" length="0"/>
+	</parameter>
+	<parameter name="new_param_2">
+		<type name="double precision" length="0"/>
+	</parameter>
+	<definition> <![CDATA[
+    DECLARE 
+	     return_value record;
+
+    BEGIN
+        IF (EXISTS(SELECT 1 FROM fdc_tgv_data.tgv_projects WHERE project_name = proj_name)) THEN  
+            UPDATE fdc_tgv_data.tgv_projects SET parameter_1 = new_param_1, parameter_2 = new_param_2 WHERE project_name = proj_name; 
+            return_value = ('Succes','Project parameters for project updated.', proj_name, new_param_1, new_param_2);
+        ELSE
+            return_value = ('Error','Project does not exist, parameters not updated', proj_name, new_param_1, new_param_2);
+        END IF;               
+        RETURN return_value;
+    END;
+]]> </definition>
+</function>
+
+<function name="create_model"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="fdc_tgv_functions"/>
+	<role name="postgres"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="record" length="0"/>
+	</return-type>
+	<parameter name="proj_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="new_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="orig">
+		<type name="boolean" length="0"/>
+	</parameter>
+	<definition> <![CDATA[
+    DECLARE 
+	     return_value record;
+		 proj_id uuid := NULL;
+
+    BEGIN
+        SELECT project_id into proj_id FROM fdc_tgv_data.tgv_projects WHERE project_name = proj_name;
+		IF proj_id IS NOT NULL THEN
+            IF (NOT EXISTS(SELECT 1 FROM fdc_tgv_data.tgv_models WHERE model_name = new_name)) THEN  
+                INSERT INTO fdc_tgv_data.tgv_models (project_id,model_name,parameter_1, parameter_2,original) VALUES (proj_id,new_name,0.0,0.0,orig);
+                return_value = ('Succes','New project created in project', proj_name, new_name,orig);
+            ELSE
+                return_value = ('Error','Model already exists', proj_name, new_name,orig);
+            END IF;
+        ELSE			
+            return_value = ('Error','Project does not exist, new model not created', proj_name, new_name,orig);
+        END IF;               
+        RETURN return_value;
+    END;
+]]> </definition>
+</function>
+
+<function name="import_model_data"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="fdc_tgv_functions"/>
+	<role name="postgres"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="record" length="0"/>
+	</return-type>
+	<parameter name="proj_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="mod_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="file_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<definition> <![CDATA[
+    DECLARE 
+	     return_value record;
+		 model_uuid uuid;
+		 
+    BEGIN
+        model_uuid = NULL;
+		SELECT a.model_id INTO model_uuid FROM fdc_tgv_data.tgv_models m JOIN fdc_tgv_data.tgv_projects p ON 
+		    m.project_id = p.project_id AND m.model_name = mod_name AND p.project_name = proj_name;   
+        IF model_uuid IS NOT NULL THEN
+            -- Import data...
+            return_value = ('Succes','Data imported into project/model', proj_name, mod_name_name,file_name);
+		ELSE
+            return_value = ('Error','Data *not* imported into project/model, project og model name does not exist', proj_name, mod_name_name,file_name);
+        END IF;               
+        RETURN return_value;
+    END;
+]]> </definition>
+</function>
+
+<function name="set_model_parameters"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="fdc_tgv_functions"/>
+	<role name="postgres"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="record" length="0"/>
+	</return-type>
+	<parameter name="proj_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="mod_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="new_param_1">
+		<type name="double precision" length="0"/>
+	</parameter>
+	<parameter name="new_param_2">
+		<type name="double precision" length="0"/>
+	</parameter>
+	<definition> <![CDATA[
+    DECLARE 
+	     return_value record;
+		 model_uuid uuid;
+		 
+    BEGIN
+        model_uuid = NULL;
+		SELECT m.model_id INTO model_uuid FROM fdc_tgv_data.tgv_models m JOIN fdc_tgv_data.tgv_projects p ON 
+		    m.project_id = p.project_id AND m.model_name = mod_name AND p.project_name = proj_name;   
+        IF model_uuid IS NOT NULL THEN
+            UPDATE fdc_tgv_data.tgv_models SET parameter_1 = new_param_1, parameter_2 = new_param_2 WHERE model_id = model_uuid; 
+            return_value = ('Succes','Parameters for model updated.', proj_name, mod_name, new_param_1, new_param_2);
+        ELSE
+            return_value = ('Error','Project or model does not exist, parameters not updated', proj_name, mod_name, new_param_1, new_param_2);
+        END IF;               
+        RETURN return_value;
+    END;
+]]> </definition>
+</function>
+
+<function name="clone_model"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="fdc_tgv_functions"/>
+	<role name="postgres"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="record" length="0"/>
+	</return-type>
+	<parameter name="proj_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="mod_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="new_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<definition> <![CDATA[
+    DECLARE 
+	     return_value record;
+		 model_uuid uuid;
+		 
+    BEGIN
+        model_uuid = NULL;
+		SELECT a.model_id INTO model_uuid FROM fdc_tgv_data.tgv_models m JOIN fdc_tgv_data.tgv_projects p ON 
+		    m.project_id = p.project_id AND m.model_name = mod_name AND p.project_name = proj_name;   
+        IF model_uuid IS NOT NULL THEN
+            IF (NOT EXISTS(SELECT 1 FROM fdc_tgv_data.tgv_models WHERE model_name = new_name)) THEN  
+                INSERT INTO fdc_tgv_data.tgv_models (project_name,model_name) VALUES (proj_name,new_name);
+                return_value = ('Succes','New model cloned for project', proj_name, new_name);
+            ELSE
+                return_value = ('Error','Model already exists', proj_name, new_name);
+            END IF;
+        ELSE
+            return_value = ('Error','Project or model does not exist, parameters not updated', proj_name, mod_name, new_param_1, new_param_2);
+        END IF;               
+        RETURN return_value;
+    END;
+]]> </definition>
+</function>
+
+<function name="extrapolate_model_data"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="fdc_tgv_functions"/>
+	<role name="postgres"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="record" length="0"/>
+	</return-type>
+	<parameter name="proj_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="mod_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="start_year">
+		<type name="integer" length="0"/>
+	</parameter>
+	<parameter name="end_year">
+		<type name="integer" length="0"/>
+	</parameter>
+	<definition> <![CDATA[
+    DECLARE 
+	     return_value record;
+		 model_uuid uuid;
+		 
+    BEGIN
+        model_uuid = NULL;
+		SELECT a.model_id INTO model_uuid FROM fdc_tgv_data.tgv_models m JOIN fdc_tgv_data.tgv_projects p ON 
+		    m.project_id = p.project_id AND m.model_name = mod_name AND p.project_name = proj_name;   
+        IF model_uuid IS NOT NULL THEN
+            -- Extrapolate data...
+            -- Find tidligste og seneste eksisterende dato 
+			-- Find periode fra projekt data
+			-- Find manglende periode
+			-- Beregn alle data på basis af modeldata , periode og gem resultat i table cell_
+
+
+
+            return_value = ('Succes','Data extrapolated for project/model', proj_name, mod_name,start_year, end_year);
+		ELSE
+            return_value = ('Error','Data *not* extrapolated for project/model, project or model name does not exist', proj_name, mod_name,start_year, end_year);
+        END IF;               
+        RETURN return_value;
+    END;
+]]> </definition>
+</function>
+
+<function name="calculate_model_year_values"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="fdc_tgv_functions"/>
+	<role name="postgres"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="record" length="0"/>
+	</return-type>
+	<parameter name="proj_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="mod_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<definition> <![CDATA[
+    DECLARE 
+	     return_value record;
+		 model_uuid uuid;
+		 
+    BEGIN
+        model_uuid = NULL;
+		SELECT a.model_id INTO model_uuid FROM fdc_tgv_data.tgv_models m JOIN fdc_tgv_data.tgv_projects p ON 
+		    m.project_id = p.project_id AND m.model_name = mod_name AND p.project_name = proj_name;   
+        IF model_uuid IS NOT NULL THEN
+            -- Calculate data...
+            return_value = ('Succes','Data calculated for project/model', proj_name, mod_name);
+		ELSE
+            return_value = ('Error','Data *not* extrapolated for project/model, project or model name does not exist', proj_name, mod_name,start_year, end_year);
+        END IF;               
+        RETURN return_value;
+    END;
+]]> </definition>
+</function>
+
+<function name="calculate_building_costs"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		parallel-type="PARALLEL UNSAFE"
+		execution-cost="100"
+		row-amount="0">
+	<schema name="fdc_tgv_functions"/>
+	<role name="postgres"/>
+	<language name="plpgsql"/>
+	<return-type>
+	<type name="record" length="0"/>
+	</return-type>
+	<parameter name="proj_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<parameter name="mod_name">
+		<type name="character varying" length="0"/>
+	</parameter>
+	<definition> <![CDATA[
+    DECLARE 
+	     return_value record;
+		 model_uuid uuid;
+		 
+    BEGIN
+        model_uuid = NULL;
+		SELECT a.model_id INTO model_uuid FROM fdc_tgv_data.tgv_models m JOIN fdc_tgv_data.tgv_projects p ON 
+		    m.project_id = p.project_id AND m.model_name = mod_name AND p.project_name = proj_name;   
+        IF model_uuid IS NOT NULL THEN
+            -- Calculate data...
+            return_value = ('Succes','Building costs calculated for project/model', proj_name, mod_name);
+		ELSE
+            return_value = ('Error','Building costs *not* extrapolated for project/model, project or model name does not exist', proj_name, mod_name,start_year, end_year);
+        END IF;               
+        RETURN return_value;
+    END;
+]]> </definition>
+</function>
+
+<table name="tgv_projects" layers="0" collapse-mode="2" max-obj-count="6" z-value="0">
+	<schema name="fdc_tgv_data"/>
+	<role name="postgres"/>
+	<position x="571.953" y="192.524"/>
+	<column name="project_id" not-null="true" default-value="gen_random_uuid()">
+		<type name="uuid" length="0"/>
+	</column>
+	<column name="project_name" not-null="true">
+		<type name="character varying" length="0"/>
+	</column>
+	<column name="parameter_1" not-null="true">
+		<type name="double precision" length="0"/>
+	</column>
+	<column name="parameter_2" not-null="true">
+		<type name="double precision" length="0"/>
+	</column>
+	<column name="geom">
+		<type name="geometry" length="0" spatial-type="MULTIPOLYGON" variation="0" srid="25832"/>
+	</column>
+	<constraint name="tgv_projects_project_name_key" type="uq-constr" table="fdc_tgv_data.tgv_projects">
+		<columns names="project_name" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="tgv_projects_pkey" type="pk-constr" table="fdc_tgv_data.tgv_projects">
+		<columns names="project_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<constraint name="fk_tgv_models_projects" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="fdc_tgv_data.tgv_projects" table="fdc_tgv_data.tgv_models">
+	<columns names="project_id" ref-type="src-columns"/>
+	<columns names="project_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_tgv_cells_projects" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="fdc_tgv_data.tgv_projects" table="fdc_tgv_data.tgv_cells">
+	<columns names="project_id" ref-type="src-columns"/>
+	<columns names="project_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_tgv_cell_values_models" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="fdc_tgv_data.tgv_models" table="fdc_tgv_data.tgv_cell_values">
+	<columns names="model_id" ref-type="src-columns"/>
+	<columns names="model_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_tgv_cell_values_cells" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="fdc_tgv_data.tgv_cells" table="fdc_tgv_data.tgv_cell_values">
+	<columns names="cell_id" ref-type="src-columns"/>
+	<columns names="cell_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_tgv_cell_calculations_models" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="fdc_tgv_data.tgv_models" table="fdc_tgv_data.tgv_cell_calculations">
+	<columns names="model_id" ref-type="src-columns"/>
+	<columns names="model_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_tgv_cell_calculations_cells" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="fdc_tgv_data.tgv_cells" table="fdc_tgv_data.tgv_cell_calculations">
+	<columns names="cell_id" ref-type="src-columns"/>
+	<columns names="cell_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_tgv_building_costs_buildings" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="fdc_tgv_data.tgv_buildings" table="fdc_tgv_data.tgv_building_costs">
+	<columns names="building_id" ref-type="src-columns"/>
+	<columns names="building_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_tgv_building_costs_models" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="fdc_tgv_data.tgv_models" table="fdc_tgv_data.tgv_building_costs">
+	<columns names="model_id" ref-type="src-columns"/>
+	<columns names="model_id" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="fk_tgv_building_costs_cell_calculations" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="fdc_tgv_data.tgv_cell_calculations" table="fdc_tgv_data.tgv_building_costs">
+	<columns names="model_id,cell_id,year" ref-type="src-columns"/>
+	<columns names="model_id,cell_id,year" ref-type="dst-columns"/>
+</constraint>
+
+<relationship name="rel_tgv_models_tgv_projects" type="relfk" layers="0"
+	 custom-color="#f7aa39"
+	 src-table="fdc_tgv_data.tgv_models"
+	 dst-table="fdc_tgv_data.tgv_projects" reference-fk="fk_tgv_models_projects"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_tgv_cells_tgv_projects" type="relfk" layers="0"
+	 custom-color="#f6ec3d"
+	 src-table="fdc_tgv_data.tgv_cells"
+	 dst-table="fdc_tgv_data.tgv_projects" reference-fk="fk_tgv_cells_projects"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_tgv_cell_values_tgv_models" type="relfk" layers="0"
+	 custom-color="#6db31c"
+	 src-table="fdc_tgv_data.tgv_cell_values"
+	 dst-table="fdc_tgv_data.tgv_models" reference-fk="fk_tgv_cell_values_models"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_tgv_cell_values_tgv_cells" type="relfk" layers="0"
+	 custom-color="#ea417a"
+	 src-table="fdc_tgv_data.tgv_cell_values"
+	 dst-table="fdc_tgv_data.tgv_cells" reference-fk="fk_tgv_cell_values_cells"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_tgv_cell_calculations_tgv_models" type="relfk" layers="0"
+	 custom-color="#0dc4e2"
+	 src-table="fdc_tgv_data.tgv_cell_calculations"
+	 dst-table="fdc_tgv_data.tgv_models" reference-fk="fk_tgv_cell_calculations_models"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_tgv_cell_calculations_tgv_cells" type="relfk" layers="0"
+	 custom-color="#7d1b4f"
+	 src-table="fdc_tgv_data.tgv_cell_calculations"
+	 dst-table="fdc_tgv_data.tgv_cells" reference-fk="fk_tgv_cell_calculations_cells"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_tgv_building_costs_tgv_buildings" type="relfk" layers="0"
+	 custom-color="#7206c0"
+	 src-table="fdc_tgv_data.tgv_building_costs"
+	 dst-table="fdc_tgv_data.tgv_buildings" reference-fk="fk_tgv_building_costs_buildings"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_tgv_building_costs_tgv_models" type="relfk" layers="0"
+	 custom-color="#2e12ed"
+	 src-table="fdc_tgv_data.tgv_building_costs"
+	 dst-table="fdc_tgv_data.tgv_models" reference-fk="fk_tgv_building_costs_models"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="rel_tgv_building_costs_tgv_cell_calculations" type="relfk" layers="0"
+	 custom-color="#6c7c8e"
+	 src-table="fdc_tgv_data.tgv_building_costs"
+	 dst-table="fdc_tgv_data.tgv_cell_calculations" reference-fk="fk_tgv_building_costs_cell_calculations"
+	 src-required="false" dst-required="true"/>
+
+</dbmodel>
