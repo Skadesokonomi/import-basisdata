@@ -1,0 +1,231 @@
+"""
+Model exported as python.
+Name : correction2
+Group : 
+With QGIS : 34404
+"""
+
+from typing import Any, Optional
+
+from qgis.core import QgsProcessing
+from qgis.core import QgsProcessingAlgorithm
+from qgis.core import QgsProcessingContext
+from qgis.core import QgsProcessingFeedback, QgsProcessingMultiStepFeedback
+from qgis.core import QgsProcessingParameterString
+from qgis.core import QgsProcessingParameterProviderConnection
+from qgis.core import QgsProcessingParameterRasterLayer
+from qgis.core import QgsProcessingParameterBand
+from qgis.core import QgsProcessingParameterEnum
+from qgis.core import QgsProcessingParameterFeatureSink
+from qgis.core import QgsExpression
+from qgis import processing
+
+
+class Correction2(QgsProcessingAlgorithm):
+
+    def initAlgorithm(self, config: Optional[dict[str, Any]] = None):
+        self.addParameter(QgsProcessingParameterString('project_name', 'Project name', multiLine=False, defaultValue=None))
+        self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue=None))
+        self.addParameter(QgsProcessingParameterRasterLayer('correction_layer', 'Correction layer', defaultValue=None))
+        self.addParameter(QgsProcessingParameterBand('correction_band', 'Correction band', parentLayerParameterName='correction_layer', allowMultiple=False, defaultValue=[1]))
+        self.addParameter(QgsProcessingParameterEnum('correction_season', 'Correction Season', options=['Spring','Summer','Autumn','Winter'], allowMultiple=False, usesStaticStrings=False, defaultValue=None))
+        self.addParameter(QgsProcessingParameterFeatureSink('refactor', 'Refactor', type=QgsProcessing.TypeVectorAnyGeometry, createByDefault=True, supportsAppend=True, defaultValue=None))
+
+    def processAlgorithm(self, parameters: dict[str, Any], context: QgsProcessingContext, model_feedback: QgsProcessingFeedback) -> dict[str, Any]:
+        # Use a multi-step feedback, so that individual child algorithm progress reports are adjusted for the
+        # overall progress through the model
+        feedback = QgsProcessingMultiStepFeedback(10, model_feedback)
+        results = {}
+        outputs = {}
+
+        # Calculate expression
+        alg_params = {
+            'INPUT': QgsExpression("'t_' || replace(uuid('WithoutBraces'),'-','')").evaluate()
+        }
+        outputs['CalculateExpression'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(1)
+        if feedback.isCanceled():
+            return {}
+
+        # Temp variables, translation of parameters
+        pname = parameters['project_name']
+        seasons = ['Spring','Summer','Autumn','Winter']
+        season = seasons[parameters['correction_season']]
+        tempt = outputs['CalculateExpression']['OUTPUT']
+
+        # PostgreSQL execute and load SQL(reference only)
+
+        #conns = QgsProviderRegistry.instance().providerMetadata('postgres').connections(False)
+        #dbCon = conns[parameters['database_connection']]
+        #res = dbCon.executeSql("SELECT ST_AsText(geom) AS wkt FROM tgv_data.tgv_projects WHERE project_id = '{}'".format( parameters['project_name']))
+        #wkt = res[0][0]
+        #temp = QgsVectorLayer("Polygon?crs=epsg:25832", "temp", "memory")
+        #dp_temp = temp.dataProvider()
+        #geom = QgsGeometry.fromWkt(wkt)
+        #feat = QgsFeature()
+        #feat.setGeometry(geom)
+        #dp_temp.addFeatures([feat])
+
+
+
+        # PostgreSQL execute and load SQL
+        alg_params = {
+            'DATABASE': parameters['database_connection'],
+            'GEOMETRY_FIELD': 'geom',
+            'ID_FIELD': 'project_id',
+            'SQL': "SELECT * FROM tgv_data.tgv_projects WHERE project_id = '{}'".format( parameters['project_name'])
+        }
+        outputs['PostgresqlExecuteAndLoadSql'] = processing.run('qgis:postgisexecuteandloadsql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(2)
+        if feedback.isCanceled():
+            return {}
+
+        # Buffer
+        alg_params = {
+            'DISSOLVE': False,
+            'DISTANCE': 0,
+            'END_CAP_STYLE': 0,  # Round
+            'INPUT': outputs['PostgresqlExecuteAndLoadSql']['OUTPUT'],
+            'JOIN_STYLE': 0,  # Round
+            'MITER_LIMIT': 2,
+            'SEGMENTS': 5,
+            'SEPARATE_DISJOINT': False,
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['Buffer'] = processing.run('native:buffer', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(3)
+        if feedback.isCanceled():
+            return {}
+
+        # Clip raster by mask layer
+        alg_params = {
+            'ALPHA_BAND': False,
+            'CREATION_OPTIONS': None,
+            'CROP_TO_CUTLINE': True,
+            'DATA_TYPE': 0,  # Use Input Layer Data Type
+            'EXTRA': None,
+            'INPUT': parameters['correction_layer'],
+            'KEEP_RESOLUTION': True,
+            'MASK': outputs['Buffer']['OUTPUT'],
+            'MULTITHREADING': False,
+            'NODATA': None,
+            'SET_RESOLUTION': False,
+            'SOURCE_CRS': 'ProjectCrs',
+            'TARGET_CRS': 'ProjectCrs',
+            'TARGET_EXTENT': None,
+            'X_RESOLUTION': None,
+            'Y_RESOLUTION': None,
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['ClipRasterByMaskLayer'] = processing.run('gdal:cliprasterbymasklayer', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(4)
+        if feedback.isCanceled():
+            return {}
+
+        # Fill NoData
+        alg_params = {
+            'BAND': parameters['correction_band'],
+            'CREATION_OPTIONS': None,
+            'DISTANCE': 10,
+            'EXTRA': None,
+            'INPUT': outputs['ClipRasterByMaskLayer']['OUTPUT'],
+            'ITERATIONS': 0,
+            'MASK_LAYER': None,
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['FillNodata'] = processing.run('gdal:fillnodata', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(5)
+        if feedback.isCanceled():
+            return {}
+
+        # Raster pixels to polygons
+        alg_params = {
+            'FIELD_NAME': 'depth',
+            'INPUT_RASTER': outputs['FillNodata']['OUTPUT'],
+            'RASTER_BAND': 1,
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['RasterPixelsToPolygons'] = processing.run('native:pixelstopolygons', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(6)
+        if feedback.isCanceled():
+            return {}
+
+        # Extract by location
+        alg_params = {
+            'INPUT': outputs['RasterPixelsToPolygons']['OUTPUT'],
+            'INTERSECT': outputs['Buffer']['OUTPUT'],
+            'PREDICATE': [0],  # intersect
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['ExtractByLocation'] = processing.run('native:extractbylocation', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(7)
+        if feedback.isCanceled():
+            return {}
+
+        feedback.pushInfo('season = ' + season)
+        feedback.pushInfo('pname  = ' + pname)
+
+
+        # Refactor fields
+        alg_params = {
+            'FIELDS_MAPPING': [{'alias': '','comment': '','expression': ' round(x(centroid(@geometry)))*10000000 + round(y(centroid(@geometry)))','length': 0,'name': 'id','precision': 0,'sub_type': 0,'type': 4,'type_name': 'int8'},{'alias': '','comment': '','expression': '"depth"','length': 20,'name': 'depth','precision': 8,'sub_type': 0,'type': 6,'type_name': 'double precision'},{'alias': '','comment': '','expression': "'" + pname + "'",'length': 0,'name': 'project_id','precision': 0,'sub_type': 0,'type': 10,'type_name': 'text'},{'alias': '','comment': '','expression': "'"+season + "'",'length': 0,'name': 'season','precision': 0,'sub_type': 0,'type': 10,'type_name': 'text'}],
+            'INPUT': outputs['ExtractByLocation']['OUTPUT'],
+            'OUTPUT': parameters['refactor']
+        }
+        outputs['RefactorFields'] = processing.run('native:refactorfields', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(8)
+        if feedback.isCanceled():
+            return {}
+
+        # Export to PostgreSQL
+        alg_params = {
+            'CREATEINDEX': True,
+            'DATABASE': parameters['database_connection'],
+            'DROP_STRING_LENGTH': False,
+            'ENCODING': 'UTF-8',
+            'FORCE_SINGLEPART': True,
+            'GEOMETRY_COLUMN': 'geom',
+            'INPUT': outputs['RefactorFields']['OUTPUT'],
+            'LOWERCASE_NAMES': True,
+            'OVERWRITE': True,
+            'PRIMARY_KEY': 'id',
+            'SCHEMA': 'tgv_import',
+            'TABLENAME': outputs['CalculateExpression']['OUTPUT']
+        }
+        outputs['ExportToPostgresql'] = processing.run('native:importintopostgis', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(9)
+        if feedback.isCanceled():
+            return {}
+
+        # PostgreSQL execute SQL
+        alg_params = {
+            'DATABASE': parameters['database_connection'],
+            'SQL': "DELETE FROM tgv_import.tgv_raadata WHERE project_id = '{}' AND season = '{}'; INSERT INTO tgv_import.tgv_raadata SELECT * FROM tgv_import.{}; DROP TABLE tgv_import.{};".format( pname,season,tempt,tempt)
+        }
+        outputs['PostgresqlExecuteSql'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        return results
+
+
+    def name(self) -> str:
+        return 'correction2'
+
+    def displayName(self) -> str:
+        return 'correction2'
+
+    def group(self) -> str:
+        return ''
+
+    def groupId(self) -> str:
+        return ''
+
+    def createInstance(self):
+        return self.__class__()
