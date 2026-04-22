@@ -160,7 +160,8 @@ ALTER TABLE tgv_building_costs ADD CONSTRAINT fk_tgv_building_costs_cell_calcula
 
 CREATE VIEW tgv_building_costs_sum AS
     WITH c AS (SELECT 
-        project_id,
+        building_id,
+		project_id,
         model_id,
         cell_no,
         MIN(year) AS year_start,
@@ -169,7 +170,17 @@ CREATE VIEW tgv_building_costs_sum AS
         SUM (cost) AS tot_cost        
     FROM tgv_building_costs
     GROUP BY 1,2,3,4
-    ) SELECT b.*, c.* FROM tgv_buildings b JOIN c ON b.building_id = c.building_id;
+    ) 
+    SELECT 
+        b.*, 
+        c.project_id,
+        c.model_id,
+        c.cell_no,
+        c.year_start,
+        c.year_end,
+        c.no_years,
+        c.tot_cost   
+        FROM tgv_buildings b JOIN c ON b.building_id = c.building_id;
 
 CREATE TABLE IF NOT EXISTS tgv_corrections
 (
@@ -672,7 +683,7 @@ CREATE OR REPLACE FUNCTION tgv_functions.building_costs_calculate(proj_name char
                             CASE WHEN days_mut2 > v180 AND bclass IN (1,2)     THEN s2*cellar_perimeter   ELSE 0.00 END + -- V5
                             CASE WHEN days_mut1 > v180 AND bclass IN (1,2,3,4) THEN s3*building_perimeter ELSE 0.00 END   -- V6
                         )::NUMERIC(12,2) AS cost
-                    FROM bc1
+                    FROM bc1;
             ELSE
                 RAISE EXCEPTION 'Non existing model id: %', mod_name USING HINT = 'Choose another id for model to copy';
             END IF;
