@@ -130,7 +130,8 @@ CREATE TABLE tgv_buildings(
     building_id character varying NOT NULL,
 	municipality_code integer,
     build_usage_code integer,
-	cellar_pct integer,
+	cellar_area_m2 real,
+	cellar_perimeter_m real,
 	is_protected boolean, 
     geom Geometry(Multipolygon,25832)
 );
@@ -156,6 +157,19 @@ ALTER TABLE tgv_building_costs ADD CONSTRAINT fk_tgv_building_costs_models
 ALTER TABLE tgv_building_costs ADD CONSTRAINT fk_tgv_building_costs_cell_calculations 
     FOREIGN KEY (project_id,model_id,cell_no, year) REFERENCES tgv_cell_calculations (project_id,model_id,cell_no, year)
     ON UPDATE CASCADE ON DELETE CASCADE;
+
+CREATE VIEW tgv_building_costs_sum AS
+    WITH c AS (SELECT 
+        project_id,
+        model_id,
+        cell_no,
+        MIN(year) AS year_start,
+        MAX(year) AS year_end,
+        COUNT(year) AS no_years,
+        SUM (cost) AS tot_cost        
+    FROM tgv_building_costs
+    GROUP BY 1,2,3,4
+    ) SELECT b.*, c.* FROM tgv_buildings b JOIN c ON b.building_id = c.building_id;
 
 CREATE TABLE IF NOT EXISTS tgv_corrections
 (
@@ -613,31 +627,35 @@ CREATE OR REPLACE FUNCTION tgv_functions.building_costs_calculate(proj_name char
                 v180 = (parm_json ->> 'v180')::integer;
         
                 -- delete existing building costs for the model
-                DELETE FROM tgv_data.building_costs WHERE model_id = mod_id;
+                DELETE FROM tgv_data.tgv_building_costs WHERE project_id = proj_name AND model_id = mod_name;
                  
                 -- run INSERT query
                 WITH bc1 AS (
                     SELECT 
         			    b.building_id,
+        			    b.cellar_area_m2,
+                        b.cellar_perimeter_m,
+                        st_area(bb.geom) as building_area_m2,
+                        st_perimeter(bb.geom) as building_perimeter_m,
+                        cc.project_id,
                         cc.model_id,
                         cc.cell_no,
                         cc.year,
                         cc.days_mut1,
                         cc.days_mut2,
-                        st_area(bb.geom) as building_area,
-                        st_perimeter(bb.geom) as building_perimeter,
                         -- local column bclass: 1->cellar & no protection; 2->cellar & protected 3->no cellar & no protection; 4->no cellar & protected  
-                        (CASE WHEN b.has_cellar THEN 
+                        (CASE WHEN b.cellar_area_m2 > 0.0 THEN 
                             CASE WHEN b.is_protected THEN 2 ELSE 1 END 
                         ELSE
                             CASE WHEN b.is_protected THEN 4 ELSE 3 END
                         END)::integer AS bclass 
                     FROM tgv_data.tgv_buildings b 
                         JOIN tgv_data.tgv_cell_calculations cc ON ST_Contains(cc.geom, ST_Centroid(b.geom))
-                    WHERE cc.model_id = mod_id
-                ),
-                bc2 AS (
-                    SELECT 
+                    WHERE cc.project_id = proj_name AND cc.model_id = mod_id
+                )
+                INSERT INTO tgv_data.tgv_building_costs 
+                     SELECT 
+        			    project_id,
         			    building_id,
         				model_id,
                         cell_no,
@@ -646,16 +664,15 @@ CREATE OR REPLACE FUNCTION tgv_functions.building_costs_calculate(proj_name char
                             -- local column bclass: 1->cellar & no protection; 2->cellar & protected 3->no cellar & no protection; 4->no cellar & protected  
                             CASE WHEN days_mut1 > v0   AND bclass = 1          THEN s1*building_area      ELSE 0.00 END + -- H1
                             CASE WHEN days_mut1 > v7   AND bclass = 2          THEN s1*building_area      ELSE 0.00 END + -- H2
-                            CASE WHEN days_mut2 > v7   AND bclass = 1          THEN s2*building_perimeter ELSE 0.00 END + -- V1
-                            CASE WHEN days_mut1 > v7   AND bclass = 1          THEN s2*building_perimeter ELSE 0.00 END + -- V2
-                            CASE WHEN days_mut2 > v30  AND bclass = 1          THEN s2*building_perimeter ELSE 0.00 END + -- V3
+                            CASE WHEN days_mut2 > v7   AND bclass = 1          THEN s2*cellar_perimeter   ELSE 0.00 END + -- V1
+                            CASE WHEN days_mut1 > v7   AND bclass = 1          THEN s2*cellar_perimeter   ELSE 0.00 END + -- V2
+                            CASE WHEN days_mut2 > v30  AND bclass = 1          THEN s2*cellar_perimeter   ELSE 0.00 END + -- V3
                             CASE WHEN days_mut1 > v30  AND bclass IN (1,3)     THEN s3*building_perimeter ELSE 0.00 END + -- V4
-                            CASE WHEN days_mut1 > v30  AND bclass = 2          THEN s2*building_perimeter ELSE 0.00 END + -- V4
-                            CASE WHEN days_mut2 > v180 AND bclass IN (1,2)     THEN s2*building_perimeter ELSE 0.00 END + -- V5
+                            CASE WHEN days_mut1 > v30  AND bclass = 2          THEN s2*cellar_perimeter   ELSE 0.00 END + -- V4
+                            CASE WHEN days_mut2 > v180 AND bclass IN (1,2)     THEN s2*cellar_perimeter   ELSE 0.00 END + -- V5
                             CASE WHEN days_mut1 > v180 AND bclass IN (1,2,3,4) THEN s3*building_perimeter ELSE 0.00 END   -- V6
                         )::NUMERIC(12,2) AS cost
-                )
-                INSERT INTO tgv_data.building_costs SELECT * FROM bc2;        
+                    FROM bc1
             ELSE
                 RAISE EXCEPTION 'Non existing model id: %', mod_name USING HINT = 'Choose another id for model to copy';
             END IF;
