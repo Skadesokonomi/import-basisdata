@@ -173,8 +173,16 @@ CREATE VIEW tgv_building_costs_sum AS
     FROM tgv_building_costs
     GROUP BY 1,2,3,4
     ) 
-	SELECT b.*, c.project_id, c.model_id, c.cell_no, c.year_start, c.year_end, c.no_years, c.tot_cost 
-	    FROM tgv_buildings b JOIN c ON b.building_id = c.building_id;
+    SELECT 
+        b.*, 
+        c.project_id,
+        c.model_id,
+        c.cell_no,
+        c.year_start,
+        c.year_end,
+        c.no_years,
+        c.tot_cost   
+        FROM tgv_buildings b JOIN c ON b.building_id = c.building_id;
 
 CREATE TABLE IF NOT EXISTS tgv_corrections
 (
