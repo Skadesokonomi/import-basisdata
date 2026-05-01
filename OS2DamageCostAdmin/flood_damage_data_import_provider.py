@@ -39,9 +39,10 @@ from .flood_damage_raster_polygon_classification_algorithm  import FDCRasterPoly
 from .flood_damage_raster_polygon_pixels_algorithm          import FDCRasterPolygonPixels
 from .flood_damage_vector_polygon_db_algorithm              import FDCVectorPolygonDB
 from .terrain_groundwater_load_correction_data_algorithm    import TGVLoadCorrectionData
+from .terrain_groundwater_load_depth_data_algorithm         import TGVLoadDepthData
 from .terrain_groundwater_load_building_data_algorithm      import TGVLoadBuildingData
 from .terrain_groundwater_interpolate_cell_values_algorithm import TGVInterpolateCellValues
-
+from .terrain_groundwater_create_qgis_project_algorithm     import TGVCreateQgisProject
 
 class FloodDamageCostAdmin(QgsProcessingProvider):
 
@@ -70,8 +71,10 @@ class FloodDamageCostAdmin(QgsProcessingProvider):
         self.addAlgorithm(FDCRasterPolygonPixels())
         self.addAlgorithm(FDCVectorPolygonDB())
         self.addAlgorithm(TGVLoadCorrectionData())
+        self.addAlgorithm(TGVLoadDepthData())
         self.addAlgorithm(TGVLoadBuildingData())
         self.addAlgorithm(TGVInterpolateCellValues())
+        self.addAlgorithm(TGVCreateQgisProject())
         # add additional algorithms here
         # self.addAlgorithm(MyOtherAlgorithm())
 
