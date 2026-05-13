@@ -663,6 +663,7 @@ CREATE OR REPLACE FUNCTION tgv_functions.building_costs_calculate(proj_name char
                             CASE WHEN b.is_protected THEN 4 ELSE 3 END
                         END)::integer AS bclass 
                     FROM tgv_data.tgv_buildings b
+                        JOIN tgv_data.tgv_projects p ON ST_Contains(p.geom, ST_Centroid(b.geom)) AND p.project_id = proj_name
                         JOIN tgv_data.tgv_cells c ON ST_Contains(c.geom, ST_Centroid(b.geom)) AND c.project_id = proj_name
                         JOIN tgv_data.tgv_cell_calculations o ON o.cell_no = c.cell_no AND o.project_id = proj_name AND o.model_id = mod_name
                 )
