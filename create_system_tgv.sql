@@ -114,6 +114,7 @@ CREATE TABLE tgv_cell_calculations (
     year integer NOT NULL CHECK (year >= 1900 AND year <= 2300),
     depths real[],
     days_tot integer,
+    days_zero integer,
     days_mut1 integer,
     days_mut2 integer	
 );
@@ -577,7 +578,7 @@ CREATE OR REPLACE FUNCTION tgv_functions.models_create_cell_calculations(proj_na
                 year_start = (parm_json ->> 'year_start')::integer;
                 year_end = (parm_json ->> 'year_end')::integer;
 
-                INSERT INTO tgv_data.tgv_cell_calculations (project_id, model_id, cell_no, year, depths,  days_tot, days_mut1, days_mut2) 
+                INSERT INTO tgv_data.tgv_cell_calculations (project_id, model_id, cell_no, year, depths,  days_tot, days_zero, days_mut1, days_mut2) 
                 SELECT 
                     project_id,
     			    model_id,
@@ -585,6 +586,7 @@ CREATE OR REPLACE FUNCTION tgv_functions.models_create_cell_calculations(proj_na
                     EXTRACT(YEAR FROM date_stamp - (ydp::text||' DAYS')::interval) AS year, -- Is it necessary with the diplacement days ?
                     NULL::real[] AS depths,
                     COUNT(*) AS days_tot,
+                    COUNT (*) FILTER (WHERE depth > -0.000001) AS days_zero,				
                     COUNT (*) FILTER (WHERE depth <= mut1) AS days_mut1,				
                     COUNT (*) FILTER (WHERE depth <= mut2 /* AND depth > dmut1*/ ) AS days_mut2		
     		    FROM tgv_data.tgv_cell_values WHERE project_id = proj_name AND model_id = mod_name AND EXTRACT(YEAR FROM date_stamp) >= year_start AND EXTRACT(YEAR FROM date_stamp) < year_end -- Correct filter for years ?
