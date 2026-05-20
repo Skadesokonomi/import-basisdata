@@ -130,6 +130,8 @@ CREATE TABLE tgv_buildings(
     building_id character varying NOT NULL,
 	municipality_code integer,
     build_usage_code integer,
+	build_area_m2 real,
+	build_perimeter_m real,
 	cellar_area_m2 real,
 	cellar_perimeter_m real,
 	is_protected boolean, 
