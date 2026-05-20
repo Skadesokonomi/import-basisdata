@@ -36,6 +36,9 @@ SELECT tgv_functions.models_interpolate_cell_values('{0}','{1}');
 TEMPLATE2 = """
 SELECT tgv_functions.models_create_cell_calculations('{0}','{1}');
 """
+TEMPLATE3 = """
+SELECT tgv_functions.building_costs_calculate('{0}','{1}');
+"""
 
 from typing import Any, Optional
 
@@ -64,7 +67,7 @@ class TGVInterpolateCellValues(QgsProcessingAlgorithm):
     def processAlgorithm(self, parameters: dict[str, Any], context: QgsProcessingContext, model_feedback: QgsProcessingFeedback) -> dict[str, Any]:
         # Use a multi-step feedback, so that individual child algorithm progress reports are adjusted for the
         # overall progress through the model
-        feedback = QgsProcessingMultiStepFeedback(2, model_feedback)
+        feedback = QgsProcessingMultiStepFeedback(3, model_feedback)
         results = {}
         outputs = {}
 
@@ -90,7 +93,19 @@ class TGVInterpolateCellValues(QgsProcessingAlgorithm):
             'DATABASE': parameters['database_connection'],
             'SQL': sqlTxt
         }
-        outputs['PostgresqlExecuteSql'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        outputs['PostgresqlExecuteSql2'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(3)
+        if feedback.isCanceled():
+            return {}
+        # PostgreSQL execute SQL
+        sqlTxt = TEMPLATE3.format(parameters['project_name'],parameters['model_name'])
+        feedback.pushInfo('Step 3: Interpolate costs on buildings basis, SQL: ' +  sqlTxt)
+        alg_params = {
+            'DATABASE': parameters['database_connection'],
+            'SQL': sqlTxt
+        }
+        outputs['PostgresqlExecuteSql3'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
         return results
 
     def name(self) -> str:

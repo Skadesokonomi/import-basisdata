@@ -114,6 +114,7 @@ CREATE TABLE tgv_cell_calculations (
     year integer NOT NULL CHECK (year >= 1900 AND year <= 2300),
     depths real[],
     days_tot integer,
+    days_zero integer,
     days_mut1 integer,
     days_mut2 integer	
 );
@@ -577,7 +578,7 @@ CREATE OR REPLACE FUNCTION tgv_functions.models_create_cell_calculations(proj_na
                 year_start = (parm_json ->> 'year_start')::integer;
                 year_end = (parm_json ->> 'year_end')::integer;
 
-                INSERT INTO tgv_data.tgv_cell_calculations (project_id, model_id, cell_no, year, depths,  days_tot, days_mut1, days_mut2) 
+                INSERT INTO tgv_data.tgv_cell_calculations (project_id, model_id, cell_no, year, depths,  days_tot, days_zero, days_mut1, days_mut2) 
                 SELECT 
                     project_id,
     			    model_id,
@@ -585,6 +586,7 @@ CREATE OR REPLACE FUNCTION tgv_functions.models_create_cell_calculations(proj_na
                     EXTRACT(YEAR FROM date_stamp - (ydp::text||' DAYS')::interval) AS year, -- Is it necessary with the diplacement days ?
                     NULL::real[] AS depths,
                     COUNT(*) AS days_tot,
+                    COUNT (*) FILTER (WHERE depth > -0.000001) AS days_zero,				
                     COUNT (*) FILTER (WHERE depth <= mut1) AS days_mut1,				
                     COUNT (*) FILTER (WHERE depth <= mut2 /* AND depth > dmut1*/ ) AS days_mut2		
     		    FROM tgv_data.tgv_cell_values WHERE project_id = proj_name AND model_id = mod_name AND EXTRACT(YEAR FROM date_stamp) >= year_start AND EXTRACT(YEAR FROM date_stamp) < year_end -- Correct filter for years ?
@@ -646,46 +648,48 @@ CREATE OR REPLACE FUNCTION tgv_functions.building_costs_calculate(proj_name char
                 WITH bc1 AS (
                     SELECT 
         			    b.building_id,
+        			    b.build_area_m2,
+                        b.build_perimeter_m,
         			    b.cellar_area_m2,
                         b.cellar_perimeter_m,
-                        st_area(bb.geom) as building_area_m2,
-                        st_perimeter(bb.geom) as building_perimeter_m,
-                        cc.project_id,
-                        cc.model_id,
-                        cc.cell_no,
-                        cc.year,
-                        cc.days_mut1,
-                        cc.days_mut2,
+                        o.project_id,
+                        o.model_id,
+                        o.cell_no,
+                        o.year,
+                        o.days_mut1,
+                        o.days_mut2,
                         -- local column bclass: 1->cellar & no protection; 2->cellar & protected 3->no cellar & no protection; 4->no cellar & protected  
                         (CASE WHEN b.cellar_area_m2 > 0.0 THEN 
                             CASE WHEN b.is_protected THEN 2 ELSE 1 END 
                         ELSE
                             CASE WHEN b.is_protected THEN 4 ELSE 3 END
                         END)::integer AS bclass 
-                    FROM tgv_data.tgv_buildings b 
-                        JOIN tgv_data.tgv_cell_calculations cc ON ST_Contains(cc.geom, ST_Centroid(b.geom))
-                    WHERE cc.project_id = proj_name AND cc.model_id = mod_id
+                    FROM tgv_data.tgv_buildings b
+                        JOIN tgv_data.tgv_projects p ON ST_Contains(p.geom, ST_Centroid(b.geom)) AND p.project_id = proj_name
+                        JOIN tgv_data.tgv_cells c ON ST_Contains(c.geom, ST_Centroid(b.geom)) AND c.project_id = proj_name
+                        JOIN tgv_data.tgv_cell_calculations o ON o.cell_no = c.cell_no AND o.project_id = proj_name AND o.model_id = mod_name
                 )
                 INSERT INTO tgv_data.tgv_building_costs 
                      SELECT 
-        			    project_id,
         			    building_id,
+        			    project_id,
         				model_id,
                         cell_no,
                         year,
                         (
                             -- local column bclass: 1->cellar & no protection; 2->cellar & protected 3->no cellar & no protection; 4->no cellar & protected  
-                            CASE WHEN days_mut1 > v0   AND bclass = 1          THEN s1*building_area      ELSE 0.00 END + -- H1
-                            CASE WHEN days_mut1 > v7   AND bclass = 2          THEN s1*building_area      ELSE 0.00 END + -- H2
-                            CASE WHEN days_mut2 > v7   AND bclass = 1          THEN s2*cellar_perimeter   ELSE 0.00 END + -- V1
-                            CASE WHEN days_mut1 > v7   AND bclass = 1          THEN s2*cellar_perimeter   ELSE 0.00 END + -- V2
-                            CASE WHEN days_mut2 > v30  AND bclass = 1          THEN s2*cellar_perimeter   ELSE 0.00 END + -- V3
-                            CASE WHEN days_mut1 > v30  AND bclass IN (1,3)     THEN s3*building_perimeter ELSE 0.00 END + -- V4
-                            CASE WHEN days_mut1 > v30  AND bclass = 2          THEN s2*cellar_perimeter   ELSE 0.00 END + -- V4
-                            CASE WHEN days_mut2 > v180 AND bclass IN (1,2)     THEN s2*cellar_perimeter   ELSE 0.00 END + -- V5
-                            CASE WHEN days_mut1 > v180 AND bclass IN (1,2,3,4) THEN s3*building_perimeter ELSE 0.00 END   -- V6
+                            CASE WHEN days_mut1 > v0   AND bclass = 1          THEN s1*build_area_m2      ELSE 0.00 END + -- H1
+                            CASE WHEN days_mut1 > v7   AND bclass = 2          THEN s1*build_area_m2      ELSE 0.00 END + -- H2
+                            CASE WHEN days_mut2 > v7   AND bclass = 1          THEN s2*cellar_perimeter_m ELSE 0.00 END + -- V1
+                            CASE WHEN days_mut1 > v7   AND bclass = 1          THEN s2*cellar_perimeter_m ELSE 0.00 END + -- V2
+                            CASE WHEN days_mut2 > v30  AND bclass = 1          THEN s2*cellar_perimeter_m ELSE 0.00 END + -- V3
+                            CASE WHEN days_mut1 > v30  AND bclass IN (1,3)     THEN s3*build_perimeter_m  ELSE 0.00 END + -- V4
+                            CASE WHEN days_mut1 > v30  AND bclass = 2          THEN s2*cellar_perimeter_m ELSE 0.00 END + -- V4
+                            CASE WHEN days_mut2 > v180 AND bclass IN (1,2)     THEN s2*cellar_perimeter_m ELSE 0.00 END + -- V5
+                            CASE WHEN days_mut1 > v180 AND bclass IN (1,2,3,4) THEN s3*build_perimeter_m  ELSE 0.00 END   -- V6
                         )::NUMERIC(12,2) AS cost
-                    FROM bc1;
+                    FROM bc1
+                    ON CONFLICT ON CONSTRAINT tgv_building_costs_pkey DO UPDATE SET cost = EXCLUDED.cost;
             ELSE
                 RAISE EXCEPTION 'Non existing model id: %', mod_name USING HINT = 'Choose another id for model to copy';
             END IF;
@@ -695,6 +699,7 @@ CREATE OR REPLACE FUNCTION tgv_functions.building_costs_calculate(proj_name char
         RETURN;
     END;
 $$ LANGUAGE plpgsql;
+--select tgv_functions.building_costs_calculate('Markby','Initial data');
 
 CREATE OR REPLACE FUNCTION tgv_functions.cells_create_from_import(proj_name character varying, parm_name character varying) RETURNS void AS $$
     DECLARE 
@@ -768,7 +773,8 @@ CREATE OR REPLACE FUNCTION tgv_functions.cells_create_from_project_parameter(pro
                 SELECT 
                     proj_name AS project_id,
                     ST_X(ST_Centroid(g2.geom))::bigint*10000000+ST_Y(ST_Centroid(g2.geom))::bigint AS cell_no,
-                    g2.geom AS geom FROM g2;
+                    g2.geom AS geom FROM g2 
+                ON CONFLICT DO NOTHING;
             ELSE
                 RAISE EXCEPTION 'Non existing parameter id: %', parm_name USING HINT = 'Choose another id for parameter';
 			END IF;
