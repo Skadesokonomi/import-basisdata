@@ -35,7 +35,7 @@ INSERT INTO tgv_data.tgv_corrections
     SELECT project_id, season, id, depth, geom FROM tgv_import.{0} 
     ON CONFLICT ON CONSTRAINT tgv_corrections_pkey DO 
         UPDATE SET (geom,depth) = (EXCLUDED.geom,EXCLUDED.depth); 
-DROP TABLE tgv_import.{0};
+--DROP TABLE tgv_import.{0};
 SELECT tgv_functions.cells_update_from_corrections('{1}',{2},'{3}');
 """
 
@@ -98,6 +98,7 @@ class TGVLoadCorrectionData(QgsProcessingAlgorithm):
         dbCon = conns[parameters['database_connection']]
         res = dbCon.executeSql("SELECT ST_AsText(geom) AS wkt FROM tgv_data.tgv_projects WHERE project_id = '{}'".format( parameters['project_name']))
         wkt = res[0][0]
+        feedback.pushInfo('WKT for project: ' + str(wkt))
 
         temp = QgsVectorLayer("Polygon?crs=epsg:25832", "temp", "memory")
         dp_temp = temp.dataProvider()
@@ -105,6 +106,7 @@ class TGVLoadCorrectionData(QgsProcessingAlgorithm):
         feat = QgsFeature()
         feat.setGeometry(geom)
         dp_temp.addFeatures([feat])
+        feedback.pushInfo('Project temp layer written')
 
 
 
@@ -141,6 +143,7 @@ class TGVLoadCorrectionData(QgsProcessingAlgorithm):
             feedback.setCurrentStep(n)
             if feedback.isCanceled():
                 return {}
+            feedback.pushInfo('Season : ' + season)
     
             # Calculate expression
             alg_params = {
@@ -148,6 +151,7 @@ class TGVLoadCorrectionData(QgsProcessingAlgorithm):
             }
             outputs['CalculateExpression'] = processing.run('native:calculateexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
             tempt = outputs['CalculateExpression']['OUTPUT']
+            feedback.pushInfo('Before clip ' + season)
     
             # Clip raster by mask layer
             alg_params = {
@@ -171,11 +175,13 @@ class TGVLoadCorrectionData(QgsProcessingAlgorithm):
                 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
             }
             outputs['ClipRasterByMaskLayer'] = processing.run('gdal:cliprasterbymasklayer', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            feedback.pushInfo('After clip ' + season)
 
             n =+ 1
             feedback.setCurrentStep(n)
             if feedback.isCanceled():
                 return {}
+            feedback.pushInfo('Before fillnodata ' + season)
     
             # Fill NoData
             alg_params = {
@@ -189,11 +195,13 @@ class TGVLoadCorrectionData(QgsProcessingAlgorithm):
                 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
             }
             outputs['FillNodata'] = processing.run('gdal:fillnodata', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            feedback.pushInfo('After fillnodata ' + season)
     
             n =+ 1
             feedback.setCurrentStep(n)
             if feedback.isCanceled():
                 return {}
+            feedback.pushInfo('Before raster to polygon ' + season)
     
             # Raster pixels to polygons
             alg_params = {
@@ -203,11 +211,13 @@ class TGVLoadCorrectionData(QgsProcessingAlgorithm):
                 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
             }
             outputs['RasterPixelsToPolygons'] = processing.run('native:pixelstopolygons', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            feedback.pushInfo('After raster to polygon ' + season)
     
             n =+ 1
             feedback.setCurrentStep(n)
             if feedback.isCanceled():
                 return {}
+            feedback.pushInfo('Before extract by location ' + season)
     
             # Extract by location
             alg_params = {
@@ -218,6 +228,7 @@ class TGVLoadCorrectionData(QgsProcessingAlgorithm):
                 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
             }
             outputs['ExtractByLocation'] = processing.run('native:extractbylocation', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            feedback.pushInfo('After extract by location ' + season)
     
             n =+ 1
             feedback.setCurrentStep(n)
