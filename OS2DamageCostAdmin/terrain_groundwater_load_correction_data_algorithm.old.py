@@ -35,7 +35,7 @@ INSERT INTO tgv_data.tgv_corrections
     SELECT project_id, season, id, depth, geom FROM tgv_import.{0} 
     ON CONFLICT ON CONSTRAINT tgv_corrections_pkey DO 
         UPDATE SET (geom,depth) = (EXCLUDED.geom,EXCLUDED.depth); 
-DROP TABLE tgv_import.{0};
+--DROP TABLE tgv_import.{0};
 SELECT tgv_functions.cells_update_from_corrections('{1}',{2},'{3}');
 """
 
