@@ -36,8 +36,12 @@ INSERT INTO tgv_data.tgv_corrections
     ON CONFLICT ON CONSTRAINT tgv_corrections_pkey DO 
         UPDATE SET (geom,depth) = (EXCLUDED.geom,EXCLUDED.depth); 
 --DROP TABLE tgv_import.{0};
-SELECT tgv_functions.cells_update_from_corrections('{1}',{2},'{3}');
 """
+
+TEMPLATE2 = """
+SELECT tgv_functions.cells_update_from_corrections('{0}',{1},'{2}');
+"""
+TEMPLATE3 = "SELECT ST_AsText(ST_Buffer(geom,{1})) AS wkt FROM tgv_data.tgv_projects WHERE project_id = '{0}'"
 
 from typing import Any, Optional
 
@@ -63,8 +67,9 @@ from qgis import processing
 class TGVLoadCorrectionData(QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config: Optional[dict[str, Any]] = None):
-        self.addParameter(QgsProcessingParameterString('project_name', 'Project name', multiLine=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue=None))
+        self.addParameter(QgsProcessingParameterString('project_name', 'Project name', multiLine=False, defaultValue=None))
+        self.addParameter(QgsProcessingParameterNumber('cell_size', 'Cell size', type=QgsProcessingParameterNumber.Double, minValue=5, maxValue=1000, defaultValue=100))
         self.addParameter(QgsProcessingParameterRasterLayer('spring_correction_layer', 'Spring Correction layer', defaultValue=None))
         self.addParameter(QgsProcessingParameterBand('spring_correction_band', 'Spring Correction band', parentLayerParameterName='spring_correction_layer', allowMultiple=False, defaultValue=1))
         self.addParameter(QgsProcessingParameterRasterLayer('summer_correction_layer', 'Summer Correction layer', defaultValue=None))
@@ -96,9 +101,12 @@ class TGVLoadCorrectionData(QgsProcessingAlgorithm):
 
         conns = QgsProviderRegistry.instance().providerMetadata('postgres').connections(False)
         dbCon = conns[parameters['database_connection']]
-        res = dbCon.executeSql("SELECT ST_AsText(geom) AS wkt FROM tgv_data.tgv_projects WHERE project_id = '{}'".format( parameters['project_name']))
+        sqltxt = TEMPLATE3.format( parameters['project_name'], parameters['cell_size'])
+        feedback.pushInfo('Before PG project execute: ' + sqltxt)
+#        res = dbCon.executeSql("SELECT ST_AsText(geom) AS wkt FROM tgv_data.tgv_projects WHERE project_id = '{}'".format( parameters['project_name']))
+        res = dbCon.executeSql(sqltxt)
         wkt = res[0][0]
-        feedback.pushInfo('WKT for project: ' + str(wkt))
+        feedback.pushInfo('After PG project execute - WKT for project: ' + str(wkt))
 
         temp = QgsVectorLayer("Polygon?crs=epsg:25832", "temp", "memory")
         dp_temp = temp.dataProvider()
@@ -234,7 +242,8 @@ class TGVLoadCorrectionData(QgsProcessingAlgorithm):
             feedback.setCurrentStep(n)
             if feedback.isCanceled():
                 return {}
-    
+
+            feedback.pushInfo('Before refactor fields ' + season)
             feedback.pushInfo('season = ' + season)
             feedback.pushInfo('pname  = ' + pname)
     
@@ -245,11 +254,13 @@ class TGVLoadCorrectionData(QgsProcessingAlgorithm):
                 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
             }
             outputs['RefactorFields'] = processing.run('native:refactorfields', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            feedback.pushInfo('After refactor fields ' + season)
     
             n =+ 1
             feedback.setCurrentStep(n)
             if feedback.isCanceled():
                 return {}
+            feedback.pushInfo('Before export to PG ' + season + ' '  + tempt)
     
             # Export to PostgreSQL
             alg_params = {
@@ -264,23 +275,42 @@ class TGVLoadCorrectionData(QgsProcessingAlgorithm):
                 'OVERWRITE': True,
                 'PRIMARY_KEY': 'id',
                 'SCHEMA': 'tgv_import',
-                'TABLENAME': outputs['CalculateExpression']['OUTPUT']
+                'TABLENAME': tempt
             }
             outputs['ExportToPostgresql'] = processing.run('native:importintopostgis', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            feedback.pushInfo('After export to PG ' + season + ' '  + tempt)
         
             n =+ 1
             feedback.setCurrentStep(n)
             if feedback.isCanceled():
                 return {}
+
             # PostgreSQL execute SQL
-            sqltxt = TEMPLATE.format(tempt,pname,period,season)
-            feedback.pushInfo('sql = ' + sqltxt)
+            sqltxt = TEMPLATE.format(tempt)
+            feedback.pushInfo('Before PG execute ' + season + ' '  + sqltxt)
 
             alg_params = {
                 'DATABASE': parameters['database_connection'],
                 'SQL': sqltxt
             }
             outputs['PostgresqlExecuteSql'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            feedback.pushInfo('After PG execute ' + season)
+
+            n =+ 1
+            feedback.setCurrentStep(n)
+            if feedback.isCanceled():
+                return {}
+
+            # PostgreSQL execute SQL
+            sqltxt = TEMPLATE2.format(pname,period,season)
+            feedback.pushInfo('Before PG2 execute ' + season + ' '  + sqltxt)
+
+            alg_params = {
+                'DATABASE': parameters['database_connection'],
+                'SQL': sqltxt
+            }
+            outputs['PostgresqlExecuteSql'] = processing.run('native:postgisexecutesql', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            feedback.pushInfo('After PG2 execute ' + season)
 
         return results
 

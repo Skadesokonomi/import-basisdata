@@ -501,7 +501,7 @@ CREATE OR REPLACE FUNCTION tgv_functions.models_interpolate_cell_values(proj_nam
                 mplng = mpend - mpstr + 1;
 
                 -- Loop over de enkelte år i interpolationsperiode
-                FOR i IN ipstr..ipend LOOP
+                FOR i IN ipstr..ipend+1 LOOP      -- Ekstra år for at have tilstrækkelige data til sidste måleår
 
                     ipdis = i - mpend - 1;        -- Tidmæssig afstand mellem nuv. år og måleperiodens afslutning
                     mpant = DIV(ipdis,mplng) + 1; -- Find antallet af "hele" måleåerioder i "afstanden"
@@ -578,20 +578,23 @@ CREATE OR REPLACE FUNCTION tgv_functions.models_create_cell_calculations(proj_na
                 year_start = (parm_json ->> 'year_start')::integer;
                 year_end = (parm_json ->> 'year_end')::integer;
 
+                WITH g AS (
+                    SELECT 
+                        project_id,
+        			    model_id,
+                        cell_no,
+                        EXTRACT(YEAR FROM date_stamp - (ydp::text||' DAYS')::interval) AS year, -- Is it necessary with the diplacement days ?
+                        NULL::real[] AS depths,
+                        COUNT(*) AS days_tot,
+                        COUNT (*) FILTER (WHERE depth > -0.000001) AS days_zero,				
+                        COUNT (*) FILTER (WHERE depth >= mut1) AS days_mut1,				
+                        COUNT (*) FILTER (WHERE depth >= mut2) AS days_mut2		
+        		    FROM tgv_data.tgv_cell_values 
+                        WHERE project_id = proj_name AND model_id = mod_name 
+                        GROUP BY 1,2,3,4)
                 INSERT INTO tgv_data.tgv_cell_calculations (project_id, model_id, cell_no, year, depths,  days_tot, days_zero, days_mut1, days_mut2) 
-                SELECT 
-                    project_id,
-    			    model_id,
-                    cell_no,
-                    EXTRACT(YEAR FROM date_stamp - (ydp::text||' DAYS')::interval) AS year, -- Is it necessary with the diplacement days ?
-                    NULL::real[] AS depths,
-                    COUNT(*) AS days_tot,
-                    COUNT (*) FILTER (WHERE depth > -0.000001) AS days_zero,				
-                    COUNT (*) FILTER (WHERE depth <= mut1) AS days_mut1,				
-                    COUNT (*) FILTER (WHERE depth <= mut2 /* AND depth > dmut1*/ ) AS days_mut2		
-    		    FROM tgv_data.tgv_cell_values WHERE project_id = proj_name AND model_id = mod_name AND EXTRACT(YEAR FROM date_stamp) >= year_start AND EXTRACT(YEAR FROM date_stamp) < year_end -- Correct filter for years ?
-                GROUP BY 1,2,3,4
-                ON CONFLICT ON CONSTRAINT tgv_cell_calculations_pkey DO UPDATE SET depths = EXCLUDED.depths, days_tot = EXCLUDED.days_tot, days_mut1 = EXCLUDED.days_mut1, days_mut2 = EXCLUDED.days_mut2;                
+                    SELECT * FROM g WHERE year >= year_start AND year <= year_end 
+                    ON CONFLICT ON CONSTRAINT tgv_cell_calculations_pkey DO UPDATE SET depths = EXCLUDED.depths, days_tot = EXCLUDED.days_tot, days_mut1 = EXCLUDED.days_mut1, days_mut2 = EXCLUDED.days_mut2;                
             ELSE
                 RAISE EXCEPTION 'Non existing model id: %', mod_name USING HINT = 'Choose another id for model to copy';
             END IF;
@@ -833,6 +836,70 @@ CREATE OR REPLACE FUNCTION tgv_functions.cells_update_from_corrections(proj_name
     END;
 $$ LANGUAGE plpgsql;
 
+/*
+CREATE OR REPLACE FUNCTION tgv_functions.cells_update_from_corrections(proj_name character varying, number_of_years real, seasonx character varying = '') RETURNS void AS $$
+
+    BEGIN
+        IF tgv_functions.projects_exists(proj_name) THEN 
+            seasonx = COALESCE (LOWER(seasonx),'');
+            IF seasonx = 'spring' THEN
+                WITH x AS (
+                    SELECT 
+                        c.project_id,
+                        c.cell_no,
+                        c.geom,
+                        (o.depth/number_of_years)::real AS correction
+                    FROM tgv_data.tgv_cells c
+                    JOIN tgv_data.tgv_corrections o ON c.cell_no = o.id AND c.project_id = o.project_id AND o.season = 'Spring'
+                	WHERE c.project_id = proj_name)
+                UPDATE tgv_data.tgv_cells t SET spring = COALESCE (x.correction, t.spring) 
+                    FROM x WHERE t.project_id = x.project_id AND t.cell_no = x.cell_no;
+            ELSIF seasonx = 'summer' THEN
+                WITH x AS (
+                    SELECT 
+                        c.project_id,
+                        c.cell_no,
+                        c.geom,
+                        (o.depth/number_of_years)::real AS correction
+                    FROM tgv_data.tgv_cells c
+                    JOIN tgv_data.tgv_corrections o ON c.cell_no = o.id AND c.project_id = o.project_id AND o.season = 'Summer'
+                	WHERE c.project_id = proj_name)
+                UPDATE tgv_data.tgv_cells t SET summer = COALESCE (x.correction, t.summer) 
+                    FROM x WHERE t.project_id = x.project_id AND t.cell_no = x.cell_no;
+            ELSIF seasonx = 'autumn' THEN
+                WITH x AS (
+                    SELECT 
+                        c.project_id,
+                        c.cell_no,
+                        c.geom,
+                        (o.depth/number_of_years)::real AS correction
+                    FROM tgv_data.tgv_cells c
+                    JOIN tgv_data.tgv_corrections o ON c.cell_no = o.id AND c.project_id = o.project_id AND o.season = 'Autumn'
+                	WHERE c.project_id = proj_name)
+                UPDATE tgv_data.tgv_cells t SET autumn = COALESCE (x.correction, t.autumn) 
+                    FROM x WHERE t.project_id = x.project_id AND t.cell_no = x.cell_no;
+            ELSIF seasonx = 'winter' THEN
+                WITH x AS (
+                    SELECT 
+                        c.project_id,
+                        c.cell_no,
+                        c.geom,
+                        (o.depth/number_of_years)::real AS correction
+                    FROM tgv_data.tgv_cells c
+                    JOIN tgv_data.tgv_corrections o ON c.cell_no = o.id AND c.project_id = o.project_id AND o.season = 'Winter'
+                	WHERE c.project_id = proj_name)
+                UPDATE tgv_data.tgv_cells t SET winter = COALESCE (x.correction, t.winter) 
+                    FROM x WHERE t.project_id = x.project_id AND t.cell_no = x.cell_no;
+            ELSE
+                RAISE EXCEPTION 'Non existing season name: %', seasonx USING HINT = 'Choose either "Spring", "Summer", "Autumn", "Winter" for season';
+            END IF;
+        ELSE
+            RAISE EXCEPTION 'Non existing project id: %', proj_name USING HINT = 'Choose another id for project';
+        END IF;
+        RETURN;
+    END;
+$$ LANGUAGE plpgsql;
+*/
 
 CREATE OR REPLACE FUNCTION tgv_functions.cell_values_create_from_import(proj_name character varying, mod_name character varying) RETURNS void AS $$
     DECLARE 
@@ -881,3 +948,11 @@ INSERT INTO tgv_data.tgv_cell_values
         RETURN;
     END;
 $$ LANGUAGE plpgsql;
+
+-- Test projekt oprettes 
+
+SELECT tgv_functions.projects_create('Markby','MultiPolygon (((727337.14333881 6163949.53417956, 727795.71684437 6164209.89600394, 728048.46844713 6164773.51362908, 
+728434.97546012 6164315.97788101, 728196.98307504 6163842.76046416, 728158.24012863 6163800.32771333, 727742.21468028 6163552.64959165, 
+727720.53707932 6163596.00479358, 727560.03058705 6163570.63738819, 727510.67945294 6163555.18633218, 727337.14333881 6163949.53417956)))',25832);
+
+SELECT tgv_functions.models_create('Markby','Initial data',True,'default');
