@@ -34,7 +34,7 @@ TEMPLATE = """
 SELECT tgv_functions.models_interpolate_cell_values('{0}','{1}');
 """
 TEMPLATE2 = """
-SELECT tgv_functions.models_create_cell_calculations('{0}','{1}',{2});
+SELECT tgv_functions.models_create_cell_calculations('{0}','{1}');
 """
 TEMPLATE3 = """
 SELECT tgv_functions.building_costs_calculate('{0}','{1}');
@@ -65,9 +65,9 @@ class TGVInterpolateCellValues(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterProviderConnection('database_connection', 'Database connection', 'postgres', defaultValue=None))
         self.addParameter(QgsProcessingParameterString('project_name', 'Project name', multiLine=False, defaultValue=None))
         self.addParameter(QgsProcessingParameterString('model_name', 'Model name', multiLine=False, defaultValue=None))
-        param = QgsProcessingParameterBoolean('mut1_excludes_mut2', 'Does mut1 exclude mut2 days', defaultValue=False)
-        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
-        self.addParameter(param)
+        #param = QgsProcessingParameterBoolean('mut1_excludes_mut2', 'Does mut1 exclude mut2 days', defaultValue=False)
+        #param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        #self.addParameter(param)
 
 
     def processAlgorithm(self, parameters: dict[str, Any], context: QgsProcessingContext, model_feedback: QgsProcessingFeedback) -> dict[str, Any]:
@@ -93,7 +93,7 @@ class TGVInterpolateCellValues(QgsProcessingAlgorithm):
         if feedback.isCanceled():
             return {}
         # PostgreSQL execute SQL
-        sqlTxt = TEMPLATE2.format(parameters['project_name'],parameters['model_name'],parameters['mut1_excludes_mut2'])
+        sqlTxt = TEMPLATE2.format(parameters['project_name'],parameters['model_name'])
         feedback.pushInfo('Step 2: Interpolate costs on cell basis, SQL: ' +  sqlTxt)
         alg_params = {
             'DATABASE': parameters['database_connection'],
