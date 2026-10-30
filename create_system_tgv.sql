@@ -116,7 +116,7 @@ CREATE TABLE tgv_cell_calculations (
     days_tot integer,
     days_zero integer,
     days_mut1 integer,
-    days_mut2 integer	
+    days_mut2 integer;
 );
 ALTER TABLE tgv_cell_calculations ADD PRIMARY KEY (project_id,model_id,cell_no,year);
 ALTER TABLE tgv_cell_calculations ADD CONSTRAINT fk_tgv_cell_calculations_models 
@@ -194,9 +194,10 @@ CREATE TABLE IF NOT EXISTS tgv_corrections
     geom geometry(Polygon,25832),
     CONSTRAINT tgv_corrections_pkey PRIMARY KEY (project_id, season, id)
 );
-ALTER TABLE tgv_corrections ADD CONSTRAINT fk_tgv_models_projects 
+ALTER TABLE tgv_corrections ADD CONSTRAINT fk_tgv_models_projects
     FOREIGN KEY (project_id) REFERENCES tgv_projects (project_id)
     ON UPDATE CASCADE ON DELETE CASCADE;
+
 CREATE INDEX sidx_tgv_corrections_geom ON tgv_corrections USING gist(geom);
 
 
@@ -594,14 +595,14 @@ CREATE OR REPLACE FUNCTION tgv_functions.models_create_cell_calculations(proj_na
                         GROUP BY 1,2,3,4)
                 INSERT INTO tgv_data.tgv_cell_calculations (project_id, model_id, cell_no, year, depths,  days_tot, days_zero, days_mut1, days_mut2) 
                     SELECT * FROM g WHERE year >= year_start AND year <= year_end 
-                    ON CONFLICT ON CONSTRAINT tgv_cell_calculations_pkey DO UPDATE SET depths = EXCLUDED.depths, days_tot = EXCLUDED.days_tot, days_mut1 = EXCLUDED.days_mut1, days_mut2 = EXCLUDED.days_mut2;                
+                    ON CONFLICT ON CONSTRAINT tgv_cell_calculations_pkey DO 
+                        UPDATE SET depths = EXCLUDED.depths, days_tot = EXCLUDED.days_tot, days_mut1 = EXCLUDED.days_mut1, days_mut2 = EXCLUDED.days_mut2;
             ELSE
                 RAISE EXCEPTION 'Non existing model id: %', mod_name USING HINT = 'Choose another id for model to copy';
             END IF;
         ELSE
             RAISE EXCEPTION 'Non existing project id: %', proj_name USING HINT = 'Choose another id for project to copy model from';
         END IF;
-
         RETURN;
     END;
 $$ LANGUAGE plpgsql;
@@ -681,8 +682,8 @@ CREATE OR REPLACE FUNCTION tgv_functions.building_costs_calculate(proj_name char
                         year,
                         (
                             -- local column bclass: 1->cellar & no protection; 2->cellar & protected 3->no cellar & no protection; 4->no cellar & protected  
-                            CASE WHEN days_mut1 > v0   AND bclass = 1          THEN s1*build_area_m2      ELSE 0.00 END + -- H1
-                            CASE WHEN days_mut1 > v7   AND bclass = 2          THEN s1*build_area_m2      ELSE 0.00 END + -- H2
+                            CASE WHEN days_mut1 > v0   AND bclass = 1          THEN s1*cellar_area_m2      ELSE 0.00 END + -- H1
+                            CASE WHEN days_mut1 > v7   AND bclass = 2          THEN s1*cellar_area_m2      ELSE 0.00 END + -- H2
                             CASE WHEN days_mut2 > v7   AND bclass = 1          THEN s2*cellar_perimeter_m ELSE 0.00 END + -- V1
                             CASE WHEN days_mut1 > v7   AND bclass = 1          THEN s2*cellar_perimeter_m ELSE 0.00 END + -- V2
                             CASE WHEN days_mut2 > v30  AND bclass = 1          THEN s2*cellar_perimeter_m ELSE 0.00 END + -- V3
