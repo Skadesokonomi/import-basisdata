@@ -39,6 +39,7 @@ INSERT INTO tgv_parameter_groups (parameter_id, parameter_values) VALUES (
 "s1": 652.00,
 "s2": 84.00,
 "s3": 84.00,
+"year_dis": 2026,
 "year_start": 2025,
 "year_end": 2124,
 "v0": 0,
@@ -261,12 +262,72 @@ CREATE TABLE tgv_model_economics (
     cost_sq numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),  
     cost_alt numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),   
     exp_est numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),   
-    exp_run numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0)   
+    exp_run numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),   
+    cost_sq_dis numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),  
+    cost_alt_dis numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),   
+    exp_est_dis numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),   
+    exp_run_dis numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0)   
 );
 ALTER TABLE tgv_model_economics ADD PRIMARY KEY (project_id,model_id,year);
 ALTER TABLE tgv_model_economics ADD CONSTRAINT fk_tgv_model_economics_models 
     FOREIGN KEY (project_id,model_id) REFERENCES tgv_models (project_id,model_id)
     ON UPDATE CASCADE ON DELETE CASCADE;
+   
+   
+CREATE OR REPLACE FUNCTION tgv_functions.models_generate_economics(proj_name character varying, mod_name character varying) RETURNS void AS $$
+    DECLARE 
+        parm_json jsonb := NULL; 		 
+        ydp integer;
+        mut1 double precision;
+        mut2 double precision;
+        year_dis integer;
+        year_start integer;
+        year_end integer;
+    BEGIN
+        IF tgv_functions.projects_exists(proj_name) THEN 
+            IF tgv_functions.models_exists (proj_name,mod_name) THEN 
+
+                SELECT p.parameter_values INTO parm_json FROM tgv_data.tgv_parameter_groups p JOIN tgv_data.tgv_models m ON p.parameter_id = m.parameter_id WHERE m.project_id = proj_name AND m.model_id = mod_name; 
+                year_start = (parm_json ->> 'year_start')::integer;
+                year_end = (parm_json ->> 'year_end')::integer;
+                ydp = (parm_json ->> 'ydp')::integer;
+                mut1 = (parm_json ->> 'mut1')::real;
+                mut2 = (parm_json ->> 'mut2')::real;
+                year_start = (parm_json ->> 'year_start')::integer;
+                year_end = (parm_json ->> 'year_end')::integer;
+
+                DELETE FROM tgv_data.tgv_model_economics WHERE m.project_id = proj_name AND m.model_id = mod_name; 
+                INSERT INTO tgv_data.tgv_model_economics (project_id, model_id, year) SELECT proj_name, mod_name, i  FROM generate_series(year_start, year_end) AS i;
+                
+                WITH g AS (
+                    SELECT 
+                        project_id,
+        			    model_id,
+                        cell_no,
+                        EXTRACT(YEAR FROM date_stamp - (ydp::text||' DAYS')::interval) AS year, -- Is it necessary with the diplacement days ?
+                        NULL::real[] AS depths,
+                        COUNT(*) AS days_tot,
+                        COUNT (*) FILTER (WHERE depth > -0.000001) AS days_zero,				
+                        COUNT (*) FILTER (WHERE depth >= mut1) AS days_mut1,				
+                        COUNT (*) FILTER (WHERE depth >= mut2) AS days_mut2		
+        		    FROM tgv_data.tgv_cell_values 
+                        WHERE project_id = proj_name AND model_id = mod_name 
+                        GROUP BY 1,2,3,4)
+                INSERT INTO tgv_data.tgv_cell_calculations (project_id, model_id, cell_no, year, depths,  days_tot, days_zero, days_mut1, days_mut2) 
+                    SELECT * FROM g WHERE year >= year_start AND year <= year_end 
+                    ON CONFLICT ON CONSTRAINT tgv_cell_calculations_pkey DO UPDATE SET depths = EXCLUDED.depths, days_tot = EXCLUDED.days_tot, days_mut1 = EXCLUDED.days_mut1, days_mut2 = EXCLUDED.days_mut2;
+            ELSE
+                RAISE EXCEPTION 'Non existing model id: %', mod_name USING HINT = 'Choose another id for model to copy';
+            END IF;
+        ELSE
+            RAISE EXCEPTION 'Non existing project id: %', proj_name USING HINT = 'Choose another id for project to copy model from';
+        END IF;
+        RETURN;
+    END;
+$$ LANGUAGE plpgsql;
+--SELECT tgv_functions.models_create_cell_calculations('Markby','Initial data');
+
+
 
 /****************************************** Nye tabeller slut *****************************/
 
@@ -845,7 +906,7 @@ CREATE OR REPLACE FUNCTION tgv_functions.cells_create_from_project_parameter(pro
                 SELECT 
                     proj_name AS project_id,
                     ST_X(ST_Centroid(g2.geom))::bigint*10000000+ST_Y(ST_Centroid(g2.geom))::bigint AS cell_no,
-                    g2.geom AS geom FROM g2 
+                    ST_Multi(g2.geom) AS geom FROM g2 
                 ON CONFLICT DO NOTHING;
             ELSE
                 RAISE EXCEPTION 'Non existing parameter id: %', parm_name USING HINT = 'Choose another id for parameter';
