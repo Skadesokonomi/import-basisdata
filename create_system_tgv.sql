@@ -116,7 +116,7 @@ CREATE TABLE tgv_cell_calculations (
     days_tot integer,
     days_zero integer,
     days_mut1 integer,
-    days_mut2 integer;
+    days_mut2 integer
 );
 ALTER TABLE tgv_cell_calculations ADD PRIMARY KEY (project_id,model_id,cell_no,year);
 ALTER TABLE tgv_cell_calculations ADD CONSTRAINT fk_tgv_cell_calculations_models 
@@ -184,6 +184,44 @@ CREATE VIEW tgv_building_costs_sum AS
         c.no_years,
         c.tot_cost   
         FROM tgv_buildings b JOIN c ON b.building_id = c.building_id;
+        
+CREATE OR REPLACE VIEW tgv_data.tgv_building_costs_sum_ext
+ AS
+ WITH c AS (
+         SELECT b_1.building_id,
+            b_1.project_id,
+            b_1.model_id,
+            b_1.cell_no,
+            min(b_1.year) AS year_start,
+            max(b_1.year) AS year_end,
+            count(b_1.year) AS no_years,
+            sum(b_1.cost) AS tot_cost,
+            sum(a.days_mut1) AS no_days_mut1,
+            sum(a.days_mut2) AS no_days_mut2
+           FROM tgv_data.tgv_building_costs b_1
+             JOIN tgv_data.tgv_cell_calculations a ON b_1.project_id::text = a.project_id::text AND b_1.model_id::text = a.model_id::text AND b_1.cell_no = a.cell_no AND b_1.year = a.year
+          GROUP BY b_1.building_id, b_1.project_id, b_1.model_id, b_1.cell_no
+        )
+ SELECT b.building_id,
+    b.municipality_code,
+    b.build_usage_code,
+    b.build_area_m2,
+    b.build_perimeter_m,
+    b.cellar_area_m2,
+    b.cellar_perimeter_m,
+    b.is_protected,
+    b.geom,
+    c.project_id,
+    c.model_id,
+    c.cell_no,
+    c.year_start,
+    c.year_end,
+    c.no_years,
+    c.no_days_mut1,
+    c.no_days_mut2,
+    c.tot_cost
+   FROM tgv_data.tgv_buildings b
+     JOIN c ON b.building_id::text = c.building_id::text;
 
 CREATE TABLE IF NOT EXISTS tgv_corrections
 (
@@ -197,9 +235,40 @@ CREATE TABLE IF NOT EXISTS tgv_corrections
 ALTER TABLE tgv_corrections ADD CONSTRAINT fk_tgv_models_projects
     FOREIGN KEY (project_id) REFERENCES tgv_projects (project_id)
     ON UPDATE CASCADE ON DELETE CASCADE;
-
 CREATE INDEX sidx_tgv_corrections_geom ON tgv_corrections USING gist(geom);
 
+/****************************************** Nye tabeller *****************************/
+
+CREATE TABLE tgv_model_actions (
+    project_id character varying NOT NULL,
+    model_id character varying NOT NULL,
+    action_id character varying NOT NULL,
+    description text NOT NULL,
+    periodic boolean NOT NULL,
+    amount NUMERIC(12,2) DEFAULT 0.0 NOT NULL,
+	year_start integer NOT NULL,
+	year_end integer NOT NULL  
+);
+ALTER TABLE tgv_model_actions ADD PRIMARY KEY (project_id,model_id,action_id);
+ALTER TABLE tgv_model_actions ADD CONSTRAINT fk_tgv_model_actions_models 
+    FOREIGN KEY (project_id,model_id) REFERENCES tgv_models (project_id,model_id)
+    ON UPDATE CASCADE ON DELETE CASCADE;
+
+CREATE TABLE tgv_model_economics (
+    project_id character varying NOT NULL,
+    model_id character varying NOT NULL,
+    year integer NOT NULL CHECK (year >= 1900 AND year <= 2300),
+    cost_sq numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),  
+    cost_alt numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),   
+    exp_est numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),   
+    exp_run numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0)   
+);
+ALTER TABLE tgv_model_economics ADD PRIMARY KEY (project_id,model_id,year);
+ALTER TABLE tgv_model_economics ADD CONSTRAINT fk_tgv_model_economics_models 
+    FOREIGN KEY (project_id,model_id) REFERENCES tgv_models (project_id,model_id)
+    ON UPDATE CASCADE ON DELETE CASCADE;
+
+/****************************************** Nye tabeller slut *****************************/
 
 -- helper functions
 
@@ -595,8 +664,7 @@ CREATE OR REPLACE FUNCTION tgv_functions.models_create_cell_calculations(proj_na
                         GROUP BY 1,2,3,4)
                 INSERT INTO tgv_data.tgv_cell_calculations (project_id, model_id, cell_no, year, depths,  days_tot, days_zero, days_mut1, days_mut2) 
                     SELECT * FROM g WHERE year >= year_start AND year <= year_end 
-                    ON CONFLICT ON CONSTRAINT tgv_cell_calculations_pkey DO 
-                        UPDATE SET depths = EXCLUDED.depths, days_tot = EXCLUDED.days_tot, days_mut1 = EXCLUDED.days_mut1, days_mut2 = EXCLUDED.days_mut2;
+                    ON CONFLICT ON CONSTRAINT tgv_cell_calculations_pkey DO UPDATE SET depths = EXCLUDED.depths, days_tot = EXCLUDED.days_tot, days_mut1 = EXCLUDED.days_mut1, days_mut2 = EXCLUDED.days_mut2;
             ELSE
                 RAISE EXCEPTION 'Non existing model id: %', mod_name USING HINT = 'Choose another id for model to copy';
             END IF;
