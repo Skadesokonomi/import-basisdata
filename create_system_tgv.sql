@@ -73,7 +73,8 @@ ALTER TABLE tgv_models ADD CONSTRAINT fk_tgv_models_projects
 ALTER TABLE tgv_models ADD CONSTRAINT fk_tgv_models_parameter_groups 
     FOREIGN KEY (parameter_id) REFERENCES tgv_parameter_groups (parameter_id)
     ON UPDATE CASCADE ON DELETE CASCADE;
-
+-- partial index ensuring only one specific model per project can be the "original" model 
+CREATE UNIQUE INDEX ON tgv_models (project_id, model_id, original) WHERE original = True;
 
 CREATE TABLE tgv_cells (
     project_id character varying NOT NULL,
@@ -241,16 +242,15 @@ CREATE INDEX sidx_tgv_corrections_geom ON tgv_corrections USING gist(geom);
 /****************************************** Nye tabeller *****************************/
 
 CREATE TABLE tgv_model_actions (
+    action_id character varying NOT NULL,
     project_id character varying NOT NULL,
     model_id character varying NOT NULL,
-    action_id character varying NOT NULL,
     description text NOT NULL,
-    periodic boolean NOT NULL,
-    amount NUMERIC(12,2) DEFAULT 0.0 NOT NULL,
 	year_start integer NOT NULL,
 	year_end integer NOT NULL  
+    yearly_amount NUMERIC(12,2) DEFAULT 0.0 NOT NULL,
 );
-ALTER TABLE tgv_model_actions ADD PRIMARY KEY (project_id,model_id,action_id);
+ALTER TABLE tgv_model_actions ADD PRIMARY KEY (project_id,model_id,description);
 ALTER TABLE tgv_model_actions ADD CONSTRAINT fk_tgv_model_actions_models 
     FOREIGN KEY (project_id,model_id) REFERENCES tgv_models (project_id,model_id)
     ON UPDATE CASCADE ON DELETE CASCADE;
@@ -259,14 +259,13 @@ CREATE TABLE tgv_model_economics (
     project_id character varying NOT NULL,
     model_id character varying NOT NULL,
     year integer NOT NULL CHECK (year >= 1900 AND year <= 2300),
-    cost_sq numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),  
-    cost_alt numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),   
-    exp_est numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),   
-    exp_run numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),   
-    cost_sq_dis numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),  
-    cost_alt_dis numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),   
-    exp_est_dis numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0),   
-    exp_run_dis numeric(12,2) NOT NULL DEFAULT 0.0 CHECK (cost >= 0.0)   
+    damage_sq numeric(12,2) NOT NULL DEFAULT 0.0,  
+    damage_alt numeric(12,2) NOT NULL DEFAULT 0.0,   
+    measure numeric(12,2) NOT NULL DEFAULT 0.0,   
+    exp_run numeric(12,2) NOT NULL DEFAULT 0.0,   
+    damage_sq_dis numeric(12,2) NOT NULL DEFAULT 0.0,  
+    damage_alt_dis numeric(12,2) NOT NULL DEFAULT 0.0,   
+    measure_dis numeric(12,2) NOT NULL DEFAULT 0.0
 );
 ALTER TABLE tgv_model_economics ADD PRIMARY KEY (project_id,model_id,year);
 ALTER TABLE tgv_model_economics ADD CONSTRAINT fk_tgv_model_economics_models 
@@ -277,9 +276,6 @@ ALTER TABLE tgv_model_economics ADD CONSTRAINT fk_tgv_model_economics_models
 CREATE OR REPLACE FUNCTION tgv_functions.models_generate_economics(proj_name character varying, mod_name character varying) RETURNS void AS $$
     DECLARE 
         parm_json jsonb := NULL; 		 
-        ydp integer;
-        mut1 double precision;
-        mut2 double precision;
         year_dis integer;
         year_start integer;
         year_end integer;
@@ -290,32 +286,38 @@ CREATE OR REPLACE FUNCTION tgv_functions.models_generate_economics(proj_name cha
                 SELECT p.parameter_values INTO parm_json FROM tgv_data.tgv_parameter_groups p JOIN tgv_data.tgv_models m ON p.parameter_id = m.parameter_id WHERE m.project_id = proj_name AND m.model_id = mod_name; 
                 year_start = (parm_json ->> 'year_start')::integer;
                 year_end = (parm_json ->> 'year_end')::integer;
-                ydp = (parm_json ->> 'ydp')::integer;
-                mut1 = (parm_json ->> 'mut1')::real;
-                mut2 = (parm_json ->> 'mut2')::real;
-                year_start = (parm_json ->> 'year_start')::integer;
-                year_end = (parm_json ->> 'year_end')::integer;
+                year_dis = (parm_json ->> 'year_dis')::integer;
 
+                -- Opret poster
                 DELETE FROM tgv_data.tgv_model_economics WHERE m.project_id = proj_name AND m.model_id = mod_name; 
                 INSERT INTO tgv_data.tgv_model_economics (project_id, model_id, year) SELECT proj_name, mod_name, i  FROM generate_series(year_start, year_end) AS i;
-                
+                                 
+                -- opdater exp_est, exp_run
                 WITH g AS (
                     SELECT 
-                        project_id,
-        			    model_id,
-                        cell_no,
-                        EXTRACT(YEAR FROM date_stamp - (ydp::text||' DAYS')::interval) AS year, -- Is it necessary with the diplacement days ?
-                        NULL::real[] AS depths,
-                        COUNT(*) AS days_tot,
-                        COUNT (*) FILTER (WHERE depth > -0.000001) AS days_zero,				
-                        COUNT (*) FILTER (WHERE depth >= mut1) AS days_mut1,				
-                        COUNT (*) FILTER (WHERE depth >= mut2) AS days_mut2		
-        		    FROM tgv_data.tgv_cell_values 
-                        WHERE project_id = proj_name AND model_id = mod_name 
-                        GROUP BY 1,2,3,4)
-                INSERT INTO tgv_data.tgv_cell_calculations (project_id, model_id, cell_no, year, depths,  days_tot, days_zero, days_mut1, days_mut2) 
-                    SELECT * FROM g WHERE year >= year_start AND year <= year_end 
-                    ON CONFLICT ON CONSTRAINT tgv_cell_calculations_pkey DO UPDATE SET depths = EXCLUDED.depths, days_tot = EXCLUDED.days_tot, days_mut1 = EXCLUDED.days_mut1, days_mut2 = EXCLUDED.days_mut2;
+                        b1.project_id AS project_id,
+        			    b1.model_id AS model_id,
+                        b1.year AS year,
+                        SUM(COALESCE(b1.cost,0.0)) AS cost_alt,
+                        SUM(COALESCE(b2.cost,0.0)) AS cost_sq,
+        		    FROM tgv_data.tgv_building_costs b1 LEFT JOIN tgv_data.tgv_building_costs b2 ON b1.project_id = b2.project_id  
+                    WHERE b1.project_id = proj_name AND b1.model_id = mod_name AND b2.original = True 
+                    GROUP BY 1,2,3)
+                UPDATE tgv_data.tgv_model_economics SET cost_alt = g.cost_alt, cost_sq = g.cost_sq WHERE project_id = g.project_id AND model_id = g.model_id AND year = g.year;  
+
+                -- opdater cost_alt, cost_sq
+                WITH g AS (
+                    SELECT 
+                        b1.project_id AS project_id,
+        			    b1.model_id AS model_id,
+                        b1.year AS year,
+                        SUM(COALESCE(b1.cost,0.0)) AS cost_alt,
+                        SUM(COALESCE(b2.cost,0.0)) AS cost_sq,
+        		    FROM tgv_data.tgv_building_costs b1 LEFT JOIN tgv_data.tgv_building_costs b2 ON b1.project_id = b2.project_id  
+                    WHERE b1.project_id = proj_name AND b1.model_id = mod_name AND b2.original = True 
+                    GROUP BY 1,2,3)
+                UPDATE tgv_data.tgv_model_economics SET cost_alt = g.cost_alt, cost_sq = g.cost_sq WHERE project_id = g.project_id AND model_id = g.model_id AND year = g.year;  
+
             ELSE
                 RAISE EXCEPTION 'Non existing model id: %', mod_name USING HINT = 'Choose another id for model to copy';
             END IF;
@@ -740,8 +742,6 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION tgv_functions.building_costs_calculate(proj_name character varying, mod_name character varying) RETURNS void AS $$
     DECLARE 
-        proj_id uuid := NULL;
-        mod_id uuid := NULL;
         parm_json jsonb := NULL; 		 
         ydp integer := 180;
         mut1 double precision :=1.0;
